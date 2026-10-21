@@ -1,0 +1,453 @@
+{
+  "available_engine_count": 14,
+  "base_graphics": "OpenGFX2 Classic 0.8.1",
+  "binary_sha256": "591d1eefb15f3d7a31bd893df8c12eb5f0422e8123d3a9c0b8cb875ca0cf2ccf",
+  "bundle_resource_hashes": {
+    "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+    "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+    "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+  },
+  "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+  "engine_source_revision": "14ec60f248547d4d062a1160f0fc26d742319888",
+  "engine_version": "15.3",
+  "events": [
+    {
+      "cash_reserve": 10000,
+      "client_name": "Copilot Probe Human",
+      "kind": "probe_started",
+      "protocol": 1,
+      "source": "server",
+      "spend_cap": 10000,
+      "tick": 1
+    },
+    {
+      "cash": 100000,
+      "client": 3,
+      "client_name": "Copilot Probe Human",
+      "company": 0,
+      "company_name": "Unnamed",
+      "date": 712223,
+      "kind": "human_company",
+      "landscape": 0,
+      "loan": 100000,
+      "map_height": 128,
+      "map_width": 128,
+      "protocol": 1,
+      "resolved": true,
+      "settings": {
+        "construction.command_pause_level": 1,
+        "difficulty.max_loan": 300000,
+        "economy.inflation": 0
+      },
+      "source": "server",
+      "tick": 43
+    },
+    {
+      "cash_after": 100000,
+      "cash_before": 100000,
+      "estimated_cost": 90,
+      "footprint_unchanged": true,
+      "kind": "dry_run",
+      "loan_after": 100000,
+      "loan_before": 100000,
+      "ok": true,
+      "piece": "rail",
+      "protocol": 1,
+      "source": "server",
+      "tick": 81
+    },
+    {
+      "cash_after": 100000,
+      "cash_before": 100000,
+      "estimated_cost": 750,
+      "footprint_unchanged": true,
+      "kind": "dry_run",
+      "loan_after": 100000,
+      "loan_before": 100000,
+      "ok": true,
+      "piece": "station",
+      "protocol": 1,
+      "source": "server",
+      "tick": 83
+    },
+    {
+      "accounting_cost": 90,
+      "cash_after": 99910,
+      "cash_before": 100000,
+      "cash_delta": 90,
+      "kind": "rail_built",
+      "loan_after": 100000,
+      "loan_before": 100000,
+      "owner": 0,
+      "protocol": 1,
+      "rail_type": 0,
+      "source": "server",
+      "tick": 86,
+      "tiles": [
+        {
+          "owner": 0,
+          "rail_type": 0,
+          "station": 65535,
+          "tile": 8256,
+          "tracks": 1,
+          "x": 64,
+          "y": 64
+        }
+      ]
+    },
+    {
+      "accounting_cost": 750,
+      "cash_after": 99160,
+      "cash_before": 99910,
+      "cash_delta": 750,
+      "kind": "station_built",
+      "loan_after": 100000,
+      "loan_before": 100000,
+      "owner": 0,
+      "protocol": 1,
+      "rail_type": 0,
+      "source": "server",
+      "station": 0,
+      "tick": 88,
+      "tiles": [
+        {
+          "owner": 0,
+          "rail_type": 0,
+          "station": 0,
+          "tile": 8257,
+          "tracks": 1,
+          "x": 65,
+          "y": 64
+        },
+        {
+          "owner": 0,
+          "rail_type": 0,
+          "station": 0,
+          "tile": 8258,
+          "tracks": 1,
+          "x": 66,
+          "y": 64
+        }
+      ]
+    },
+    {
+      "accepted": false,
+      "accounting_cost": 0,
+      "assets_unchanged": true,
+      "cash_after": 99160,
+      "cash_before": 99160,
+      "command": "repeat_rail_same_track",
+      "error_code": 259,
+      "error_text": "ERR_ALREADY_BUILT",
+      "kind": "rejection_checked",
+      "loan_after": 100000,
+      "loan_before": 100000,
+      "passed": true,
+      "protocol": 1,
+      "source": "server",
+      "station": 0,
+      "tick": 91
+    },
+    {
+      "acceptor": 12,
+      "candidate": {
+        "direction": 1,
+        "rail_estimate": 90,
+        "rail_tile": 8256,
+        "rail_tiles": [
+          8256
+        ],
+        "rail_type": 0,
+        "station": 8257,
+        "station_estimate": 750,
+        "station_tiles": [
+          8257,
+          8258
+        ],
+        "total_estimate": 840,
+        "track": 1,
+        "vertical": false,
+        "x": 64,
+        "y": 64
+      },
+      "cash_after": 99160,
+      "cash_before": 100000,
+      "checks": {
+        "cash_reserve": true,
+        "coal_producer_and_acceptor": true,
+        "dry_run_unchanged": true,
+        "human_company_associated": true,
+        "loan_unchanged": true,
+        "rail_readback": true,
+        "rejection_no_mutation": true,
+        "spend_cap": true,
+        "station_readback": true
+      },
+      "client": 3,
+      "coal": 1,
+      "company": 0,
+      "kind": "probe_complete",
+      "loan_after": 100000,
+      "loan_before": 100000,
+      "producer": 0,
+      "protocol": 1,
+      "rail_cost": 90,
+      "rail_tiles": [
+        8256
+      ],
+      "rail_track": 1,
+      "rail_type": 0,
+      "source": "server",
+      "station": 0,
+      "station_cost": 750,
+      "station_tiles": [
+        8257,
+        8258
+      ],
+      "tick": 93,
+      "total_cost": 840
+    }
+  ],
+  "final_save_sha256": "9bca2fd418e4e28c1af044ceea9acff1b57cafd601774c294b2a9623fcf2bb59",
+  "fixture_settings": {
+    "ai_companies": 0,
+    "inflation": false,
+    "newgrfs": [],
+    "rivers": 0,
+    "sea_lakes": 0,
+    "terrain_type": 0
+  },
+  "industry_count": 13,
+  "initial_save_scope": "generated world before human client joins; no initial human company",
+  "initial_save_sha256": "a56a8b01081c739ab9b5d2cb8e99ad7beca13dc6dd649a456219db7147565cb6",
+  "limitations": [
+    "No depot, train purchase, orders, coal route, or deliveries",
+    "No Admin requests, reconnect protocol, older-save detection or production journaling",
+    "No throughput or varied-terrain acceptance evidence",
+    "GUI inspection is the user handoff; automated verification used dedicated/null video drivers"
+  ],
+  "normal_profile_check": {
+    "config_and_save_files": 4,
+    "content_and_mtime_unchanged": true
+  },
+  "os": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "raw_bundle": "artifacts/control-probe/20261021T180450Z-f8fc9132",
+  "raw_manifest_sha256": "2c6994175106784da3f5f49c39428dccf80d83193836727755022bde2ba6a9bf",
+  "reload": {
+    "event": {
+      "current_cash": 99160,
+      "current_company": 0,
+      "current_loan": 100000,
+      "current_rail_tiles": [
+        {
+          "owner": 0,
+          "rail_type": 0,
+          "station": 65535,
+          "tile": 8256,
+          "tracks": 1,
+          "x": 64,
+          "y": 64
+        }
+      ],
+      "current_station_tiles": [
+        {
+          "owner": 0,
+          "rail_type": 0,
+          "station": 0,
+          "tile": 8257,
+          "tracks": 1,
+          "x": 65,
+          "y": 64
+        },
+        {
+          "owner": 0,
+          "rail_type": 0,
+          "station": 0,
+          "tile": 8258,
+          "tracks": 1,
+          "x": 66,
+          "y": 64
+        }
+      ],
+      "kind": "loaded_readback",
+      "loaded_version": 1,
+      "protocol": 1,
+      "saved": {
+        "acceptor": 12,
+        "candidate": {
+          "direction": 1,
+          "rail_estimate": 90,
+          "rail_tile": 8256,
+          "rail_tiles": [
+            8256
+          ],
+          "rail_type": 0,
+          "station": 8257,
+          "station_estimate": 750,
+          "station_tiles": [
+            8257,
+            8258
+          ],
+          "total_estimate": 840,
+          "track": 1,
+          "vertical": false,
+          "x": 64,
+          "y": 64
+        },
+        "cash_after": 99160,
+        "cash_before": 100000,
+        "checks": {
+          "cash_reserve": true,
+          "coal_producer_and_acceptor": true,
+          "dry_run_unchanged": true,
+          "human_company_associated": true,
+          "loan_unchanged": true,
+          "rail_readback": true,
+          "rejection_no_mutation": true,
+          "spend_cap": true,
+          "station_readback": true
+        },
+        "client": 3,
+        "coal": 1,
+        "company": 0,
+        "loan_after": 100000,
+        "loan_before": 100000,
+        "producer": 0,
+        "rail_cost": 90,
+        "rail_tiles": [
+          8256
+        ],
+        "rail_track": 1,
+        "rail_type": 0,
+        "station": 0,
+        "station_cost": 750,
+        "station_tiles": [
+          8257,
+          8258
+        ],
+        "total_cost": 840
+      },
+      "saved_candidate": {
+        "direction": 1,
+        "rail_estimate": 90,
+        "rail_tile": 8256,
+        "rail_tiles": [
+          8256
+        ],
+        "rail_type": 0,
+        "station": 8257,
+        "station_estimate": 750,
+        "station_tiles": [
+          8257,
+          8258
+        ],
+        "total_estimate": 840,
+        "track": 1,
+        "vertical": false,
+        "x": 64,
+        "y": 64
+      },
+      "saved_progress": {
+        "candidate": {
+          "direction": 1,
+          "rail_estimate": 90,
+          "rail_tile": 8256,
+          "rail_tiles": [
+            8256
+          ],
+          "rail_type": 0,
+          "station": 8257,
+          "station_estimate": 750,
+          "station_tiles": [
+            8257,
+            8258
+          ],
+          "total_estimate": 840,
+          "track": 1,
+          "vertical": false,
+          "x": 64,
+          "y": 64
+        },
+        "cash": 99160,
+        "client": 3,
+        "company": 0,
+        "loan": 100000,
+        "rail_cost": 90,
+        "rail_tiles": [
+          {
+            "owner": 0,
+            "rail_type": 0,
+            "station": 65535,
+            "tile": 8256,
+            "tracks": 1,
+            "x": 64,
+            "y": 64
+          }
+        ],
+        "state": "built",
+        "station": 0,
+        "station_cost": 750,
+        "station_tiles": [
+          {
+            "owner": 0,
+            "rail_type": 0,
+            "station": 0,
+            "tile": 8257,
+            "tracks": 1,
+            "x": 65,
+            "y": 64
+          },
+          {
+            "owner": 0,
+            "rail_type": 0,
+            "station": 0,
+            "tile": 8258,
+            "tracks": 1,
+            "x": 66,
+            "y": 64
+          }
+        ]
+      },
+      "saved_state": "complete",
+      "source": "stderr",
+      "tick": 1
+    },
+    "final_save_hash_unchanged": true,
+    "money": {
+      "cash_matches": true,
+      "cash_status": "matched",
+      "expected_cash": 99160,
+      "expected_loan": 100000,
+      "loan_stable": true,
+      "observed_cash": 99160,
+      "observed_loan": 100000
+    },
+    "raw_log_sha256": "ef1c69c47e3ab2a54f9b5fa0650d6ab9326fc6cb1290a40afa8ff553afc8ddf1",
+    "status": "success"
+  },
+  "run": "20261021T180450Z-f8fc9132",
+  "runtime_seconds": 4.153,
+  "runtime_seconds_scope": "one run including startup, content copy, construction, and saving; not a throughput benchmark",
+  "schema": 1,
+  "scope": "M1 S1/S2 company-control fixture; not a transport service or full M1 acceptance",
+  "seed": 20261021,
+  "source_parent_revision": "d4c06e96661cf2dc42f63200d9fbe9c3516ecc82",
+  "source_sha256": {
+    "game/copilot_probe/info.nut": "2b3e97ca6fa972753c45c211dd8a83263df5bc5612a8887c52b9447a2db3eb02",
+    "game/copilot_probe/main.nut": "ff7c92415c883476301d5106e86e0607642839776392fdf901d4ee23035c67b2",
+    "tools/check_probe_reload.py": "27897e211b5d0852eb361b832308d8112082e419a2b2b2b7bb0e4e6ada395715",
+    "tools/run_control_probe.py": "86b93f56cb5c0a6dbf5169cd78a679ff19c995471671fbb6211a45e37b95e502"
+  },
+  "status": "success",
+  "termination": {
+    "client": "terminated",
+    "server": "console_quit_sent",
+    "server_exit": "console_quit"
+  },
+  "world": {
+    "climate": "temperate",
+    "height": 128,
+    "starting_year": 1950,
+    "width": 128
+  }
+}

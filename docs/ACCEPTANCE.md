@@ -1,6 +1,6 @@
 # Acceptance and reliability plan
 
-Status: proposed gates, 2026-10-20. **No tests in this document have been implemented or run.**
+Status: proposed release gates with initial S1/S2 evidence, 2026-10-21. The isolated company-control fixture passes rail/station accounting, readback, duplicate rejection, and one-shot reload checks. [Evidence](evidence/2026-10-21-control-probe.json). **The end-to-end transport test and release scenario suite below are not implemented or passed.**
 
 ## What “reliable” means
 

@@ -35,3 +35,6 @@ The user explicitly asked for careful planning and a durable record of plans and
 - Report unsupported conditions, search limits, budget failures, partial construction, and unverified operation honestly.
 - Existing source findings do not prove why the user's previous attempts failed. Reproduce failures before claiming causes or comparative reliability.
 - Continue routine implementation within the authorized task; documentation is not an extra approval requirement.
+- Implement in bounded pieces and stop a session at a useful user testing point. State exactly what is ready to inspect and which milestone gates remain open.
+- User authorized committing and pushing implementation and project records together. Preserve the required no-reply identity and verify the remote result.
+- Use the strongest available model for architecture, consequential decisions, and review. Delegate suitable bounded coding/execution work to cheaper capable models; the primary agent remains responsible for integration and real-engine evidence.

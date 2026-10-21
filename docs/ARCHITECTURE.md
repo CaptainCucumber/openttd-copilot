@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: design baseline, 2026-10-20. No components below are implemented yet. Adapter choice is gated by M1.
+Status: design baseline with an S1/S2 control probe, 2026-10-21. The disposable Python harness and Squirrel fixture verify limited human-company construction and saved-world readback. Production components below remain planned; adapter choice is gated by all M1 criteria. See [checkpoint scope and instructions](CONTROL_PROBE.md).
 
 ## Responsibilities
 
