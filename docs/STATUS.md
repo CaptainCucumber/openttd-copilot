@@ -5,7 +5,7 @@ Updated: 2026-10-21, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning baseline published on `main`; local branch tracks `origin/main`. GitHub commit metadata and all ten initial project files were verified remotely.
+- Planning baseline and S1/S2 implementation checkpoint published on `main`; local branch tracks `origin/main`. Implementation commit [`57be13a`](https://github.com/CaptainCucumber/openttd-copilot/commit/57be13a979c7d8c927a0f5dc96fe9a77a6b73876) and all 15 changed files were verified through GitHub after pushing.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
