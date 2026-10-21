@@ -1,0 +1,45 @@
+# OpenTTD Copilot
+
+Build and operate transport networks in your OpenTTD company through conversation.
+
+The first target is a request like:
+
+> Build a railway carrying coal from Pronnington Coal Mine to Frenwood Power Station. Wait for a full load at the mine and use the money my company already has.
+
+Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
+
+**Status: researched project plan; no Copilot runtime implemented yet.**
+
+GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
+
+## Project records
+
+| Record | Purpose |
+|---|---|
+| [Current status](docs/STATUS.md) | What is done, what is unproven, and the next concrete tasks |
+| [Project plan](docs/PROJECT_PLAN.md) | Requirements, scope, milestones, dependencies, and risks |
+| [Architecture](docs/ARCHITECTURE.md) | How intent, planning, game control, and verification fit together |
+| [Acceptance tests](docs/ACCEPTANCE.md) | What we must demonstrate in the real game |
+| [Research](docs/RESEARCH.md) | Findings from OpenTTD and the two reference projects, with pinned sources |
+| [Decision log](docs/DECISIONS.md) | Choices, assumptions, and conditions for revisiting them |
+| [Work log](docs/WORK_LOG.md) | Dated actions, results, and handoffs |
+
+Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
+
+## Direction
+
+```mermaid
+flowchart LR
+    A[Chat request] --> B[Validated goal and constraints]
+    B --> C[Deterministic railway planner]
+    C --> D[Costed construction plan]
+    D --> E[Game adapter and execution journal]
+    E --> F[OpenTTD]
+    F --> G[Readback and operating checks]
+    G --> E
+    G --> H[Progress or precise failure report]
+```
+
+Prove control of the player's company first, then build a complete railway from a structured request, then add natural language. The first adapter experiment targets the installed OpenTTD 15.3 through GameScript and its Admin interface. A small engine integration remains an option if that approach fails the capability or performance checks.
+
+No installation or run instructions are available yet. The research pass inspected source and local installation metadata; it did not launch a game or change existing saves.
