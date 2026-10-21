@@ -43,3 +43,11 @@ M0's initial planning baseline is complete. Begin M1 with S1–S4 in `STATUS.md`
 - Before any local commit or push, the user prohibited use of their work email. Verified that the local workspace still had no Git repository and the remote repository was empty.
 - Selected the account's GitHub no-reply identity, `CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>`, for local author and committer settings. Global Git settings remain unchanged.
 - Added the identity requirement to `AGENTS.md` and the repository link to the project records. Preparing the planning baseline for its initial commit and push; verify author/committer metadata before publication.
+
+## 2026-10-21 — Planning baseline published
+
+- Initialized local Git on `main`, configured the repository-local no-reply author/committer identity, and added the private GitHub repository as `origin`.
+- Created and pushed initial commit `26c96823b46bdeb7b384e1fa9b3d0e4996196bc1`, containing all ten project files. `main` now tracks `origin/main`.
+- Verified the initial commit through GitHub's API: its author and committer both use `37813159+CaptainCucumber@users.noreply.github.com`; the expected ten files are present. Confirmed repository visibility is private.
+- Checked project file contents for work email addresses before committing; none were present. No work email was used in commit metadata. Global Git identity was not changed.
+- Updated the current status and this log to record publication. The next engineering task remains M1's isolated game-control prototype.

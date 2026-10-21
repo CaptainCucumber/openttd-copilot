@@ -1,11 +1,11 @@
 # Current status
 
-Updated: 2026-10-20, America/Vancouver.
+Updated: 2026-10-21, America/Vancouver.
 
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Publishing the planning baseline on `main`; publication verification is recorded in the work log.
+- Planning baseline published on `main`; local branch tracks `origin/main`. GitHub commit metadata and all ten initial project files were verified remotely.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
