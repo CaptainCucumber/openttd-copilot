@@ -79,6 +79,8 @@ def show_saved_game(binary: str, artifact: Path) -> None:
 def run_job(binary: str, deadline: float, seed: int, show: bool) -> int:
     command = [sys.executable, "-B", str(PROBE), "--binary", binary,
                "--deadline", str(deadline), "--seed", str(seed)]
+    if show:
+        command.append("--visible")
     print("Starting the disposable OpenTTD job...", flush=True)
     completed = subprocess.run(command, cwd=ROOT)
     if completed.returncode == 0:

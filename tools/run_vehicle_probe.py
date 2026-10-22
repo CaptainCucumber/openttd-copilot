@@ -68,8 +68,9 @@ class VehicleExperiment(Experiment):
     script_source = ROOT / "game/copilot_vehicle"
     script_name = "Copilot Vehicle Probe"
 
-    def __init__(self, binary, timeout, seed):
+    def __init__(self, binary, timeout, seed, visible=False):
         super().__init__(binary, timeout, seed)
+        self.visible_client = visible
         self.manifest["scope"] = "S3b disposable one-train fixture; no general per-vehicle delivery event or crash-gap proof"
         self.manifest["limits"].update(fixture_cap=20000, purchase_cap=50000,
                                        max_telemetry_events=32)
@@ -255,10 +256,12 @@ def main():
     parser.add_argument("--binary", default=str(base.DEFAULT_BINARY))
     parser.add_argument("--deadline", type=float, default=600)
     parser.add_argument("--seed", type=int, default=base.DEFAULT_SEED)
+    parser.add_argument("--visible", action="store_true",
+                        help="show the disposable client while the job runs")
     args = parser.parse_args()
     if not math.isfinite(args.deadline) or args.deadline <= 0 or not 0 <= args.seed < 0xFFFFFFFE:
         parser.error("positive finite deadline and seed between 0 and 4294967293 required")
-    experiment = VehicleExperiment(Path(args.binary).resolve(), args.deadline, args.seed)
+    experiment = VehicleExperiment(Path(args.binary).resolve(), args.deadline, args.seed, args.visible)
     failure = None
     try:
         experiment.run()

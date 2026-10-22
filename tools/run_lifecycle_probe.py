@@ -55,6 +55,7 @@ class Experiment:
         self.secret_files = []
         self.events, self.errors = [], []
         self.server = self.server_pump = self.admin = None
+        self.visible_client = False
         self.counter = 0
         self.manifest = {
             "schema": 1, "run": self.name, "status": "running", "seed": seed,
@@ -141,7 +142,7 @@ class Experiment:
                                    capture_output=True, text=True, timeout=5, check=True).stdout
         require(f"127.0.0.1:{self.admin_port} (LISTEN)" in listeners, "Admin listener not loopback")
         require(all("127.0.0.1:" in line for line in listeners.splitlines()[1:]), "unexpected non-loopback listener")
-        client_argv = base.build_client_argv(self.binary, client_config, self.port)
+        client_argv = base.build_client_argv(self.binary, client_config, self.port, self.visible_client)
         if save is not None:
             client_argv[-1] += "#1"
         self.client, _ = self.launch_process(client_argv, client_profile, label + "-client")

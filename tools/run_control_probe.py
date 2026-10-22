@@ -342,7 +342,8 @@ def build_server_argv(binary: Path, config: Path, port: int, seed: int = DEFAULT
     return [str(binary), "-X", "-x", "-c", str(config), "-G", str(seed), "-D", f"127.0.0.1:{port}"]
 
 
-def build_client_argv(binary: Path, config: Path, port: int) -> list[str]:
+def build_client_argv(binary: Path, config: Path, port: int, visible: bool = False) -> list[str]:
+    video = "cocoa" if visible else "null:ticks=100000000"
     return [
         str(binary),
         "-X",
@@ -350,7 +351,7 @@ def build_client_argv(binary: Path, config: Path, port: int) -> list[str]:
         "-c",
         str(config),
         "-v",
-        "null:ticks=100000000",
+        video,
         "-s",
         "null",
         "-m",
