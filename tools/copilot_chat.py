@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-import re
 import subprocess
 import sys
 
@@ -62,20 +61,39 @@ def format_plan(intent: dict) -> str:
     )
 
 
-def run_job(binary: str, deadline: float, seed: int) -> int:
+def show_saved_game(binary: str, artifact: Path) -> None:
+    manifest_path = artifact / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    save = Path(manifest["saves"]["service-final"]["path"])
+    if not save.is_file():
+        raise RuntimeError(f"successful job did not leave a final save: {save}")
+    # Use the installed profile only for read-only game display. -x prevents
+    # configuration writes; the generated save remains under artifacts/.
+    process = subprocess.Popen([
+        binary, "-x", "-v", "cocoa", "-s", "null", "-m", "null", "-g", str(save)
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    start_new_session=True)
+    print(f"OpenTTD is open with the completed route (pid {process.pid}).")
+
+
+def run_job(binary: str, deadline: float, seed: int, show: bool) -> int:
     command = [sys.executable, "-B", str(PROBE), "--binary", binary,
                "--deadline", str(deadline), "--seed", str(seed)]
     print("Starting the disposable OpenTTD job...", flush=True)
     completed = subprocess.run(command, cwd=ROOT)
     if completed.returncode == 0:
+        artifact = max((ROOT / "artifacts" / "vehicle-probe").iterdir(),
+                       key=lambda path: path.stat().st_mtime)
         print("Job complete. Inspect artifacts/vehicle-probe/ for the evidence.")
+        if show:
+            show_saved_game(binary, artifact)
     else:
         print("Job failed; diagnostics were retained under artifacts/vehicle-probe/.",
               file=sys.stderr)
     return completed.returncode
 
 
-def interactive(binary: str, deadline: float, seed: int) -> int:
+def interactive(binary: str, deadline: float, seed: int, show: bool) -> int:
     print("OpenTTD Copilot chat (first supported job: coal railway)")
     print("Type a request, 'plan', 'build', 'help', or 'quit'.")
     pending: dict | None = None
@@ -100,7 +118,7 @@ def interactive(binary: str, deadline: float, seed: int) -> int:
             if pending is None:
                 print("Give me the transport request first.")
             else:
-                return run_job(binary, deadline, seed)
+                return run_job(binary, deadline, seed, show)
             continue
         try:
             pending = parse_request(line)
@@ -116,6 +134,8 @@ def main() -> int:
     parser.add_argument("--binary", default="/Applications/OpenTTD.app/Contents/MacOS/openttd")
     parser.add_argument("--deadline", type=float, default=600)
     parser.add_argument("--seed", type=int, default=20261021)
+    parser.add_argument("--no-show", action="store_true",
+                        help="leave the successful save on disk without opening the GUI")
     parser.add_argument("request", nargs="*", help="optional one-shot request")
     args = parser.parse_args()
     if args.request:
@@ -125,7 +145,7 @@ def main() -> int:
             parser.error(str(exc))
         print(format_plan(intent))
         return 0
-    return interactive(args.binary, args.deadline, args.seed)
+    return interactive(args.binary, args.deadline, args.seed, not args.no_show)
 
 
 if __name__ == "__main__":
