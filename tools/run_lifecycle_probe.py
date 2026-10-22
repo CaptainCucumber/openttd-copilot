@@ -35,12 +35,16 @@ def normal_fingerprints():
 
 
 class Experiment:
+    probe_kind = "lifecycle-probe"
+    script_source = SOURCE
+    script_name = "Copilot Lifecycle Probe"
+
     def __init__(self, binary: Path, timeout: float, seed: int):
         self.binary, self.seed = binary, seed
         self.started = time.monotonic()
         self.deadline = self.started + timeout
         self.name, self.profile, self.artifacts = base.create_run(
-            ROOT / ".runtime/lifecycle-probe", ROOT / "artifacts/lifecycle-probe")
+            ROOT / ".runtime" / self.probe_kind, ROOT / "artifacts" / self.probe_kind)
         self.password = secrets.token_hex(16)
         # A reloaded company's allow-list recognizes the original client key.
         # Reuse one disposable identity throughout this run, never the user's.
@@ -92,11 +96,11 @@ class Experiment:
         archive = base.stage_opengfx(base.find_opengfx_archive(), profile)
         config, private = base.write_config(profile, port, include_game_script=admin_port is not None,
                                             server=admin_port is not None)
-        text = config.read_text().replace('"Copilot Control Probe"', '"Copilot Lifecycle Probe"')
+        text = config.read_text().replace('"Copilot Control Probe"', '"' + self.script_name + '"')
         if admin_port is not None:
             text = text.replace("server_admin_port = 0", f"server_admin_port = {admin_port}\nallow_insecure_admin_login = true")
             private.write_text(private.read_text() + "\n[server_bind_addresses]\n127.0.0.1 =\n")
-            base.stage_game_script(profile, SOURCE)
+            base.stage_game_script(profile, self.script_source)
         secret = profile / "secrets.cfg"
         fd = os.open(secret, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         self.secret_files.append(secret)
@@ -327,7 +331,7 @@ class Experiment:
         manifest_text = (self.artifacts / "manifest.json").read_text()
         require(all(secret not in manifest_text for secret in (self.password, self.client_secret)),
                 "secret leaked into manifest")
-        print(f"lifecycle probe {self.manifest['status']}: {self.artifacts}")
+        print(f"{self.probe_kind.replace('-', ' ')} {self.manifest['status']}: {self.artifacts}")
         if failure:
             print(self.manifest["failure"], file=sys.stderr)
         return 0 if self.manifest["status"] == "success" else 2
