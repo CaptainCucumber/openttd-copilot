@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Small local chat adapter for the first supported OpenTTD job.
+
+This is intentionally model-free. It accepts the fixed coal request used by
+the S3b fixture, produces a structured intent, and delegates execution to the
+deterministic vehicle probe. It is a test seam for the eventual chat adapter,
+not yet a general route planner.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PROBE = ROOT / "tools" / "run_vehicle_probe.py"
+
+
+class ChatInputError(ValueError):
+    """The request is outside the currently supported intent scope."""
+
+
+def parse_request(text: str) -> dict:
+    """Parse the deliberately narrow first chat intent without guessing.
+
+    Names are optional because the disposable fixture binds the actual source
+    and destination names from the generated world. Unsupported cargo,
+    transport, or operating constraints are rejected before any game action.
+    """
+    normalized = " ".join(text.lower().strip().split())
+    if not normalized:
+        raise ChatInputError("Please describe a transport job.")
+    if "coal" not in normalized:
+        raise ChatInputError("The first supported job carries coal.")
+    if not any(word in normalized for word in ("rail", "railway", "train")):
+        raise ChatInputError("The first supported job uses a railway train.")
+    if "full load" not in normalized and "fully loaded" not in normalized:
+        raise ChatInputError("Please specify that the train must wait for a full load.")
+    if not any(word in normalized for word in ("power station", "power plant")):
+        raise ChatInputError("The first supported destination is a power station.")
+    return {
+        "cargo": "coal",
+        "mode": "rail",
+        "source": "coal mine",
+        "destination": "power station",
+        "loading": "full_load",
+        "verification": ["two_full_load_departures", "two_deliveries"],
+        "scope": "disposable_fixture",
+    }
+
+
+def format_plan(intent: dict) -> str:
+    return (
+        "I understand: build a coal railway from a coal mine to a power station, "
+        "wait for a full load, and verify two loaded departures and two deliveries.\n"
+        "This uses the disposable OpenTTD fixture; it will not touch your normal saves.\n"
+        f"Intent: {json.dumps(intent, sort_keys=True)}"
+    )
+
+
+def run_job(binary: str, deadline: float, seed: int) -> int:
+    command = [sys.executable, "-B", str(PROBE), "--binary", binary,
+               "--deadline", str(deadline), "--seed", str(seed)]
+    print("Starting the disposable OpenTTD job...", flush=True)
+    completed = subprocess.run(command, cwd=ROOT)
+    if completed.returncode == 0:
+        print("Job complete. Inspect artifacts/vehicle-probe/ for the evidence.")
+    else:
+        print("Job failed; diagnostics were retained under artifacts/vehicle-probe/.",
+              file=sys.stderr)
+    return completed.returncode
+
+
+def interactive(binary: str, deadline: float, seed: int) -> int:
+    print("OpenTTD Copilot chat (first supported job: coal railway)")
+    print("Type a request, 'plan', 'build', 'help', or 'quit'.")
+    pending: dict | None = None
+    while True:
+        try:
+            line = input("you> ").strip()
+        except EOFError:
+            print()
+            return 0
+        if line.lower() in {"quit", "exit"}:
+            return 0
+        if line.lower() == "help":
+            print("Example: Build a railway carrying coal from a coal mine to a power station. Wait for a full load.")
+            continue
+        if line.lower() == "plan":
+            if pending is None:
+                print("Give me the transport request first.")
+            else:
+                print(format_plan(pending))
+            continue
+        if line.lower() == "build":
+            if pending is None:
+                print("Give me the transport request first.")
+            else:
+                return run_job(binary, deadline, seed)
+            continue
+        try:
+            pending = parse_request(line)
+        except ChatInputError as exc:
+            print(f"I cannot run that yet: {exc}")
+        else:
+            print(format_plan(pending))
+            print("Type 'build' to run it, or 'quit' to leave without changing the game.")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--binary", default="/Applications/OpenTTD.app/Contents/MacOS/openttd")
+    parser.add_argument("--deadline", type=float, default=600)
+    parser.add_argument("--seed", type=int, default=20261021)
+    parser.add_argument("request", nargs="*", help="optional one-shot request")
+    args = parser.parse_args()
+    if args.request:
+        try:
+            intent = parse_request(" ".join(args.request))
+        except ChatInputError as exc:
+            parser.error(str(exc))
+        print(format_plan(intent))
+        return 0
+    return interactive(args.binary, args.deadline, args.seed)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

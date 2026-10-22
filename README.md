@@ -45,3 +45,16 @@ Prove control of the player's company first, then build a complete railway from 
 The first implementation checkpoint is an isolated rail/station control probe. See [running and inspecting the probe](docs/CONTROL_PROBE.md) and [current verification status](docs/STATUS.md). It uses the installed OpenTTD binary, copied graphics, and disposable profiles.
 
 The next checkpoint also verifies bounded Admin requests and recovery across disconnects, pause, and save reloads. See [running the lifecycle probe](docs/LIFECYCLE_PROBE.md).
+
+The first local chat seam is now available for the supported disposable coal
+fixture. It is deliberately model-free while the deterministic route builder is
+being completed:
+
+```sh
+python3 -B tools/copilot_chat.py
+```
+
+Enter `Build a railway carrying coal from a coal mine to a power station. Wait
+for a full load.`, then type `build`. The command runs the isolated OpenTTD
+vehicle probe; it does not attach to or modify normal saves. Unsupported
+requests are rejected before any game action.
