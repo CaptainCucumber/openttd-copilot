@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import time
+import uuid
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -95,8 +97,57 @@ def run_job(binary: str, deadline: float, seed: int, show: bool) -> int:
     return completed.returncode
 
 
+def launch_live_job(binary: str, deadline: float, seed: int, show: bool):
+    """Open the map and stop before purchase until chat authorizes the job."""
+    wait_file = ROOT / ".runtime" / "chat-session" / f"{uuid.uuid4().hex}.ready"
+    wait_file.parent.mkdir(parents=True, exist_ok=True)
+    command = [sys.executable, "-B", str(PROBE), "--binary", binary,
+               "--deadline", str(deadline), "--seed", str(seed),
+               "--wait-file", str(wait_file)]
+    if show:
+        command.append("--visible")
+    print("Starting a disposable OpenTTD map...", flush=True)
+    process = subprocess.Popen(command, cwd=ROOT)
+    end = time.monotonic() + min(deadline, 90)
+    while not wait_file.exists():
+        if process.poll() is not None:
+            raise RuntimeError(f"OpenTTD job stopped before the map opened (exit {process.returncode})")
+        if time.monotonic() >= end:
+            process.terminate()
+            raise RuntimeError("Timed out waiting for the OpenTTD map to open")
+        time.sleep(0.1)
+    print("The OpenTTD map is open. The fixture found its coal source and power station.")
+    return process, wait_file
+
+
+def finish_live_job(binary: str, process, wait_file: Path, show: bool) -> int:
+    wait_file.unlink(missing_ok=True)
+    result = process.wait()
+    if result == 0 and show:
+        artifact = max((ROOT / "artifacts" / "vehicle-probe").iterdir(),
+                       key=lambda path: path.stat().st_mtime)
+        show_saved_game(binary, artifact)
+    return result
+
+
+def cancel_live_job(process, wait_file: Path) -> None:
+    wait_file.unlink(missing_ok=True)
+    if process.poll() is None:
+        process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
+
 def interactive(binary: str, deadline: float, seed: int, show: bool) -> int:
     print("OpenTTD Copilot chat (first supported job: coal railway)")
+    print("Opening a disposable map before accepting the build request...")
+    try:
+        process, wait_file = launch_live_job(binary, deadline, seed, show)
+    except RuntimeError as exc:
+        print(f"Could not open the game: {exc}", file=sys.stderr)
+        return 2
     print("Type a request, 'plan', 'build', 'help', or 'quit'.")
     pending: dict | None = None
     while True:
@@ -104,8 +155,10 @@ def interactive(binary: str, deadline: float, seed: int, show: bool) -> int:
             line = input("you> ").strip()
         except EOFError:
             print()
+            cancel_live_job(process, wait_file)
             return 0
         if line.lower() in {"quit", "exit"}:
+            cancel_live_job(process, wait_file)
             return 0
         if line.lower() == "help":
             print("Example: Build a railway carrying coal from a coal mine to a power station. Wait for a full load.")
@@ -120,7 +173,7 @@ def interactive(binary: str, deadline: float, seed: int, show: bool) -> int:
             if pending is None:
                 print("Give me the transport request first.")
             else:
-                return run_job(binary, deadline, seed, show)
+                return finish_live_job(binary, process, wait_file, show)
             continue
         try:
             pending = parse_request(line)

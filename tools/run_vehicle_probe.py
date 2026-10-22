@@ -68,9 +68,10 @@ class VehicleExperiment(Experiment):
     script_source = ROOT / "game/copilot_vehicle"
     script_name = "Copilot Vehicle Probe"
 
-    def __init__(self, binary, timeout, seed, visible=False):
+    def __init__(self, binary, timeout, seed, visible=False, wait_file=None):
         super().__init__(binary, timeout, seed)
         self.visible_client = visible
+        self.wait_file = Path(wait_file).resolve() if wait_file else None
         self.manifest["scope"] = "S3b disposable one-train fixture; no general per-vehicle delivery event or crash-gap proof"
         self.manifest["limits"].update(fixture_cap=20000, purchase_cap=50000,
                                        max_telemetry_events=32)
@@ -130,6 +131,13 @@ class VehicleExperiment(Experiment):
         require(0 < fixture["cost"] <= 20000, "fixture construction cap violated")
         require(self.call("hello")["loan"] == hello["loan"], "fixture borrowed money")
         self.check("fixture_built", fixture)
+        if self.wait_file is not None:
+            self.wait_file.parent.mkdir(parents=True, exist_ok=True)
+            self.wait_file.write_text("ready\n", encoding="utf-8")
+            print("READY game_open", flush=True)
+            while self.wait_file.exists():
+                self.remaining()
+                time.sleep(0.1)
         baseline = self.save("before-purchase")
         request = {"v": 1, "rid": "lost-purchase", "cmd": "purchase", "world": world,
                    "session": session, "company": 0, "op": uuid.uuid4().hex,
@@ -258,10 +266,12 @@ def main():
     parser.add_argument("--seed", type=int, default=base.DEFAULT_SEED)
     parser.add_argument("--visible", action="store_true",
                         help="show the disposable client while the job runs")
+    parser.add_argument("--wait-file", help="pause after opening the map until this file is removed")
     args = parser.parse_args()
     if not math.isfinite(args.deadline) or args.deadline <= 0 or not 0 <= args.seed < 0xFFFFFFFE:
         parser.error("positive finite deadline and seed between 0 and 4294967293 required")
-    experiment = VehicleExperiment(Path(args.binary).resolve(), args.deadline, args.seed, args.visible)
+    experiment = VehicleExperiment(Path(args.binary).resolve(), args.deadline, args.seed,
+                                   args.visible, args.wait_file)
     failure = None
     try:
         experiment.run()

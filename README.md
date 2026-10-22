@@ -54,10 +54,10 @@ being completed:
 python3 -B tools/copilot_chat.py
 ```
 
-Enter `Build a railway carrying coal from a coal mine to a power station. Wait
-for a full load.`, then type `build`. The command runs the isolated OpenTTD
-vehicle probe and opens the completed disposable save in the OpenTTD window so
-you can watch the route and train while the job is running. It also opens the
-completed save when verification finishes. It does not attach to or modify
+The command opens the disposable map first. Enter `Build a railway carrying
+coal from a coal mine to a power station. Wait for a full load.`, then type
+`build`. The command runs the vehicle probe in that same world and opens the
+completed disposable save when verification finishes, so you can watch the
+route and train while the job is running. It does not attach to or modify
 normal saves. Unsupported requests are rejected before any game action. Use
 `--no-show` when running without a graphical session.
