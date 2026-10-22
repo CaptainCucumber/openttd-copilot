@@ -269,7 +269,10 @@ class CopilotVehicle extends CopilotLifecycle {
 				/* Some 15.3 industry types reject external production control;
 				 * retain their normal production in that case and verify actual
 				 * cargo at the station below. */
-				GSIndustry.SetProductionLevel(source_industry, 128, false, null);
+				local controls = GSIndustry.GetControlFlags(source_industry);
+				GSIndustry.SetControlFlags(source_industry, controls | GSIndustry.INDCTL_EXTERNAL_PROD_LEVEL | GSIndustry.INDCTL_NO_PRODUCTION_DECREASE);
+				local changed = GSIndustry.SetProductionLevel(source_industry, 128, false, null);
+				GSLog.Info("COPILOT_VEHICLE source_production_setup id=" + source_industry + " controls=" + GSIndustry.GetControlFlags(source_industry) + " changed=" + (changed ? "true" : "false") + " level=" + GSIndustry.GetProductionLevel(source_industry));
 			}
 			industries_before = this._IndustrySet();
 			if (!GSIndustryType.BuildIndustry(types.destination, site.destination_industry_tile)) throw "destination_industry";

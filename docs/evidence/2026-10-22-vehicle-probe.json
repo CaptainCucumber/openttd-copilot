@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "run": "20261022T181426Z-4ac68dab",
+  "source_revision": "84064a77d3efb9ad0381c40fcf7aa02da9719733",
+  "engine_version": "15.3",
+  "engine_binary_sha256": "591d1eefb15f3d7a31bd893df8c12eb5f0422e8123d3a9c0b8cb875ca0cf2ccf",
+  "seed": 20261021,
+  "elapsed_seconds": 160.829,
+  "normal_profile_unchanged": true,
+  "secret_files_removed": true,
+  "scope": "disposable one-company one-primary-train fixture",
+  "attribution_limit": "Stock CargoMonitor identifies company, cargo, and destination industry, not vehicle ID; this run attributes delivery by isolation.",
+  "fixture": {
+    "company": 0,
+    "cargo": 1,
+    "source_industry": 0,
+    "destination_industry": 1,
+    "source_station": 0,
+    "destination_station": 1,
+    "engine": 0,
+    "wagon": 29,
+    "rail_type": 0,
+    "infrastructure_cost": 3645,
+    "engine_quote": 8203,
+    "wagon_quote": 1031
+  },
+  "checks": {
+    "fixture_built": true,
+    "purchase_identity_and_pause_guards": true,
+    "purchase_cap_rejected": true,
+    "lost_purchase_reconciled": true,
+    "purchase_replay_no_duplicate": true,
+    "purchase_save_reload_replay": true,
+    "consist_and_orders_readback": true,
+    "train_started": true,
+    "two_full_load_deliveries": true,
+    "loan_preserved": true,
+    "older_purchase_save_stopped": true
+  },
+  "purchase": {
+    "vehicle": 0,
+    "cost": 8203,
+    "loan_before_and_after": 100000,
+    "lost_reply_reconciled": true,
+    "reload_replay_duplicate": true
+  },
+  "service": {
+    "vehicle": 0,
+    "fleet_count": 1,
+    "capacity": 30,
+    "departures": 2,
+    "deliveries": 2,
+    "observation_gap": null,
+    "events": [
+      {"kind": "departure", "vehicle": 0, "tick": 3291, "source_station": 0, "load": 30, "capacity": 30, "fleet_count": 1},
+      {"kind": "delivery", "vehicle": 0, "tick": 3908, "destination_station": 1, "destination_industry": 1, "amount": 5, "fleet_count": 1},
+      {"kind": "departure", "vehicle": 0, "tick": 5131, "source_station": 0, "load": 30, "capacity": 30, "fleet_count": 1},
+      {"kind": "delivery", "vehicle": 0, "tick": 5726, "destination_station": 1, "destination_industry": 1, "amount": 5, "fleet_count": 1}
+    ]
+  }
+}
