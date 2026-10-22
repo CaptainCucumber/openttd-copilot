@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: company-control and rail-only transport/lifecycle probes tested in OpenTTD 15.3. No route planner or conversational Copilot yet.**
+**Status: company-control, lifecycle, vehicle-service, and bounded throughput probes tested in OpenTTD 15.3. A narrow model-free chat demo exists; no general route planner or conversational Copilot yet.**
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -45,6 +45,8 @@ Prove control of the player's company first, then build a complete railway from 
 The first implementation checkpoint is an isolated rail/station control probe. See [running and inspecting the probe](docs/CONTROL_PROBE.md) and [current verification status](docs/STATUS.md). It uses the installed OpenTTD binary, copied graphics, and disposable profiles.
 
 The next checkpoint also verifies bounded Admin requests and recovery across disconnects, pause, and save reloads. See [running the lifecycle probe](docs/LIFECYCLE_PROBE.md).
+
+The five-world stock-adapter throughput checkpoint is documented in [the M1 throughput probe](docs/THROUGHPUT_PROBE.md).
 
 The first local chat seam is now available for the supported disposable coal
 fixture. It is deliberately model-free while the deterministic route builder is

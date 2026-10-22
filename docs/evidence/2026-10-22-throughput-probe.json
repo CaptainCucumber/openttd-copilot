@@ -1,0 +1,61 @@
+{
+  "schema": "openttd-copilot-throughput-evidence-v1",
+  "date": "2026-10-22",
+  "status": "passed",
+  "scope": "Five disposable OpenTTD worlds; bounded GameScript tile-observation and simple rail-command throughput only",
+  "raw_artifact": "artifacts/throughput-probe/20261022T214622Z-2e240ab1",
+  "engine": {
+    "version": "15.3",
+    "binary_sha256": "591d1eefb15f3d7a31bd893df8c12eb5f0422e8123d3a9c0b8cb875ca0cf2ccf"
+  },
+  "cohort": {
+    "runs": 5,
+    "seeds": [20261021, 20261022, 20261023, 20261024, 20261025],
+    "elapsed_seconds": 33.604,
+    "observation": {
+      "valid_tiles_per_run": 10000,
+      "wall_seconds": {"median": 2.670163542032242, "p95_nearest_rank": 2.677825708000455},
+      "simulation_ticks": {"median": 97, "p95_nearest_rank": 97}
+    },
+    "construction": {
+      "pieces_per_run": 100,
+      "wall_seconds": {"median": 2.7523568749893457, "p95_nearest_rank": 2.7545666249934584},
+      "simulation_ticks": {"median": 100, "p95_nearest_rank": 100},
+      "cost_range": [10800, 13065],
+      "cap_per_run": 20000,
+      "readback_present_each_run": 100,
+      "wrong_owner_each_run": 0,
+      "loan_each_run": 100000
+    },
+    "responsiveness": {
+      "concurrent_admin_ping_seconds": {"median": 0.026931875036098063, "p95_nearest_rank": 0.02910300000803545},
+      "queued_gamescript_hello_seconds": {"median": 2.7254552909871563, "p95_nearest_rank": 2.7287142500281334},
+      "post_operation_admin_ping_seconds": {"median": 0.02680995804257691, "p95_nearest_rank": 0.03167966700857505},
+      "post_operation_hello_seconds": {"median": 0.02640441694529727, "p95_nearest_rank": 0.030338667042087764},
+      "max_gamescript_packet_bytes": 527
+    }
+  },
+  "safety": {
+    "normal_profile_unchanged": true,
+    "temporary_secret_files_removed": true,
+    "pause_refusal_passed_each_run": true,
+    "stock_command_validation_used": true,
+    "automatic_retry_or_rollback_claimed": false
+  },
+  "source_hashes": {
+    "tools/run_throughput_probe.py": "a276849f34672361f83fba1a47725def127980bda1d88f66fe0ed1392d1ab1cb",
+    "tools/admin_transport.py": "46f287eb06f36502d1ee63a77b5bb9c44e2603e8430525892782fbe0185be2b8",
+    "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+    "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+    "game/copilot_throughput/main.nut": "4243a83d6b0cc83adcc6f0d19ab587c6e94c6e55c2f044c67bbe1e01b42039ba",
+    "game/copilot_throughput/info.nut": "cb02a95f9e70057247637e8f8d5a198de278ddd6ca7185017171889af88e7760",
+    "game/copilot_lifecycle/main.nut": "b0c322ce56d7ad834825c6b5561f31533e37aeeb2309f749a846ddd9d2934a22"
+  },
+  "limitations": [
+    "The 10000 tile rows are processed inside GameScript and returned as a bounded aggregate rather than transferred in full",
+    "The 100 rail pieces are independent simple commands, not a connected route or terrain-planning benchmark",
+    "The stock GameScript opcode budget is not overridden or numerically reported; tick deltas expose suspension",
+    "This does not test representative copied existing saves or coexistence with another GameScript",
+    "This does not close the mutation-before-journal/save crash gap or select the final adapter"
+  ]
+}
