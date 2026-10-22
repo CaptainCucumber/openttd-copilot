@@ -10,14 +10,14 @@ Updated: 2026-10-22, America/Vancouver.
 
 ## Outcome so far
 
-**S3a transport/lifecycle checkpoint passes in OpenTTD 15.3.** Versioned requests, stable paging, lost-response reconciliation, pause refusal, saved outcomes, replay after reload, older-save detection, and changed-world detection pass in a disposable rail-only fixture. All 36 unit tests and 12 real-engine assertions pass. See [instructions and limits](LIFECYCLE_PROBE.md) and [source-hashed evidence](evidence/2026-10-22-lifecycle-probe.json). Vehicle purchases, delivery telemetry, throughput cohorts, and the mutation/save crash gap remain unproven.
+**S3a transport/lifecycle checkpoint passes in OpenTTD 15.3.** Versioned requests, stable paging, lost-response reconciliation, pause refusal, saved outcomes, replay after reload, older-save detection, and changed-world detection pass in a disposable rail-only fixture. All 36 unit tests and 12 real-engine assertions pass. See [instructions and limits](LIFECYCLE_PROBE.md) and [source-hashed evidence](evidence/2026-10-22-lifecycle-probe.json). S3b now has a tested vehicle fixture and purchase lifecycle, but cargo delivery remains unproven because the disposable source industry produced zero coal during the runtime attempt.
 
 The first implementation checkpoint passes in real OpenTTD 15.3: an isolated server/client harness discovers a human company, reads the world, builds one rail piece and a two-tile station, verifies exact costs and ownership, and rejects duplicate track without mutation. Reloading a copied save preserves the result and performs no construction. **This is a control probe, not a working railway service or conversational Copilot.** See [test instructions](CONTROL_PROBE.md) and the [evidence report](evidence/2026-10-21-control-probe.json).
 
 | Milestone | State | Evidence |
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
-| M1: prove game control and choose adapter | In progress: S1/S2 and scoped S3a checkpoints pass | Real-engine rail/station control plus Admin/lifecycle evidence. Vehicle, telemetry, throughput, coexistence, and final adapter gates remain open. |
+| M1: prove game control and choose adapter | In progress: S1/S2 and scoped S3a plus partial S3b pass | Real-engine rail/station control, Admin/lifecycle evidence, and vehicle purchase/order/save-replay checks pass. Cargo production/delivery, throughput, coexistence, and final adapter gates remain open. |
 | M2: railway builder from structured intent | Planned | No implementation |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
@@ -26,7 +26,7 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 ## Next work, in order
 
 1. **User testing point:** run `python3 -B tools/run_lifecycle_probe.py`. Expect 12 `PASS` lines and a success manifest; this creates only disposable worlds. The earlier rail/station inspection remains available with `python3 tools/run_control_probe.py --inspect latest --open`.
-2. **S3b — Vehicle and observation spike:** prove vehicle purchase/order/readback and attributable full-load departure/delivery telemetry. Include a lost purchase response and reconciliation without buying twice; the rail-only S3a result does not satisfy that M1 requirement.
+2. **S3b — Vehicle and observation spike:** purchase/order/readback, lost-purchase reconciliation, duplicate prevention, save replay, and train start now pass in the disposable fixture. Resume with a deterministic producing coal source and prove attributable full-load departures/deliveries; the current source reports production level 16, last-month production 0, and station waiting cargo 0.
 3. **S3b — Remaining M1 measurements:** measure 10,000 tile queries and 100 construction pieces across five runs. Check attaching to copied existing saves and coexistence with another GameScript. Current save reloads use this probe's own generated world.
 4. **S4 — Adapter decision:** compare findings to every M1 exit criterion. Keep stock GameScript if sufficient; otherwise implement the smallest engine bridge that closes demonstrated gaps. Record the decision before the production adapter.
 5. **S5 / M2 — First complete rail job:** use a fixed structured request and a known feasible flat map; build, buy, order, run, and verify two full-load coal deliveries.

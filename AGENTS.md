@@ -37,4 +37,11 @@ The user explicitly asked for careful planning and a durable record of plans and
 - Continue routine implementation within the authorized task; documentation is not an extra approval requirement.
 - Implement in bounded pieces and stop a session at a useful user testing point. State exactly what is ready to inspect and which milestone gates remain open.
 - User authorized committing and pushing implementation and project records together. Preserve the required no-reply identity and verify the remote result.
-- Use the strongest available model for architecture, consequential decisions, and review. Delegate suitable bounded coding/execution work to cheaper capable models; the primary agent remains responsible for integration and real-engine evidence.
+- Use model effort proportionally. Keep the strongest available model for architecture, ambiguous engine failures, security/recovery decisions, and final integration review. Route routine implementation, test additions, source lookup, documentation, and bounded fixture edits to a cheaper capable model (prefer GPT-5.6 Luna at low/medium effort; use GPT-5.6 Sol when the task needs broader reasoning). Do not spend high-end reasoning on mechanical edits or ordinary test runs. The primary agent remains responsible for integration and real-engine evidence.
+
+### Default model routing
+
+- **High-end model, medium/high effort:** architecture changes, milestone/adapter decisions, contradictory runtime evidence, security or durability boundaries, and final review of engine-facing changes.
+- **GPT-5.6 Sol, medium effort:** bounded design reviews, cross-file debugging, test strategy, and changes with several interacting invariants.
+- **GPT-5.6 Luna, low/medium effort:** routine coding, fixture implementation, unit tests, source/API lookup, documentation, formatting, and evidence extraction.
+- **Do not delegate:** final claims about real-engine success, release acceptance, Git identity, or whether an uncertain mutation is safe to retry.

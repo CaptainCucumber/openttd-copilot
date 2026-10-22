@@ -1,6 +1,6 @@
 # Acceptance and reliability plan
 
-Status: proposed release gates with S1/S2 and scoped S3a evidence, 2026-10-22. The isolated control fixture passes rail/station accounting and readback. The rail-only lifecycle fixture passes 12 Admin/reconnect/pause/save checks, including replay after reload without additional cost. [Control evidence](evidence/2026-10-21-control-probe.json), [lifecycle evidence](evidence/2026-10-22-lifecycle-probe.json). No vehicle purchase/delivery or command/save crash-gap evidence exists yet. **The end-to-end transport test and release scenario suite below are not implemented or passed.**
+Status: proposed release gates with S1/S2, scoped S3a, and partial S3b evidence, 2026-10-22. The isolated control fixture passes rail/station accounting and readback. The rail-only lifecycle fixture passes 12 Admin/reconnect/pause/save checks, including replay after reload without additional cost. The S3b fixture passes purchase guards, lost-response reconciliation, duplicate/conflict handling, save replay, consist/order readback, and train start. Delivery remains unproven: the disposable source reported zero production and zero waiting cargo. [Control evidence](evidence/2026-10-21-control-probe.json), [lifecycle evidence](evidence/2026-10-22-lifecycle-probe.json). **The end-to-end transport test and release scenario suite below are not passed.**
 
 ## What “reliable” means
 

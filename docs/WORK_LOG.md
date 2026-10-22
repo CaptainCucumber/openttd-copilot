@@ -109,3 +109,15 @@ M0's initial planning baseline is complete. Begin M1 with S1–S4 in `STATUS.md`
 - All 36 unit tests pass in the actual repository, including send failure, overflow, inconsistent outcome, failed intent write, and uncertain directory-sync cases. Source-hashed evidence and lifecycle instructions are retained with status, architecture, acceptance, plan, and D012 updates.
 - Scope remains rail-only: no train purchase, delivery/revenue observation, throughput cohort, another-GameScript coexistence, or command/save crash-gap proof. M1 remains in progress. Resume S3b vehicle/order/readback and attributable delivery telemetry, then throughput and adapter selection.
 - Handoff command: `python3 -B tools/run_lifecycle_probe.py`; expect 12 PASS lines and a success manifest. The prior graphical control probe can still be inspected independently. Commit/push use only the repository-local GitHub no-reply author and committer; no global Git changes.
+
+## 2026-10-22 — Model routing adjusted
+
+- User asked to avoid using the most expensive model for routine programming. Updated `AGENTS.md` with explicit proportional routing: high-end reasoning for architecture, ambiguous engine failures, security/recovery decisions, and final review; GPT-5.6 Sol for cross-file debugging and bounded design review; GPT-5.6 Luna at low/medium effort for routine implementation, tests, source lookup, documentation, and evidence extraction.
+- Final integration, real-engine claims, release acceptance, Git identity, and uncertain-mutation retry decisions remain with the primary agent regardless of model cost.
+
+## 2026-10-22 — S3b vehicle and purchase lifecycle checkpoint
+
+- Added `tools/run_vehicle_probe.py`, `game/copilot_vehicle/`, and `tests/test_vehicle_evidence.py`. The fixture uses the existing Admin transport and external journal, then checks purchase guards, pause refusal, lost purchase response reconciliation, duplicate/conflict rejection, copied-save replay, consist/order readback, and train start.
+- Staged real-engine run reached all of those checks successfully. The observed purchase cost was 8,203, wagon/configuration cost 1,031, the loan stayed at 100,000, and replay after reload returned the stored vehicle outcome without buying another vehicle. The run is retained under the temporary S3b staging artifacts; no public evidence JSON is claimed yet.
+- The same run did not prove delivery. The fixture source reported production level 16, last-month production 0, and station waiting cargo 0, so the train remained at the source station with no full-load departure. A deity-only production-setting attempt was rejected by the stock GameScript context and is not treated as a capability.
+- Stock delivery monitoring still has no vehicle ID. The fixture requires one isolated primary train and records that scope explicitly; this cannot establish per-train attribution in an arbitrary existing company. The next S3b task is to make the source production deterministic or use a known producing industry, then rerun the two-departure/two-delivery gate.
