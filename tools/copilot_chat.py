@@ -60,7 +60,8 @@ def format_plan(intent: dict) -> str:
     return (
         "I understand: build a coal railway from a coal mine to a power station, "
         "wait for a full load, and verify two loaded departures and two deliveries.\n"
-        "This uses the disposable OpenTTD fixture; it will not touch your normal saves.\n"
+        "The opened map is inspected first; construction currently uses a bounded "
+        "feasible-pair fixture and will not touch your normal saves.\n"
         f"Intent: {json.dumps(intent, sort_keys=True)}"
     )
 

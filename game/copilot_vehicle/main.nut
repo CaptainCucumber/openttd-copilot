@@ -634,6 +634,31 @@ class CopilotVehicle extends CopilotLifecycle {
 		});
 	}
 
+	function _Discover(request)
+	{
+		local error = this._RequireWorld(request);
+		if (error != null) return this._Error(request, error);
+		local coal = this._CoalCargo();
+		if (coal < 0) return this._Error(request, "coal_unavailable");
+		local producers = [];
+		local acceptors = [];
+		local count = 0;
+		local industries = GSIndustryList();
+		for (local industry = industries.Begin(); !industries.IsEnd(); industry = industries.Next()) {
+			count++;
+			local location = GSIndustry.GetLocation(industry);
+			local produces = this._ListHas(GSCargoList_IndustryProducing(industry), coal);
+			local accepts = GSIndustry.IsCargoAccepted(industry, coal) == GSIndustry.CAS_ACCEPTED;
+			local summary = { id = industry, name = GSIndustry.GetName(industry),
+				x = GSMap.GetTileX(location), y = GSMap.GetTileY(location),
+				production = GSIndustry.GetLastMonthProduction(industry, coal) };
+			if (produces && producers.len() < 8) producers.append(summary);
+			if (accepts && acceptors.len() < 8) acceptors.append(summary);
+		}
+		return this._Reply(request, true, { cargo = coal, industry_count = count,
+			coal_producers = producers, coal_acceptors = acceptors });
+	}
+
 	function _Dispatch(request)
 	{
 		if (request == null || this._Type(request) != "table") return this._Error(null, "malformed");
@@ -642,6 +667,7 @@ class CopilotVehicle extends CopilotLifecycle {
 		if (!("cmd" in request) || !this._IsString(request.cmd)) return this._Error(request, "invalid_command");
 		{
 			if (request.cmd == "fixture") return this._Fixture(request);
+			if (request.cmd == "discover") return this._Discover(request);
 			if (request.cmd == "purchase") return this._Purchase(request);
 			if (request.cmd == "configure") return this._Configure(request);
 			if (request.cmd == "start") return this._Start(request);

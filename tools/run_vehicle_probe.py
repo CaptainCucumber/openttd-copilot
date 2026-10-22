@@ -123,6 +123,14 @@ class VehicleExperiment(Experiment):
         initialized = self.call("init", world=world)
         self.call("bind", world=world, session=session)
         ledger = Journal(self.artifacts / "external-journal.json", initialized)
+        discovery = self.call("discover", world=world)
+        require(discovery.get("industry_count", 0) > 0, "map discovery found no industries")
+        self.manifest["map_discovery"] = discovery
+        self.check("map_discovery", {
+            "industry_count": discovery["industry_count"],
+            "coal_producers": len(discovery.get("coal_producers", [])),
+            "coal_acceptors": len(discovery.get("coal_acceptors", [])),
+        })
         if self.wait_file is not None:
             self.wait_file.parent.mkdir(parents=True, exist_ok=True)
             self.wait_file.write_text("ready\n", encoding="utf-8")
