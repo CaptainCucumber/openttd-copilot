@@ -1,6 +1,6 @@
 # Source research
 
-Inspected: 2026-10-20. This is a source/documentation review and a read-only local environment inventory. **Neither reference project nor our proposed adapter was run.** Source findings must not be presented as a measured explanation of the user's past failures.
+Initially inspected: 2026-10-20. Updated with this project's M1 runtime findings on 2026-10-22. The third-party reference projects were not run, and their source findings must not be presented as a measured explanation of the user's past failures. OpenTTD Copilot's own source-hashed engine probes are listed in the [M1 report](M1_REPORT.md).
 
 ## Pinned references
 
@@ -36,6 +36,20 @@ The script command result path handles estimates separately and can suspend scri
 
 Do not infer a throughput figure or paused-game capability from these source excerpts. Measure those in M1.
 
+### M1 resolved the GameScript attachment boundary
+
+OpenTTD save loading clears the currently configured GameScript and restores
+the script identity stored in the save. The engine owns one global
+`Game::instance`. [Save chunk](https://github.com/OpenTTD/OpenTTD/blob/14ec60f248547d4d062a1160f0fc26d742319888/src/saveload/game_sl.cpp),
+[game lifecycle](https://github.com/OpenTTD/OpenTTD/blob/14ec60f248547d4d062a1160f0fc26d742319888/src/game/game_core.cpp).
+
+The final M1 runtime probe reproduced the product consequence. A configured
+Copilot GameScript did not attach to a copied ordinary save while Admin stayed
+responsive. A saved foreign GameScript resumed instead of Copilot when both
+packages were installed. This evidence selects the narrow native bridge in
+[D013](DECISIONS.md#d013--select-a-narrow-native-openttd-bridge); it does not
+claim the bridge is implemented.
+
 ## Reference project: OpenTTD Directorate MCP
 
 This project already separates observation, planning, application, commissioning, and verification, and describes persisted operations and replay handling. Merely adopting those architectural names would not establish an improvement. [README](https://github.com/OVER99K/openttd-directorate-mcp/blob/b6eda7f433f28c86602181f059c8ae768e4d8579/README.md).
@@ -68,10 +82,10 @@ Its README describes a bus-route proof of concept, while the inspected Python co
 
 ## Conclusions and open questions
 
-Source evidence supports attempting stock GameScript company control. It does **not** establish that stock integration will satisfy performance, lifecycle, save compatibility, or telemetry needs. The user accepts a custom build and prioritizes reliability, so a narrow engine bridge is a valid outcome of M1.
+Source evidence supported attempting stock GameScript company control, and the M1 probes measured its strengths and limitations. Stock meets the bounded control, lifecycle, and performance experiments, but not ordinary-save attachment, GameScript coexistence, or general vehicle-attributed delivery telemetry. The user accepts a custom build and prioritizes reliability, so D013 selects a narrow engine bridge.
 
 Our proposed improvement is a complete, tested construction service: legal railway geometry, whole-job money handling, sequential validation, recoverable execution, and observed transport. The model supplies intent and explanations. Comparative reliability remains unmeasured until the same tasks are run against a common observer.
 
-Before implementation grows, prove: human-company operation; observation volume; command cost precision; full-load/departure/delivery telemetry; request reconciliation; save lineage; game pause behavior; and existing-save/GameScript coexistence. [Next tasks](STATUS.md#next-work-in-order).
+M1 established human-company operation, observation volume, command cost precision, isolated full-load/delivery observations, request reconciliation, save lineage, pause behavior, and the stock existing-save/GameScript boundary. M2 begins with the smallest native bridge slice on copied saves. [Next tasks](STATUS.md#next-work-in-order).
 
 No third-party source has been copied into the implementation. Record attribution and applicable license files if code is later reused; keep engine patch provenance with its pinned upstream source.

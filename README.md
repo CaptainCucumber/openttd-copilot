@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: company-control, lifecycle, vehicle-service, and bounded throughput probes tested in OpenTTD 15.3. A narrow model-free chat demo exists; no general route planner or conversational Copilot yet.**
+**Status: M1 complete. Real-engine evidence selects a narrow custom OpenTTD bridge; implementation starts in M2. A model-free disposable chat demo exists, but no general route planner or conversational Copilot yet.**
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -23,6 +23,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [Research](docs/RESEARCH.md) | Findings from OpenTTD and the two reference projects, with pinned sources |
 | [Decision log](docs/DECISIONS.md) | Choices, assumptions, and conditions for revisiting them |
 | [Work log](docs/WORK_LOG.md) | Dated actions, results, and handoffs |
+| [M1 adapter report](docs/M1_REPORT.md) | Capability evidence, stock limitations, and the selected production boundary |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 

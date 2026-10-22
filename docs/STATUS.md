@@ -5,19 +5,21 @@ Updated: 2026-10-22, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through the measured S3c throughput cohort are on `main`; local branch tracks `origin/main`. The S3c implementation and evidence are committed together under `Add measured OpenTTD throughput probe`; commit metadata and remote publication are verified during handoff.
+- Planning and implementation checkpoints through M1 are on `main`; local branch tracks `origin/main`. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified during each handoff.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
 
-**S3a transport/lifecycle, S3b vehicle, and S3c throughput checkpoints pass in OpenTTD 15.3.** S3a covers versioned requests, stable paging, lost-response reconciliation, pause refusal, saved outcomes, replay after reload, older-save detection, and changed-world detection. S3b covers vehicle purchase/order/readback, lost-purchase reconciliation, duplicate/conflict handling, save replay, and two full-load departures plus two destination-industry delivery deltas in an isolated one-train fixture. S3c measures five fresh worlds: 10,000 valid tile observations take 2.670s median / 2.678s p95, and 100 tested rail commands take 2.752s median / 2.755s p95. All 500 pieces were independently read back with the correct owner, no run borrowed money, and the normal profile stayed unchanged. The first model-free local chat seam opens that disposable generated map first, reads a bounded summary of existing industries, waits for the user's supported coal request, runs the vehicle probe in the same world after `build`, shows the live client while the job runs, and opens the completed save in the OpenTTD GUI. Construction still uses bounded fixtures; arbitrary route planning and normal-save attachment remain unsupported. See [lifecycle evidence](evidence/2026-10-22-lifecycle-probe.json), [vehicle evidence](evidence/2026-10-22-vehicle-probe.json), and [throughput evidence](evidence/2026-10-22-throughput-probe.json). Stock CargoMonitor still has no vehicle ID, so the delivery attribution is explicitly limited to this isolated fixture.
+**M1 is complete: select a narrow native OpenTTD bridge for the production adapter.** S1–S3 prove stock GameScript/Admin control, lifecycle handling, isolated vehicle service, and adequate simple-operation throughput in OpenTTD 15.3. The final environment probe loaded an untouched copy of a representative user autosave: Admin remained responsive, but the configured Copilot GameScript did not attach. A saved foreign GameScript also retained the single script slot when Copilot was configured and both scripts were installed. Together with stock CargoMonitor's lack of vehicle identity, these are measured gaps—not speculative objections—and justify the smallest custom bridge described in [D013](DECISIONS.md#d013--select-a-narrow-native-openttd-bridge). See the [M1 report](M1_REPORT.md) and [environment evidence](evidence/2026-10-22-environment-probe.json).
+
+The first model-free local chat seam remains a disposable fixture demonstration. It opens a generated map, reads a bounded industry summary, waits for the supported coal request, runs the one-train vehicle probe after `build`, and shows the live/completed world. It is not the M2 route planner or a production adapter.
 
 The first implementation checkpoint passes in real OpenTTD 15.3: an isolated server/client harness discovers a human company, reads the world, builds one rail piece and a two-tile station, verifies exact costs and ownership, and rejects duplicate track without mutation. Reloading a copied save preserves the result and performs no construction. **This is a control probe, not a working railway service or conversational Copilot.** See [test instructions](CONTROL_PROBE.md) and the [evidence report](evidence/2026-10-21-control-probe.json).
 
 | Milestone | State | Evidence |
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
-| M1: prove game control and choose adapter | In progress: S1/S2 and S3a–S3c pass | Real-engine rail/station control, Admin/lifecycle evidence, vehicle purchase/order/save-replay checks, isolated delivery observations, and the five-run throughput cohort pass. Arbitrary existing-save attachment, coexistence, crash-gap, and final adapter gates remain open. |
+| M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
 | M2: railway builder from structured intent | Planned | No implementation |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
@@ -25,15 +27,12 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 
 ## Next work, in order
 
-1. **User testing point:** run `python3 -B tools/run_lifecycle_probe.py`. Expect 12 `PASS` lines and a success manifest; this creates only disposable worlds. The earlier rail/station inspection remains available with `python3 tools/run_control_probe.py --inspect latest --open`.
-2. **S3b — Vehicle and observation spike:** purchase/order/readback, lost-purchase reconciliation, duplicate prevention, save replay, train start, and two full-load deliveries now pass in the disposable fixture. The result is isolated one-train evidence; stock per-vehicle delivery attribution and the command/save crash gap remain open.
-3. **Chat seam:** `python3 -B tools/copilot_chat.py` accepts the fixed coal request, shows the grounded intent, runs S3b only after `build`, and opens the completed save in the GUI. General route planning and normal-save attachment remain unsupported.
-4. **S3c — Throughput measurement:** the bounded [throughput probe](THROUGHPUT_PROBE.md) passes its five-world OpenTTD 15.3 cohort and the proposed <5s observation / <30s construction targets. It returns an aggregate of the 10,000 rows rather than transporting every row, and the construction workload is 100 independent simple pieces rather than a route.
-5. **Remaining M1 environment checks:** test attaching to representative copied existing saves and document the one-GameScript-slot/coexistence behavior. Current reloads use this project's generated worlds. Preserve the command/save crash gap as an explicit recovery limitation unless further evidence closes it.
-6. **S4 — Adapter decision:** compare findings to every M1 exit criterion. Keep stock GameScript if sufficient; otherwise implement the smallest engine bridge that closes demonstrated gaps. Record the decision before the production adapter.
-7. **S5 / M2 — First complete rail job:** replace the fixture delegation with the deterministic structured route builder; build, buy, order, run, and verify two full-load coal deliveries.
+1. **M2a — Native bridge skeleton:** fork the pinned OpenTTD 15.3 revision and add a versioned, loopback-only Copilot Admin message family independent of the GameScript slot. Prove read-only world/company identity on a copied existing save while a foreign GameScript continues running.
+2. **M2b — Typed mutation and recovery contract:** execute one bounded rail command through the normal game-thread command pipeline, return authoritative cost/readback, persist world/operation identity, and stop uncertain around the still-open mutation/save crash gap.
+3. **M2c — Vehicle-tagged observation:** expose loaded-departure and delivered-cargo observations with vehicle identity, then reproduce the existing isolated service gate through the native bridge.
+4. **M2d — Deterministic complete rail job:** replace fixture placement with typed intent, world snapshot, station/depot search, directed route planning, consist selection, whole-job pricing, execution, and two verified full-load deliveries.
 
-S1/S2 and the declared S3a rail fixture are complete. See [M1 in the plan](PROJECT_PLAN.md#m1--prove-control-and-select-the-integration) for remaining pass/fail criteria. No final adapter selection has been made.
+M1's bounded experiments and adapter decision are complete. This does not implement the chosen bridge or satisfy M2's end-to-end railway gate.
 
 ## Implemented and tested checkpoint
 
@@ -42,6 +41,7 @@ S1/S2 and the declared S3a rail fixture are complete. See [M1 in the plan](PROJE
 - Final run `artifacts/control-probe/20261021T180450Z-f8fc9132/`: 90 rail + 750 station = **840 engine money units**; cash 100,000 → 99,160; existing loan unchanged at 100,000. Duplicate rail returns `ERR_ALREADY_BUILT`, costs zero, and changes no observed assets.
 - `tools/check_probe_reload.py`: copied-save readback matches tile ownership/geometry, cash, loan, and recorded cost; no construction events; original final save hash unchanged. This is not general recovery or exactly-once execution evidence.
 - `tools/run_throughput_probe.py`: five disposable worlds, 50,000 valid tile observations total, 500 tested/executed/read-back rail pieces total, per-run pause refusal and responsiveness samples, median/p95 aggregation, and source-hashed evidence. This is a simple-operation benchmark, not route-planning or full-row transport evidence.
+- `tools/run_environment_probe.py`: non-mutating copied-save and saved-GameScript-slot probe. The representative autosave stayed byte-for-byte and timestamp identical; Admin remained responsive; Copilot did not attach; the saved foreign script resumed with persisted state and zero gameplay mutations.
 - Normal profile configuration and three original saves retain identical content hashes and modification times. Failed setup attempts are retained and described in the work log.
 
 ## Confirmed decisions and provisional defaults
@@ -50,7 +50,7 @@ S1/S2 and the declared S3a rail fixture are complete. See [M1 in the plan](PROJE
 - OpenTTD 15.3, temperate climate, standard vehicles and industries, no additional gameplay NewGRFs for the initial test profile.
 - **User confirmed:** “Full train” means depart the mine fully loaded, then deliver to the power station. Production-based sizing is a separate later capability.
 - “Current budget” means existing cash, with a disclosed operating reserve and no automatic loan increase.
-- **User confirmed:** a custom OpenTTD build is acceptable; prioritize reliable control. Select the adapter based on evidence, with no requirement to preserve stock-app compatibility at the expense of reliability.
+- **User confirmed:** a custom OpenTTD build is acceptable; prioritize reliable control. M1 evidence now selects a narrow native bridge; stock GameScript/Admin fixtures remain regression/reference tools rather than the production adapter.
 - **Recommendation under discussion:** use local MCP for the first conversational interface so compatible AI clients can supply their own model access; retain one deterministic game-control core and allow in-game chat later. This is not yet a user-confirmed change to M4 or a working integration. See [D010](DECISIONS.md#d010--recommend-mcp-as-the-first-conversational-interface).
 
 The user answered both initial questions during this session. Remaining environment/profile choices are defaults to validate against the eventual test world.
@@ -65,4 +65,4 @@ The user answered both initial questions during this session. Remaining environm
 
 ## Known uncertainties
 
-Per-train delivery telemetry outside the isolated fixture; existing-save/GameScript coexistence; complete job cost accounting; mutation/journal/save crash windows; rejected/uncertain-operation resolution; route-planner coverage. S3c measures bounded stock-adapter throughput, but not production-sized row transfer or connected-route planning/execution.
+Native bridge implementation and compatibility; complete job cost accounting; mutation/journal/save crash windows; rejected/uncertain-operation resolution; route-planner coverage; backwards/forwards handling of saves written by the custom build. M1 selected the bridge but did not prove these M2/M3 capabilities.

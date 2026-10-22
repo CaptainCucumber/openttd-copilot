@@ -56,6 +56,8 @@ Deliver requirements, source findings, architecture proposal, acceptance criteri
 
 ### M1 — Prove control and select the integration
 
+Status: **Complete, 2026-10-22.** Production adapter selection is recorded in D013.
+
 **Purpose:** resolve the most expensive architectural uncertainties before writing the route planner.
 
 Deliver an isolated game harness, minimal observation/control adapter, protocol sketch backed by working calls, and an evidence-based adapter decision. Start with standard OpenTTD's GameScript/Admin path; use a custom engine bridge if it fails essential requirements.
@@ -70,7 +72,7 @@ Exit checks:
 6. Establish paused-game behavior, human-company setup in the fixture, attaching to copied existing saves, and coexistence limitations with another GameScript.
 7. Decide adapter based on coverage and measured performance. If the stock path cannot meet a requirement, identify the specific missing query/event/command behavior before extending OpenTTD.
 
-S3a evidence (2026-10-22): the [rail-only lifecycle probe](LIFECYCLE_PROBE.md) covers request paging, pause, reconnect, saved outcomes, duplicate replay after reload, and older/changed-world detection. S3b adds vehicle-purchase replay and isolated one-train service evidence. S3c's [five-world throughput probe](THROUGHPUT_PROBE.md) covers exit check 4's bounded workload: 10,000 valid tile observations at 2.670s median / 2.678s p95 and 100 simple rail commands at 2.752s median / 2.755s p95. The scan returns a bounded aggregate rather than all rows, and the pieces are independent rather than a connected route. Exit check 5 retains the mutation/save crash gap; check 6 remains open for representative copied existing saves and another GameScript.
+M1 evidence (2026-10-22): the [rail-only lifecycle probe](LIFECYCLE_PROBE.md) covers request paging, pause, reconnect, saved outcomes, duplicate replay after reload, and older/changed-world detection. S3b adds vehicle-purchase replay and isolated one-train service evidence. S3c's [five-world throughput probe](THROUGHPUT_PROBE.md) covers exit check 4's bounded workload: 10,000 valid tile observations at 2.670s median / 2.678s p95 and 100 simple rail commands at 2.752s median / 2.755s p95. The final [environment probe](ENVIRONMENT_PROBE.md) establishes the stock limitation: Copilot does not attach to an ordinary copied save, and a saved foreign GameScript retains the sole script slot. Exit check 3 also determined that stock delivery monitoring cannot generally attribute delivery to a vehicle. These findings select the narrow native bridge in [D013](DECISIONS.md#d013--select-a-narrow-native-openttd-bridge). The mutation/save crash gap remains an explicit M2/M3 recovery case, not a completed guarantee.
 
 A custom bridge must use the engine's normal command pipeline on the game thread. Source access does not make arbitrary memory edits or unsupported command shortcuts acceptable implementations.
 

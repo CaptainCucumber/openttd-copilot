@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: design baseline with S1/S2 company control and S3a–S3c real-engine evidence, 2026-10-22. The disposable fixtures verify construction/readback, bounded Admin transport, journalling, reconnect, pause, save identity, isolated vehicle service, and simple-operation throughput. Production components below remain planned; adapter choice is gated by all M1 criteria. See [control probe](CONTROL_PROBE.md), [lifecycle probe and limits](LIFECYCLE_PROBE.md), [throughput probe](THROUGHPUT_PROBE.md), and [D012](DECISIONS.md#d012--scope-the-lifecycle-checkpoint-to-a-durable-rail-fixture).
+Status: M1 adapter decision complete, 2026-10-22. Stock fixtures verify construction/readback, bounded Admin transport, journalling, reconnect, pause, save identity, isolated vehicle service, and simple-operation throughput. Copied-save and coexistence evidence shows that stock GameScript cannot serve as the production adapter. A narrow native bridge is selected but not implemented. See the [M1 report](M1_REPORT.md) and [D013](DECISIONS.md#d013--select-a-narrow-native-openttd-bridge).
 
 ## Responsibilities
 
@@ -19,12 +19,14 @@ A practical initial implementation is a Python service for planning, protocol ha
 
 | Option | Strength | Cost / limitation | Position |
 |---|---|---|---|
-| Standard GameScript + Admin interface | Supported company-context commands and normal game validation | Local hosted game/server; GameScript slot/coexistence; bounded transport and script execution; telemetry to prove | First capability spike |
-| Small custom OpenTTD bridge | Direct observation and event instrumentation; possible single-player integration | Engine builds, update maintenance, distribution, strict game-thread integration | Fallback if measured needs justify it |
+| Standard GameScript + Admin interface | Supported company-context commands and normal game validation | Cannot attach Copilot to an ordinary save; saved scripts retain the sole slot; no general vehicle ID on delivery telemetry | Retain as reference and regression fixture, not production adapter |
+| Small custom OpenTTD bridge | Independent of GameScript slot; direct observation and vehicle-tagged events; existing-save attachment | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected for production after M1 measurements** |
 | NoAI controller | Established autonomous company API | An autonomous AI company differs from assisting the player's company | Reference/test tool, not initial product adapter |
 | Screenshot/mouse automation | Can use ordinary UI | Fragile execution and limited authoritative state | Visual QA only |
 
 The stock experiment hosts a local game and connects the normal client to the human company. Do not assume the Admin interface alone is a general construction API: the GameScript performs gameplay operations. The adapter contract should permit replacement without rewriting the planner.
+
+The selected bridge is deliberately narrow. It adds a versioned Copilot-specific Admin message family and a native controller independent of `Game::instance`; it is not a general remote console. Read-only queries and typed mutations are allowlisted. Mutations run on the game thread through OpenTTD's normal test/execute command pipeline and return authoritative costs plus readback. The bridge supplies stable world/operation identity and vehicle-tagged cargo events, while the external Python service retains intent parsing, planning, budgets, journaling, and verification. Local authentication and bounded messages remain mandatory. Any new saved state uses an explicit versioned save chunk and copied saves until compatibility is proven.
 
 ## Intent and identity
 

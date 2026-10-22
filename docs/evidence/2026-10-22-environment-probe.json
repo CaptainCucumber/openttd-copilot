@@ -1,0 +1,55 @@
+{
+  "schema": "openttd-copilot-environment-evidence-v1",
+  "date": "2026-10-22",
+  "status": "passed",
+  "scope": "Non-mutating copied-save attachment and saved single-GameScript-slot behavior",
+  "raw_artifact": "artifacts/environment-probe/20261022T215727Z-df9986b3",
+  "engine": {
+    "version": "15.3",
+    "binary_sha256": "591d1eefb15f3d7a31bd893df8c12eb5f0422e8123d3a9c0b8cb875ca0cf2ccf"
+  },
+  "representative_save": {
+    "kind": "user autosave loaded only through an isolated copy",
+    "sha256": "277b1768d678ea5e19091819ae185fed03b8676523d1c7ed0f6d11c2897064fd",
+    "size": 92656,
+    "original_unchanged": true,
+    "normal_profile_unchanged": true,
+    "copilot_response": false,
+    "bounded_timeout_seconds": 3.002,
+    "admin_ping_after_timeout": true,
+    "loopback_only": true,
+    "mutation_requests": 0
+  },
+  "coexistence_fixture": {
+    "configured_script": "Copilot Lifecycle Probe",
+    "installed_scripts": ["Copilot Lifecycle Probe", "Foreign Environment Fixture"],
+    "active_saved_script": "Foreign Environment Fixture",
+    "saved_script_loaded_state": true,
+    "saved_marker_preserved": true,
+    "copilot_response": false,
+    "mutation_requests": 0
+  },
+  "safety": {
+    "temporary_secret_files_removed": true,
+    "normal_profile_unchanged": true,
+    "original_save_path_passed_to_openttd": false,
+    "gameplay_mutations_requested": false
+  },
+  "source_hashes": {
+    "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+    "tools/admin_transport.py": "46f287eb06f36502d1ee63a77b5bb9c44e2603e8430525892782fbe0185be2b8",
+    "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+    "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+    "game/foreign_environment/info.nut": "b54b00aef8ada8e983f9fdb3a70dc849b6a0d69c5f1bebbe0811535058652d51",
+    "game/foreign_environment/main.nut": "cd6070530dc923238c4b91632e5214afc29575839db16145e6d097b2d1803dab",
+    "game/copilot_lifecycle/info.nut": "3bd570867b6382471af783679f55ba955c253e76bdceeb8764caf862e10cee68",
+    "game/copilot_lifecycle/main.nut": "b0c322ce56d7ad834825c6b5561f31533e37aeeb2309f749a846ddd9d2934a22"
+  },
+  "finding": "A configured stock Copilot GameScript cannot attach to an ordinary existing save and cannot coexist beside a different saved GameScript; the saved script identity owns the single slot.",
+  "limitations": [
+    "The representative save had no gameplay NewGRFs and this probe did not join its human company",
+    "The foreign fixture is a minimal controlled GameScript, not a compatibility survey of third-party scripts",
+    "The probe is observational and sends no gameplay mutation request",
+    "This evidence selects but does not implement or validate the native bridge"
+  ]
+}

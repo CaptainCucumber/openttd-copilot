@@ -18,7 +18,7 @@ Use a new entry when changing a substantial decision. Preserve superseded entrie
 
 ## D003 — Reliable control takes priority; custom build permitted
 
-- Date: 2026-10-20. Status: **user confirmed; adapter choice pending M1**.
+- Date: 2026-10-20. Status: **user confirmed; adapter choice resolved by D013**.
 - User answer: “Yes—prioritize reliable control” when asked about running a custom OpenTTD build.
 - Conduct a bounded stock GameScript/Admin capability experiment because source supports company-context construction. Choose a narrow native bridge if it better meets required control, performance, telemetry, or lifecycle behavior.
 - Stock compatibility is not a reason to retain a fragile workaround. Do not spend multiple milestones trying to avoid an engine patch.
@@ -61,7 +61,7 @@ Use a new entry when changing a substantial decision. Preserve superseded entrie
 
 ## D009 — Keep implementation choices provisional until the spike
 
-- Date: 2026-10-20. Status: **proposed**.
+- Date: 2026-10-20. Status: **superseded by D013 after M1 evidence**.
 - Initial service candidate: Python, SQLite, CLI; minimal Squirrel adapter or a narrow C++ engine bridge. External chat/model provider selected after the deterministic builder works. MCP is optional interface work.
 - Reason: keep the first engineering effort on state/control and route construction, with few moving parts. No runtime dependencies installed yet.
 - Revisit at M1 based on protocol integration and performance measurements.
@@ -99,3 +99,14 @@ Use a new entry when changing a substantial decision. Preserve superseded entrie
 - Partial sends close the connection without adding another frame. Response-buffer overflow is explicit. A journal write failure disables further writes until reopen/reconciliation, and completion requires consistent operation/sequence proof.
 - The final source-hashed engine run passes all 12 checks, including duplicate replay after reload with unchanged cash/loan/sequence. See [evidence](evidence/2026-10-22-lifecycle-probe.json).
 - Limits: two rail mutations, no vehicle or revenue telemetry, no command/save/journal crash-gap proof, no exactly-once claim, no automatic resolution of rejected or unknown/pending operations, no general existing-save/GameScript coexistence result. Continue S3b before S4 adapter selection.
+
+## D013 — Select a narrow native OpenTTD bridge
+
+- Date: 2026-10-22. Status: **accepted production adapter decision; implementation pending M2**. This resolves D003's and D009's adapter question.
+- Keep the external deterministic Python service for typed intent, planning, budgets, execution journaling, and verification. Replace the stock GameScript gameplay adapter with the smallest native OpenTTD bridge that closes the measured gaps.
+- Runtime basis: stock GameScript/Admin passes human-company construction, cost/readback, reconnect/save identity, lost-purchase replay, isolated service observation, and the five-run performance targets. It therefore remains valuable as a regression/reference fixture.
+- Runtime blockers: on an isolated copy of a representative OpenTTD 15.3 user autosave, the configured Copilot GameScript did not answer while Admin ping remained healthy. In the coexistence fixture, a saved foreign GameScript resumed with persisted state even though Copilot was configured and both scripts were installed. Stock delivery monitoring also lacks vehicle identity outside the isolated one-train scope. See the [M1 report](M1_REPORT.md) and [environment evidence](evidence/2026-10-22-environment-probe.json).
+- Source explanation: save loading clears the configured game script and restores the script identity stored in the save ([`game_sl.cpp`](https://github.com/OpenTTD/OpenTTD/blob/14ec60f248547d4d062a1160f0fc26d742319888/src/saveload/game_sl.cpp)); OpenTTD owns one global `Game::instance` ([`game_core.cpp`](https://github.com/OpenTTD/OpenTTD/blob/14ec60f248547d4d062a1160f0fc26d742319888/src/game/game_core.cpp)). The runtime probe establishes the product consequence; source alone was not treated as proof.
+- Bridge boundary: add a versioned, authenticated, loopback-only Copilot Admin message family and native controller independent of the GameScript slot. Allow only bounded typed queries and mutations. Execute every gameplay mutation on the game thread through normal OpenTTD command test/execute validation; do not edit memory, bypass ownership/money/authority rules, or expose arbitrary console/code execution.
+- Bridge evidence required before building the full route: attach read-only to a copied existing save while its GameScript keeps running; identify the intended company/world; execute and read back one capped rail mutation; report vehicle-tagged load/departure/delivery events; persist versioned world/operation identity; and preserve explicit uncertain outcomes around any mutation/save crash gap.
+- Save compatibility: all development uses generated worlds or copies. Any bridge-specific save chunk is versioned. Do not overwrite an original save or claim stock-build round-trip compatibility until measured.
