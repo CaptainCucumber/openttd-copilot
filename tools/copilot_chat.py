@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -19,6 +20,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 PROBE = ROOT / "tools" / "run_vehicle_probe.py"
+OPEN_TTD = "/Applications/OpenTTD.app/Contents/MacOS/openttd"
 
 
 class ChatInputError(ValueError):
@@ -75,6 +77,7 @@ def show_saved_game(binary: str, artifact: Path) -> None:
         binary, "-x", "-v", "cocoa", "-s", "null", "-m", "null", "-g", str(save)
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     start_new_session=True)
+    activate_game()
     print(f"OpenTTD is open with the completed route (pid {process.pid}).")
 
 
@@ -106,6 +109,7 @@ def launch_live_job(binary: str, deadline: float, seed: int, show: bool):
                "--wait-file", str(wait_file)]
     if show:
         command.append("--visible")
+    close_previous_demo_windows(binary)
     print("Starting a disposable OpenTTD map...", flush=True)
     process = subprocess.Popen(command, cwd=ROOT)
     end = time.monotonic() + min(deadline, 90)
@@ -116,8 +120,40 @@ def launch_live_job(binary: str, deadline: float, seed: int, show: bool):
             process.terminate()
             raise RuntimeError("Timed out waiting for the OpenTTD map to open")
         time.sleep(0.1)
-    print("The OpenTTD map is open. The fixture found its coal source and power station.")
+    if show:
+        activate_game()
+    print("The OpenTTD map is open. The map has ordinary industries; the build request will select a feasible coal pair.")
     return process, wait_file
+
+
+def close_previous_demo_windows(binary: str) -> None:
+    """Close only OpenTTD processes whose profile belongs to this project."""
+    try:
+        result = subprocess.run(["pgrep", "-f", binary], capture_output=True, text=True, check=False)
+    except OSError:
+        return
+    for line in result.stdout.splitlines():
+        try:
+            pid = int(line)
+        except ValueError:
+            continue
+        try:
+            command = subprocess.check_output(["ps", "-p", str(pid), "-o", "command="], text=True).strip()
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        if str(ROOT) in command and "openttd" in command.lower():
+            try:
+                os.kill(pid, 15)
+            except ProcessLookupError:
+                pass
+
+
+def activate_game() -> None:
+    """Bring the current Cocoa client to the front on macOS."""
+    subprocess.run(
+        ["osascript", "-e", 'tell application "OpenTTD" to activate'],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
 
 
 def finish_live_job(binary: str, process, wait_file: Path, show: bool) -> int:

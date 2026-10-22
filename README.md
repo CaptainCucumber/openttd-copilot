@@ -61,3 +61,7 @@ completed disposable save when verification finishes, so you can watch the
 route and train while the job is running. It does not attach to or modify
 normal saves. Unsupported requests are rejected before any game action. Use
 `--no-show` when running without a graphical session.
+
+The launcher closes stale Copilot demo windows and brings the current Cocoa
+window to the front so an older completed route cannot be mistaken for the new
+map.

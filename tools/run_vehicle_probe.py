@@ -84,7 +84,10 @@ class VehicleExperiment(Experiment):
                          profile / "game/copilot_probe/lifecycle.nut")
             # These are scenario-generation settings, not gameplay money or
             # command-validation bypasses. Only this disposable S3b world uses them.
-            settings = config.read_text().replace("[difficulty]\n", "[difficulty]\nindustry_density = 0\n")
+            # Keep the demo map populated with ordinary industries. The
+            # deterministic fixture still chooses a known feasible coal pair
+            # after the user authorizes the build, but the map is not empty.
+            settings = config.read_text().replace("[difficulty]\n", "[difficulty]\nindustry_density = 2\n")
             settings = settings.replace("[economy]\n", "[economy]\nmultiple_industry_per_town = true\n")
             config.write_text(settings)
             metadata["config_sha256"] = base.sha256_file(config)
@@ -120,6 +123,13 @@ class VehicleExperiment(Experiment):
         initialized = self.call("init", world=world)
         self.call("bind", world=world, session=session)
         ledger = Journal(self.artifacts / "external-journal.json", initialized)
+        if self.wait_file is not None:
+            self.wait_file.parent.mkdir(parents=True, exist_ok=True)
+            self.wait_file.write_text("ready\n", encoding="utf-8")
+            print("READY game_open", flush=True)
+            while self.wait_file.exists():
+                self.remaining()
+                time.sleep(0.1)
         # Fixture setup is deliberately one-shot. A timeout or partial build
         # leaves diagnostic state; the harness never retries setup.
         self.counter += 1
@@ -131,13 +141,6 @@ class VehicleExperiment(Experiment):
         require(0 < fixture["cost"] <= 20000, "fixture construction cap violated")
         require(self.call("hello")["loan"] == hello["loan"], "fixture borrowed money")
         self.check("fixture_built", fixture)
-        if self.wait_file is not None:
-            self.wait_file.parent.mkdir(parents=True, exist_ok=True)
-            self.wait_file.write_text("ready\n", encoding="utf-8")
-            print("READY game_open", flush=True)
-            while self.wait_file.exists():
-                self.remaining()
-                time.sleep(0.1)
         baseline = self.save("before-purchase")
         request = {"v": 1, "rid": "lost-purchase", "cmd": "purchase", "world": world,
                    "session": session, "company": 0, "op": uuid.uuid4().hex,
