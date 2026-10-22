@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: first company-control probe tested in OpenTTD 15.3. No route planner or conversational Copilot yet.**
+**Status: company-control and rail-only transport/lifecycle probes tested in OpenTTD 15.3. No route planner or conversational Copilot yet.**
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -43,3 +43,5 @@ flowchart LR
 Prove control of the player's company first, then build a complete railway from a structured request, then add natural language. The first adapter experiment targets the installed OpenTTD 15.3 through GameScript and its Admin interface. A small engine integration remains an option if that approach fails the capability or performance checks.
 
 The first implementation checkpoint is an isolated rail/station control probe. See [running and inspecting the probe](docs/CONTROL_PROBE.md) and [current verification status](docs/STATUS.md). It uses the installed OpenTTD binary, copied graphics, and disposable profiles.
+
+The next checkpoint also verifies bounded Admin requests and recovery across disconnects, pause, and save reloads. See [running the lifecycle probe](docs/LIFECYCLE_PROBE.md).

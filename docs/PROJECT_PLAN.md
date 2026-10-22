@@ -70,6 +70,8 @@ Exit checks:
 6. Establish paused-game behavior, human-company setup in the fixture, attaching to copied existing saves, and coexistence limitations with another GameScript.
 7. Decide adapter based on coverage and measured performance. If the stock path cannot meet a requirement, identify the specific missing query/event/command behavior before extending OpenTTD.
 
+S3a evidence (2026-10-22): the [rail-only lifecycle probe](LIFECYCLE_PROBE.md) covers request paging, pause, reconnect, saved outcomes, duplicate replay after reload, and older/changed-world detection. Exit check 5 remains open for vehicle purchases and crash windows; check 6 remains open for arbitrary existing-save attachment and another GameScript.
+
 A custom bridge must use the engine's normal command pipeline on the game thread. Source access does not make arbitrary memory edits or unsupported command shortcuts acceptable implementations.
 
 ### M2 — Complete one railway without an LLM

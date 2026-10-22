@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: design baseline with an S1/S2 control probe, 2026-10-21. The disposable Python harness and Squirrel fixture verify limited human-company construction and saved-world readback. Production components below remain planned; adapter choice is gated by all M1 criteria. See [checkpoint scope and instructions](CONTROL_PROBE.md).
+Status: design baseline with S1/S2 company control and S3a rail-only lifecycle evidence, 2026-10-22. The disposable fixtures verify construction/readback plus bounded Admin transport, journalling, reconnect, pause, and save identity. Production components below remain planned; adapter choice is gated by all M1 criteria. See [control probe](CONTROL_PROBE.md), [lifecycle probe and limits](LIFECYCLE_PROBE.md), and [D012](DECISIONS.md#d012--scope-the-lifecycle-checkpoint-to-a-durable-rail-fixture).
 
 ## Responsibilities
 

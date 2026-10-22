@@ -1,0 +1,554 @@
+{
+  "base_commit_before_uncommitted_implementation": "0cdedda77c8835c82326ccaa5766b10c91ee63ba",
+  "binary_sha256": "591d1eefb15f3d7a31bd893df8c12eb5f0422e8123d3a9c0b8cb875ca0cf2ccf",
+  "changed_world": {
+    "hello": {
+      "head": null,
+      "initialized": true,
+      "ok": true,
+      "rid": "r56",
+      "seq": 0,
+      "session": null,
+      "tick": 25,
+      "v": 1,
+      "world": "1212275d64c24914a6706041228e5477"
+    },
+    "rejection": {
+      "error": "world_mismatch",
+      "head": null,
+      "ok": false,
+      "rid": "r57",
+      "seq": 0,
+      "session": null,
+      "tick": 26,
+      "v": 1,
+      "world": "1212275d64c24914a6706041228e5477"
+    }
+  },
+  "checkpoint": "S3a rail-only transport and lifecycle",
+  "date": "2026-10-22",
+  "elapsed_seconds": 6.749,
+  "engine_checks_passed": [
+    "changed_world_stopped",
+    "duplicate_and_conflict",
+    "human_company",
+    "invalid_version_rejected",
+    "latest_save_reload",
+    "lost_reply_reconciled",
+    "older_save_stopped",
+    "paged_capture",
+    "pause_queries_and_mutation_refusal",
+    "second_build",
+    "stale_session_rejected",
+    "versioned_round_trip"
+  ],
+  "engine_source_revision": "14ec60f248547d4d062a1160f0fc26d742319888",
+  "engine_version": "15.3",
+  "first_operation": {
+    "cash": 99910,
+    "cost": 90,
+    "loan": 100000,
+    "op": "942238e9d1794d87b9164a2b61f4da69",
+    "owner": 0,
+    "seq": 1,
+    "state": "completed",
+    "tile": 8256,
+    "tracks": 1
+  },
+  "largest_observed_packet_bytes": 448,
+  "latest_reload": {
+    "after_replay": {
+      "cash": 99820,
+      "client": 2,
+      "client_name": "Copilot Probe Human",
+      "company": 0,
+      "company_name": "Copilot Probe Human Transport",
+      "date": 712224,
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "human_found": true,
+      "loaded": true,
+      "loan": 100000,
+      "map_height": 128,
+      "map_width": 128,
+      "ok": true,
+      "paused": false,
+      "rid": "r40",
+      "seq": 2,
+      "session": "376ea3e778ed4735b203469a6139e743",
+      "tick": 24,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    },
+    "blocked": {
+      "error": "not_bound",
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "ok": false,
+      "rid": "old-session",
+      "seq": 2,
+      "session": null,
+      "tick": 17,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    },
+    "hello": {
+      "cash": 99820,
+      "client": 2,
+      "client_name": "Copilot Probe Human",
+      "company": 0,
+      "company_name": "Copilot Probe Human Transport",
+      "date": 712224,
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "human_found": true,
+      "loaded": true,
+      "loan": 100000,
+      "map_height": 128,
+      "map_width": 128,
+      "ok": true,
+      "paused": false,
+      "rid": "r34",
+      "seq": 2,
+      "session": null,
+      "tick": 16,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    },
+    "replay": {
+      "cash": 99910,
+      "cost": 90,
+      "duplicate": true,
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "loan": 100000,
+      "ok": true,
+      "outcome": {
+        "cash": 99910,
+        "cost": 90,
+        "loan": 100000,
+        "op": "942238e9d1794d87b9164a2b61f4da69",
+        "owner": 0,
+        "seq": 1,
+        "state": "completed",
+        "tile": 8256,
+        "tracks": 1
+      },
+      "owner": 0,
+      "rid": "reload-replay",
+      "seq": 2,
+      "session": "376ea3e778ed4735b203469a6139e743",
+      "state": "completed",
+      "tick": 23,
+      "tile": 8256,
+      "tracks": 1,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    }
+  },
+  "limitations": [
+    "Rail-only fixture; no vehicle or delivery proof",
+    "No command/journal/save crash-gap or exactly-once proof",
+    "Single-controller high-water check; no atomic lease",
+    "No automatic rejected/uncertain-operation resolution",
+    "No throughput cohort or general existing-save/GameScript coexistence evidence"
+  ],
+  "limits": {
+    "construction_cap": 10000,
+    "journal_operations": 32,
+    "json_bytes": 1449,
+    "reserve": 10000,
+    "rows_per_page": 4,
+    "tiles_per_scan": 32
+  },
+  "normal_profile_files_checked": 4,
+  "normal_profile_unchanged": true,
+  "older_reload": {
+    "hello": {
+      "cash": 100000,
+      "client": 2,
+      "client_name": "Copilot Probe Human",
+      "company": 0,
+      "company_name": "Copilot Probe Human Transport",
+      "date": 712223,
+      "head": null,
+      "human_found": true,
+      "loaded": true,
+      "loan": 100000,
+      "map_height": 128,
+      "map_width": 128,
+      "ok": true,
+      "paused": false,
+      "rid": "r45",
+      "seq": 0,
+      "session": null,
+      "tick": 18,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    },
+    "readback": {
+      "capture": {
+        "capture_end_tick": 20,
+        "capture_start_tick": 20,
+        "end_tick": 20,
+        "head": null,
+        "ok": true,
+        "pages": 1,
+        "rid": "r47",
+        "scan": "95b15a812a2f4d2491c03da2792f1258",
+        "seq": 0,
+        "session": null,
+        "start_tick": 20,
+        "tick": 20,
+        "total": 1,
+        "v": 1,
+        "world": "c9e724d4e81a484da70c2c406f2984fe"
+      },
+      "pages": [
+        {
+          "capture_end_tick": 20,
+          "capture_start_tick": 20,
+          "end_tick": 20,
+          "head": null,
+          "index": 0,
+          "ok": true,
+          "pages": 1,
+          "rid": "r48",
+          "rows": [
+            [
+              8256,
+              -1,
+              0,
+              0,
+              1
+            ]
+          ],
+          "scan": "95b15a812a2f4d2491c03da2792f1258",
+          "seq": 0,
+          "session": null,
+          "start_tick": 20,
+          "tick": 21,
+          "total": 1,
+          "v": 1,
+          "world": "c9e724d4e81a484da70c2c406f2984fe"
+        }
+      ]
+    },
+    "status": {
+      "head": null,
+      "ok": true,
+      "outcome": {
+        "cash": null,
+        "cost": null,
+        "loan": null,
+        "op": "942238e9d1794d87b9164a2b61f4da69",
+        "owner": null,
+        "seq": 0,
+        "state": "unknown",
+        "tile": null,
+        "tracks": null
+      },
+      "rid": "r46",
+      "seq": 0,
+      "session": null,
+      "state": "unknown",
+      "tick": 19,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    }
+  },
+  "pause": {
+    "paused": {
+      "cash": 99820,
+      "client": 2,
+      "client_name": "Copilot Probe Human",
+      "company": 0,
+      "company_name": "Copilot Probe Human Transport",
+      "date": 712224,
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "human_found": true,
+      "loaded": false,
+      "loan": 100000,
+      "map_height": 128,
+      "map_width": 128,
+      "ok": true,
+      "paused": true,
+      "rid": "r29",
+      "seq": 2,
+      "session": "b752096c98154aa19383bfe10cf3d168",
+      "tick": 83,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    },
+    "pong": 12345,
+    "refusal": {
+      "error": "paused",
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "ok": false,
+      "rid": "paused-build",
+      "seq": 2,
+      "session": "b752096c98154aa19383bfe10cf3d168",
+      "tick": 85,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    },
+    "unpaused": {
+      "cash": 99820,
+      "client": 2,
+      "client_name": "Copilot Probe Human",
+      "company": 0,
+      "company_name": "Copilot Probe Human Transport",
+      "date": 712224,
+      "head": "6faeb006fdeb4071b8b70ab6ec89e1db",
+      "human_found": true,
+      "loaded": false,
+      "loan": 100000,
+      "map_height": 128,
+      "map_width": 128,
+      "ok": true,
+      "paused": false,
+      "rid": "r30",
+      "seq": 2,
+      "session": "b752096c98154aa19383bfe10cf3d168",
+      "tick": 86,
+      "v": 1,
+      "world": "c9e724d4e81a484da70c2c406f2984fe"
+    }
+  },
+  "phases": [
+    {
+      "client": {
+        "config_sha256": "17db667a1009b1d19d22a6b6e8647d3cf6c4ea4583afd8d61d91016c9d0979da",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "7508f26f21880db19e7220f0eab220f49c21933ec7d3711709d76d20ca970489",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      },
+      "label": "initial",
+      "loaded_source_sha256": null,
+      "server": {
+        "config_sha256": "7d9d3530b682b7f4dbfa7e44973a72f2db8b48630a199acd984791a470eee9c5",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "664d5ad6d667eb1d2b039f3ccc5acb50ea8da746cb884c2d8e0645e502601e8c",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      }
+    },
+    {
+      "client": {
+        "config_sha256": "112e987ef472cf2e9b3b705b4bc729a8e43f22db5bc947bca231cd5d9b5b53c1",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "7508f26f21880db19e7220f0eab220f49c21933ec7d3711709d76d20ca970489",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      },
+      "label": "latest-reload",
+      "loaded_source_sha256": "2baca653ac73b00287fc50721440a2034534132afed9277ffcb669d02a56d179",
+      "server": {
+        "config_sha256": "8d752b1573e2ca43e4581a21b142cec80fb000ff7da8beef3d3ac22e586a04cd",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "664d5ad6d667eb1d2b039f3ccc5acb50ea8da746cb884c2d8e0645e502601e8c",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      }
+    },
+    {
+      "client": {
+        "config_sha256": "4b35a0be983bb9cead500e0838e36ea90d3350cbe2211ee13ebe0c94269b451e",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "7508f26f21880db19e7220f0eab220f49c21933ec7d3711709d76d20ca970489",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      },
+      "label": "older-reload",
+      "loaded_source_sha256": "6e61b1d5bb6d0dda8267feb5c703a3c402f6e7493d5891512047fd13fe1b77b4",
+      "server": {
+        "config_sha256": "d39555e8a4b1d70edee1c381fb4df14492b3c6fa2b65e9c8ce6a230e9536eac5",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "664d5ad6d667eb1d2b039f3ccc5acb50ea8da746cb884c2d8e0645e502601e8c",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      }
+    },
+    {
+      "client": {
+        "config_sha256": "e028b6af0c1498d0d09ba3b9fcb7d75503058aa1721267664c0db1b558b74d99",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "7508f26f21880db19e7220f0eab220f49c21933ec7d3711709d76d20ca970489",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      },
+      "label": "changed-world",
+      "loaded_source_sha256": null,
+      "server": {
+        "config_sha256": "3c93fa9fadb9ebbe087a1a78b382a43f64e926d73fad5d07f3bc17125411b6c2",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "private_config_sha256": "664d5ad6d667eb1d2b039f3ccc5acb50ea8da746cb884c2d8e0645e502601e8c",
+        "resources": {
+          "file_counts": {
+            "baseset": 18,
+            "game_compat": 13,
+            "lang": 66
+          },
+          "source": "/Applications/OpenTTD.app/Contents/Resources",
+          "source_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          },
+          "staged_sha256": {
+            "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+            "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+            "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+          }
+        }
+      }
+    }
+  ],
+  "raw_manifest": "artifacts/lifecycle-probe/20261022T173734Z-4c01df51/manifest.json",
+  "raw_manifest_sha256": "853547e25856b98cf9be1c2837fe6d0fd25743fa291912a2977ec0daba05816f",
+  "run": "20261022T173734Z-4c01df51",
+  "saves": {
+    "baseline-seq0": {
+      "sha256": "6e61b1d5bb6d0dda8267feb5c703a3c402f6e7493d5891512047fd13fe1b77b4"
+    },
+    "latest-seq2": {
+      "sha256": "2baca653ac73b00287fc50721440a2034534132afed9277ffcb669d02a56d179"
+    }
+  },
+  "schema": 1,
+  "second_operation": {
+    "cash": 99820,
+    "cost": 90,
+    "loan": 100000,
+    "op": "6faeb006fdeb4071b8b70ab6ec89e1db",
+    "owner": 0,
+    "seq": 2,
+    "state": "completed",
+    "tile": 8127,
+    "tracks": 1
+  },
+  "secret_files_removed": true,
+  "seed": 20261021,
+  "source_hashes": {
+    "game/copilot_lifecycle/info.nut": "3bd570867b6382471af783679f55ba955c253e76bdceeb8764caf862e10cee68",
+    "game/copilot_lifecycle/main.nut": "b0c322ce56d7ad834825c6b5561f31533e37aeeb2309f749a846ddd9d2934a22",
+    "tools/admin_transport.py": "46f287eb06f36502d1ee63a77b5bb9c44e2603e8430525892782fbe0185be2b8",
+    "tools/lifecycle_journal.py": "0942434edeff92bae57e6f7532ef87c052a6f31d28721f2e3f1d87b90343daf2",
+    "tools/run_control_probe.py": "86b93f56cb5c0a6dbf5169cd78a679ff19c995471671fbb6211a45e37b95e502",
+    "tools/run_lifecycle_probe.py": "23b34f33eaf54308559d86fa2a93d3adf78befbde48d615f74495ab3b5415b87"
+  },
+  "status": "success",
+  "unit_tests": {
+    "command": "python3 -B -m unittest discover -s tests -v",
+    "passed": 36
+  }
+}
