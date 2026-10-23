@@ -5,7 +5,7 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Implementation and records now include the M2d native station/depot checkpoint. The clean engine branch `copilot/m2d-native-infrastructure` is pinned at `2c4dfef1bdee73f9994323c8139afd25768db150`; publication is recorded in the work log. Both repositories use the required no-reply Git identity.
+- Implementation and records through the M2d native station/depot checkpoint are published on `origin/main` (implementation `b684625b067f73938329830d17be233f55b245bb`). The clean engine branch `copilot/m2d-native-infrastructure` is published at `2c4dfef1bdee73f9994323c8139afd25768db150`; both remote SHAs were verified. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
