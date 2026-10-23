@@ -5,7 +5,7 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through M2c are kept on `main`; local branch tracks `origin/main`. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified during each handoff.
+- Planning and implementation checkpoints through the M2d tile seam are kept on `main`; local branch tracks `origin/main`. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified during each handoff.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
