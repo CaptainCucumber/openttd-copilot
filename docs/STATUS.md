@@ -5,7 +5,7 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through the M2d tile seam are on `origin/main`. This session adds industry and rail-catalog read-only checkpoints; the clean engine branch `copilot/m2d-industry-snapshot` is published at `9428e3ecdd98d066feb3f984bdeb266fe4a4c711`. Copilot repository publication is recorded in the work log. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified during each handoff.
+- Planning and implementation checkpoints through the M2d industry and rail-catalog seams are on `origin/main`. The clean engine branch `copilot/m2d-industry-snapshot` is published at `9428e3ecdd98d066feb3f984bdeb266fe4a4c711`. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication were verified during this handoff.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
