@@ -546,6 +546,76 @@ class AdminTransportTests(unittest.TestCase):
                 client.close()
                 server_sock.close()
 
+    def test_copilot_tile_snapshot_round_trip_is_bounded_and_correlated(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    struct.unpack_from("<HBIIB", payload),
+                    (COPILOT_PROTOCOL_VERSION, 4, 42, 1000, 2),
+                )
+                self.assertEqual(payload[struct.calcsize("<HBIIB"):], b"world-123\0")
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 4, 42, 0)
+                response += b"world-123\0" + struct.pack("<IIB", 321, 1000, 2)
+                response += struct.pack("<IBBBBBBB", 1000, 1, 4, 0, 2, 7, 16, 1)
+                response += struct.pack("<IBBBBBBB", 1001, 0, 0, 255, 0, 0, 0, 255)
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_tile_snapshot(
+                world_id="world-123", start_tile=1000, count=2, request_id=42
+            )
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(
+                {key: result[key] for key in ("world_id", "frame", "start_tile", "count")},
+                {"world_id": "world-123", "frame": 321, "start_tile": 1000, "count": 2},
+            )
+            self.assertEqual(
+                result["tiles"],
+                [
+                    {"tile": 1000, "valid": True, "tile_type": 4, "owner": 0,
+                     "slope": 2, "height": 7, "track_bits": 16, "rail_type": 1},
+                    {"tile": 1001, "valid": False, "tile_type": 0, "owner": 255,
+                     "slope": 0, "height": 0, "track_bits": 0, "rail_type": 255},
+                ],
+            )
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_tile_snapshot_rejects_invalid_bounds_and_response(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for count in (0, 33, True):
+                with self.subTest(count=count), self.assertRaises(ValueError):
+                    client.copilot_tile_snapshot("world-123", 1, count)
+        finally:
+            client.close()
+            server_sock.close()
+
+        cases = [
+            (struct.pack("<IIB", 10, 1, 0), b"", "tile limit"),
+            (struct.pack("<IIB", 10, 1, 1) + struct.pack("<IBBBBBBB", 1, 2, 0, 0, 0, 0, 0, 0), b"", "validity marker"),
+            (struct.pack("<IIB", 10, 1, 1) + b"x", b"", "truncated"),
+            (struct.pack("<IIB", 10, 1, 1) + struct.pack("<IBBBBBBB", 1, 1, 0, 0, 0, 0, 0, 0), b"x", "trailing data"),
+            (struct.pack("<IIB", 10, 1, 1) + struct.pack("<IBBBBBBB", 11, 1, 0, 0, 0, 0, 0, 0), b"", "tile sequence"),
+        ]
+        for fixed, suffix, message in cases:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 4, 7, 0)
+                response += b"world-123\0" + fixed + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_tile_snapshot("world-123", 1, 1, request_id=7)
+            finally:
+                client.close()
+                server_sock.close()
+
 
 if __name__ == "__main__":
     unittest.main()

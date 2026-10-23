@@ -78,7 +78,7 @@ A custom bridge must use the engine's normal command pipeline on the game thread
 
 ### M2 — Complete one railway without an LLM
 
-Status: **In progress. M2a identity, M2b one-piece mutation, and M2c vehicle-tagged observation completed 2026-10-23; M2d complete rail job is next.**
+Status: **In progress. M2a identity, M2b one-piece mutation, and M2c vehicle-tagged observation completed 2026-10-23. M2d has a read-only tile snapshot checkpoint; the complete rail job remains open.**
 
 **Depends on:** M1 adapter and observation contract.
 

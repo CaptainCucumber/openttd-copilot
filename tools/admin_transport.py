@@ -43,8 +43,10 @@ _COPILOT_IDENTITY = 0
 _COPILOT_BUILD_SINGLE_RAIL = 1
 _COPILOT_OPERATION_STATUS = 2
 _COPILOT_VEHICLE_EVENTS = 3
+_COPILOT_TILE_SNAPSHOT = 4
 _MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
 _MAX_COPILOT_EVENTS = 16
+_MAX_COPILOT_TILE_SNAPSHOT_COUNT = 32
 _COPILOT_OPERATION_STATE_NAMES = {
     0: "empty",
     1: "pending",
@@ -434,6 +436,146 @@ class AdminClient:
         )
         if response["world_id"] != world_id:
             raise AdminProtocolError("Copilot vehicle events response world ID mismatch")
+        return response
+
+    def copilot_tile_snapshot(
+        self,
+        world_id: str,
+        start_tile: int,
+        count: int,
+        timeout: float | None = None,
+        request_id: int | None = None,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+    ) -> dict[str, Any]:
+        """Read a bounded contiguous page of typed world tile observations."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        start_tile = self._check_uint("start_tile", start_tile, 32)
+        if (
+            isinstance(count, bool)
+            or not isinstance(count, int)
+            or not 1 <= count <= _MAX_COPILOT_TILE_SNAPSHOT_COUNT
+        ):
+            raise ValueError(
+                f"count must be an integer from 1 through {_MAX_COPILOT_TILE_SNAPSHOT_COUNT}"
+            )
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIIB", protocol_version, _COPILOT_TILE_SNAPSHOT,
+            request_id, start_tile, count
+        ) + world
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        self.events.append(
+            {
+                "time": time.time(),
+                "direction": "sent",
+                "packet_type": "copilot_tile_snapshot",
+                "packet_length": len(payload) + _HEADER_SIZE,
+                "request_id": request_id,
+                "protocol_version": protocol_version,
+                "start_tile": start_tile,
+                "count": count,
+            }
+        )
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_tile_snapshot(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append(
+                    {
+                        "time": time.time(),
+                        "direction": "received",
+                        "packet_type": "copilot_tile_snapshot",
+                        "packet_length": len(response_payload) + _HEADER_SIZE,
+                        "request_id": request_id,
+                        "status": response["status"],
+                    }
+                )
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                if response["world_id"] != world_id:
+                    raise AdminProtocolError("Copilot tile snapshot response world ID mismatch")
+                if response["start_tile"] != start_tile or response["count"] != count:
+                    raise AdminProtocolError("Copilot tile snapshot response range mismatch")
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+
+    @staticmethod
+    def _decode_copilot_tile_snapshot(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version,
+            "request_kind": request_kind,
+            "request_id": request_id,
+            "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_TILE_SNAPSHOT:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_format = "<IIB"
+        fixed_size = struct.calcsize(fixed_format)
+        if position + fixed_size > len(payload):
+            raise AdminProtocolError("truncated Copilot tile snapshot response")
+        frame, start_tile, count = struct.unpack_from(fixed_format, payload, position)
+        position += fixed_size
+        if not 1 <= count <= _MAX_COPILOT_TILE_SNAPSHOT_COUNT:
+            raise AdminProtocolError("Copilot tile snapshot response exceeds tile limit")
+        record_format = "<IBBBBBBB"
+        record_size = struct.calcsize(record_format)
+        if position + count * record_size > len(payload):
+            raise AdminProtocolError("truncated Copilot tile snapshot record")
+        tiles: list[dict[str, Any]] = []
+        for offset in range(count):
+            tile, valid, tile_type, owner, slope, height, track_bits, rail_type = struct.unpack_from(
+                record_format, payload, position
+            )
+            position += record_size
+            if valid not in (0, 1):
+                raise AdminProtocolError("invalid Copilot tile snapshot validity marker")
+            if tile != start_tile + offset:
+                raise AdminProtocolError("Copilot tile snapshot tile sequence mismatch")
+            tiles.append(
+                {
+                    "tile": tile,
+                    "valid": bool(valid),
+                    "tile_type": tile_type,
+                    "owner": owner,
+                    "slope": slope,
+                    "height": height,
+                    "track_bits": track_bits,
+                    "rail_type": rail_type,
+                }
+            )
+        if position != len(payload):
+            raise AdminProtocolError("Copilot tile snapshot response has trailing data")
+        response.update(
+            {
+                "world_id": world_id,
+                "frame": frame,
+                "start_tile": start_tile,
+                "count": count,
+                "tiles": tiles,
+            }
+        )
         return response
 
     def _copilot_vehicle_events_request(

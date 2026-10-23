@@ -16,6 +16,8 @@ Updated: 2026-10-23, America/Vancouver.
 
 **M2c is complete as a vehicle-observation checkpoint.** Protocol v3 reports train departure load/capacity and exact industry-accepted cargo with the paying vehicle ID through a bounded, paged, runtime-only event ring. The committed custom binary observed the isolated fixture's assigned train leave its mine twice at 30/30 coal and deliver to the intended power-station industry on both trips. The GameScript still built and operated that fixture; native full-route construction remains open. See the [M2c report](M2C_REPORT.md), [probe instructions](NATIVE_VEHICLE_PROBE.md), and [evidence](evidence/2026-10-23-native-vehicle-probe.json).
 
+**M2d has started with a read-only tile snapshot checkpoint.** An additive protocol-v3 request returns up to 32 contiguous tile records per page, including validity, tile type, owner, slope, height, and plain/crossing rail geometry. The clean custom build matched known rail/station/void tiles in a copied save, rejected a wrong world ID, and returned identical tiles after reload without company mutation. This is the first world-data seam for planning, not a complete route builder. See the [tile report](M2D_TILE_REPORT.md), [probe instructions](NATIVE_TILE_PROBE.md), and [evidence](evidence/2026-10-23-native-tile-probe.json).
+
 The first model-free local chat seam remains a disposable fixture demonstration. It opens a generated map, reads a bounded industry summary, waits for the supported coal request, runs the one-train vehicle probe after `build`, and shows the live/completed world. It is not the M2 route planner or a production adapter.
 
 The first implementation checkpoint passes in real OpenTTD 15.3: an isolated server/client harness discovers a human company, reads the world, builds one rail piece and a two-tile station, verifies exact costs and ownership, and rejects duplicate track without mutation. Reloading a copied save preserves the result and performs no construction. **This is a control probe, not a working railway service or conversational Copilot.** See [test instructions](CONTROL_PROBE.md) and the [evidence report](evidence/2026-10-21-control-probe.json).
@@ -24,14 +26,14 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
-| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete** | Identity, one typed mutation, and vehicle-tagged service observation proven; planner and native complete-route construction remain open. |
+| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d tile seam proven** | Identity, one typed mutation, vehicle-tagged service observation, and read-only tile pages proven; planner and native complete-route construction remain open. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
 | M5: usable local alpha | Planned | No implementation |
 
 ## Next work, in order
 
-1. **M2d — Deterministic complete rail job:** replace fixture placement with typed intent, world snapshot, station/depot search, directed route planning, consist selection, whole-job pricing, execution, and two verified full-load deliveries.
+1. **M2d — Deterministic complete rail job:** extend the live snapshot with industries, cargo acceptance, company rail/vehicle catalog and asset readback; then add station/depot search, directed route planning, whole-job pricing, sequential typed execution, and two verified full-load deliveries. Tile pages are now available.
 2. **M3 recovery tests:** fault-inject the pending-save and mutation/save/journal windows; do not retry an uncertain operation without reconciliation.
 
 M1 and M2a–M2c are complete. The bridge only mutates one clear flat rail tile per world; M2's planning and native end-to-end railway gate remain open.
@@ -48,6 +50,7 @@ M1 and M2a–M2c are complete. The bridge only mutates one clear flat rail tile 
 - `tools/run_native_bridge_probe.py`: M2a copied-save and coexistence gate. Final run `artifacts/native-bridge-probe/20261023T160625Z-65d8877d/` passed both checks in 2.369 seconds with zero gameplay mutation requests. Its runtime revision string names engine commit `2850af59a`; the manifest also requires that exact clean checkout and hashes all four modified engine files.
 - `tools/run_native_mutation_probe.py`: M2b copied-save gate. Final run `artifacts/native-mutation-probe/20261023T163704Z-fb8cb770/` passed four checks in 3.252 seconds. The runtime revision string names clean engine commit `8b8f3d7bad`; the manifest hashes the binary and relevant source files. The 90-unit command reduced cash from 99,160 to 99,070, left loan at 100,000, and survived duplicate request and reload.
 - `tools/run_native_vehicle_probe.py`: M2c generated-world service gate. Final run `artifacts/native-vehicle-probe/20261023T172550Z-485cd1fd/` passed native vehicle-tagged observation alongside the stock fixture's two-cycle gate in 160.388 seconds. The runtime revision names clean engine commit `37f88cc03d`; the manifest hashes the binary and source. Train 2 departed twice at 30/30 coal and delivered accepted cargo to industry 11 on both visits. The event ring is runtime-only and resets on world load.
+- `tools/run_native_tile_probe.py`: M2d read-only tile gate. Final run `artifacts/native-tile-probe/20261023T174736Z-1b7db921/` passed in 1.654 seconds against clean engine commit `bf789a968c`; the manifest hashes binary and source. It matched the known rail piece, two station tiles, and void border, rejected a wrong-world query, and repeated the same tiles after fresh-process reload. No mutation request was sent.
 - Normal profile configuration and three original saves retain identical content hashes and modification times. Failed setup attempts are retained and described in the work log.
 
 ## Confirmed decisions and provisional defaults
@@ -71,4 +74,4 @@ The user answered both initial questions during this session. Remaining environm
 
 ## Known uncertainties
 
-General native mutation compatibility beyond one clear flat tile; complete-job cost accounting; pending-operation save/load fault injection; mutation/journal/save crash windows; rejected/uncertain-operation resolution beyond the tested cases; event-ring overflow and save/reload continuity in a real game; route-planner coverage; backwards/forwards handling of saves written by the custom build. M2c proves vehicle-tagged observation in an isolated GameScript-built service, not native complete-route construction.
+General native mutation compatibility beyond one clear flat tile; complete-job cost accounting; pending-operation save/load fault injection; mutation/journal/save crash windows; rejected/uncertain-operation resolution beyond the tested cases; event-ring overflow and save/reload continuity in a real game; route-planner coverage; backwards/forwards handling of saves written by the custom build. Tile pages are read-only, page snapshots can span game frames, and their rail bits cover only plain rail/crossing tiles; industry, station/depot, and vehicle detail still require live queries. M2c proves vehicle-tagged observation in an isolated GameScript-built service, not native complete-route construction.

@@ -1,0 +1,125 @@
+{
+  "binary_sha256": "25050ad87d294e1839808dae61a79b850062157657c7bf70830b0c7b8ae59174",
+  "bundle_resource_hashes": {
+    "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+    "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+    "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+  },
+  "company": {
+    "id": 0,
+    "is_ai": false,
+    "loan": 100000,
+    "money": 99160,
+    "name": "Copilot Probe Human Transport"
+  },
+  "config_sha256_by_phase": {
+    "reload": "fb7332377a36240327b55e0e45bb7c8dcdde5754502c6e92017f93724e29e5f9",
+    "snapshot": "d519db7e749b73ad4b7bde3a4af92687bf48c4ff9ecde5adf8ec1230d21cb865"
+  },
+  "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+  "elapsed_seconds": 1.654,
+  "engine_commit": "bf789a968cdf47ac54237a917402821d24e6dff6",
+  "engine_revision": "OpenTTD 20261023-m2d-tile-snapshot-gbf789a968c",
+  "engine_source_hashes": {
+    "src/network/network_admin.cpp": "74d21cf3e42404ad2e52682a7cfa9281bee93341611aac003df0e84d770c14f2",
+    "src/network/network_admin.h": "076600baf1cf14ff211b99856f53b02ffb90dfd6a3f15033cdb280a9e101045d"
+  },
+  "gate": "M2d-S1 read-only native tile snapshot",
+  "limit": "Read-only tile pages only; industry, station/depot, train catalog, whole-job mutation and two-cycle native service remain open.",
+  "log_errors": [],
+  "map": {
+    "height": 128,
+    "landscape": 0,
+    "seed": 20261021,
+    "width": 128
+  },
+  "max_admin_packet_bytes": 134,
+  "normal_profile_unchanged": true,
+  "observed_tiles": [
+    {
+      "height": 1,
+      "owner": 16,
+      "rail_type": 255,
+      "slope": 0,
+      "tile": 8255,
+      "tile_type": 0,
+      "track_bits": 0,
+      "valid": true
+    },
+    {
+      "height": 1,
+      "owner": 0,
+      "rail_type": 0,
+      "slope": 0,
+      "tile": 8256,
+      "tile_type": 1,
+      "track_bits": 1,
+      "valid": true
+    },
+    {
+      "height": 1,
+      "owner": 0,
+      "rail_type": 255,
+      "slope": 0,
+      "tile": 8257,
+      "tile_type": 5,
+      "track_bits": 0,
+      "valid": true
+    },
+    {
+      "height": 1,
+      "owner": 0,
+      "rail_type": 255,
+      "slope": 0,
+      "tile": 8258,
+      "tile_type": 5,
+      "track_bits": 0,
+      "valid": true
+    }
+  ],
+  "private_config_sha256": "664d5ad6d667eb1d2b039f3ccc5acb50ea8da746cb884c2d8e0645e502601e8c",
+  "reload_equal_tiles": true,
+  "runtime_manifest": "artifacts/native-tile-probe/20261023T174736Z-1b7db921/manifest.json",
+  "secret_files_removed": true,
+  "sequence_before_after": [
+    0,
+    0
+  ],
+  "source_save_fingerprint": {
+    "mtime_ns": 1792605894235287465,
+    "sha256": "9bca2fd418e4e28c1af044ceea9acff1b57cafd601774c294b2a9623fcf2bb59",
+    "size": 28588
+  },
+  "source_save_unchanged": true,
+  "status": "success",
+  "tool_source_hashes": {
+    "tools/admin_transport.py": "4633e4816d901aa6d975416fb4e2ad950e38a20518b0be3bd570a3a8332ba76c",
+    "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+    "tools/run_native_mutation_probe.py": "c76b6a03a4634c3652d8412d57e0f9a6a465f8bf6ff662a260534814c9bc6141",
+    "tools/run_native_tile_probe.py": "f0fe00a91dacd6cf96fb55f5fd7b20228261aa86750fd57cf131369f302e2e53"
+  },
+  "void_border": [
+    {
+      "height": 0,
+      "owner": 16,
+      "rail_type": 255,
+      "slope": 0,
+      "tile": 127,
+      "tile_type": 7,
+      "track_bits": 0,
+      "valid": false
+    },
+    {
+      "height": 0,
+      "owner": 16,
+      "rail_type": 255,
+      "slope": 0,
+      "tile": 128,
+      "tile_type": 7,
+      "track_bits": 0,
+      "valid": false
+    }
+  ],
+  "world_id": "6BAAC8B739403503F1A7714B8CC47013",
+  "wrong_world_status": 5
+}
