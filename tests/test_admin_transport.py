@@ -68,15 +68,17 @@ def operation_response(
     world_id: str = "world-123",
     operation_hi: int = 5,
     operation_lo: int = 6,
+    state: int = 2,
     valid_tile: int = 1,
     has_rail: int = 1,
+    track: int = 2,
     company_valid: int = 1,
 ) -> bytes:
     header = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, request_kind, request_id, 0)
     body = world_id.encode() + b"\0" + struct.pack(
         "<QQQBQQQQBIBBqqIIBBBBBBqq",
-        9, 10, 11, 2, operation_hi, operation_lo, 7, 8,
-        0, 321, 1, 2, 500, 90, 0, 456,
+        9, 10, 11, state, operation_hi, operation_lo, 7, 8,
+        0, 321, 1, track, 500, 90, 0, 456,
         valid_tile, has_rail, 0, 4, 1, company_valid, 10000, 100000,
     )
     return header + body
@@ -393,6 +395,117 @@ class AdminTransportTests(unittest.TestCase):
                  "rail_type": 1, "company_valid": True, "money": 10000, "loan": 100000},
             )
             self.assertTrue(client.receive_response("later")["ok"])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_build_infrastructure_serializes_kind_and_length(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            response = operation_response(11, 77, track=0) + struct.pack("<BBI", 1, 2, 123)
+
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                values = struct.unpack_from("<HBIBIBBBBqQQQQQQQ", payload)
+                self.assertEqual(values[1], 11)
+                self.assertEqual(values[3:9], (0, 8254, 0, 0, 1, 2))
+                self.assertEqual(
+                    payload,
+                    struct.pack("<HBIBIBBBBqQQQQQQQ", COPILOT_PROTOCOL_VERSION, 11, 77,
+                                0, 8254, 0, 0, 1, 2, 1000, 9, 10, 11, 5, 6, 7, 8)
+                    + b"world-123\0",
+                )
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_build_infrastructure(
+                world_id="world-123", company_id=0, tile=8254, rail_type=0,
+                orientation=0, infrastructure_kind=1, length=2, max_cost=1000,
+                expected_sequence=9, expected_head_hi=10, expected_head_lo=11,
+                operation_hi=5, operation_lo=6, payload_hash_hi=7, payload_hash_lo=8,
+                request_id=77,
+            )
+            thread.join(timeout=1)
+            self.assertEqual(result["created_asset_id"], 123)
+            self.assertEqual(result["infrastructure_kind"], 1)
+            self.assertEqual(result["length"], 2)
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_infrastructure_input_and_extension_are_strict(self) -> None:
+        client, server_sock = connected_client()
+        try:
+            kwargs = dict(
+                world_id="world", company_id=0, tile=1, rail_type=0, orientation=0,
+                infrastructure_kind=2, length=2, max_cost=1, expected_sequence=0,
+                expected_head_hi=0, expected_head_lo=0, operation_hi=1, operation_lo=2,
+                payload_hash_hi=3, payload_hash_lo=4,
+            )
+            with self.assertRaisesRegex(ValueError, "depot length"):
+                client.copilot_build_infrastructure(**kwargs)
+        finally:
+            client.close()
+            server_sock.close()
+        malformed = operation_response(11, 1)
+        with self.assertRaises(AdminProtocolError):
+            AdminClient._decode_copilot_operation(malformed, 11)
+
+    def test_status12_accepts_rail_extension_without_readback_identity(self) -> None:
+        payload = operation_response(12, 1, track=2) + struct.pack("<BBI", 0, 0, 0xFFFFFFFF)
+        result = AdminClient._decode_copilot_operation(payload, 12)
+        self.assertEqual(
+            (result["infrastructure_kind"], result["length"], result["created_asset_id"]),
+            (0, 0, 0xFFFFFFFF),
+        )
+        self.assertNotIn("infrastructure_kind", result["readback"])
+        self.assertNotIn("created_asset_id", result["readback"])
+
+    def test_infrastructure_extension_rejects_bad_shape_kind_id_and_orientation(self) -> None:
+        valid = operation_response(11, 1, track=0) + struct.pack("<BBI", 1, 2, 9)
+        cases = [
+            valid[:-1], valid + b"\x00",
+            operation_response(11, 1, track=0) + struct.pack("<BBI", 3, 2, 9),
+            operation_response(11, 1, track=0) + struct.pack("<BBI", 1, 0, 9),
+            operation_response(11, 1, track=0) + struct.pack("<BBI", 1, 2, 0xFFFFFFFF),
+            operation_response(11, 1, track=2) + struct.pack("<BBI", 1, 2, 9),
+            operation_response(11, 1, track=0) + struct.pack("<BBI", 0, 0, 9),
+            operation_response(11, 1, track=0) + struct.pack("<BBI", 0, 0, 0xFFFFFFFF),
+            operation_response(11, 1, track=4) + struct.pack("<BBI", 2, 1, 9),
+            operation_response(11, 1, state=1, track=0) + struct.pack("<BBI", 1, 2, 9),
+            operation_response(11, 1, state=9, track=0) + struct.pack("<BBI", 1, 2, 9),
+        ]
+        for payload in cases:
+            with self.subTest(length=len(payload)):
+                with self.assertRaises(AdminProtocolError):
+                    AdminClient._decode_copilot_operation(payload, 11)
+
+    def test_infrastructure_status_request_is_byte_exact_and_correlated(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    payload,
+                    struct.pack("<HBIQQ", COPILOT_PROTOCOL_VERSION, 12, 77, 5, 6)
+                    + b"world-123\0",
+                )
+                server_sock.sendall(frame(
+                    130, operation_response(12, 77, operation_hi=5, operation_lo=6, track=2)
+                    + struct.pack("<BBI", 0, 0, 0xFFFFFFFF)
+                ))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_infrastructure_status(
+                world_id="world-123", operation_hi=5, operation_lo=6, request_id=77,
+            )
+            thread.join(timeout=1)
+            self.assertEqual(result["request_kind"], 12)
+            self.assertEqual(result["operation"], {"hi": 5, "lo": 6})
         finally:
             client.close()
             server_sock.close()

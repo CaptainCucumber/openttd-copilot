@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "scope": "M2d bounded native station/depot construction; not a complete railway",
+  "engine_commit": "2c4dfef1bdee73f9994323c8139afd25768db150",
+  "engine_revision": "20261023-m2d-native-infrastructure-g2c4dfef1bd",
+  "engine_clean": true,
+  "binary_sha256": "90fff71e2f239fac4e42c5244399d4ba41ea40dceadf570ffd484f61519710f5",
+  "engine_source_hashes": {
+    "src/command_type.h": "3bb999aedf0486dddcc18dedcd39e7fedbe097e916ea23ac66c2f2173f4a34f8",
+    "src/copilot_cmd.cpp": "5eeab03d9f43740808a479536fe7de108ca4351690f357ebf6e8eb398b1791ab",
+    "src/copilot_cmd.h": "8e00b6397d4eb5c106ddedc3e3188fcfc2f4ba387d0c19d8970e663280263267",
+    "src/network/network_admin.cpp": "4f359c37e78148b320df1619298e09924e3db3af67ccb8053b4712a1002994f2",
+    "src/network/network_admin.h": "c4799573b4013d8848c552cd4bd327e1c57a671e8ab17b15a79e43122c3d6a8f",
+    "src/network/network_command.cpp": "38c681cb7be5b0841309eaf30b2f64f3bbd7190a5c5021780ca5683162e3988b",
+    "src/saveload/copilot_sl.cpp": "8b64872876e11dcb97c919f86bff06585d2e6a3512a261293aa87645065e93a9"
+  },
+  "source_hashes": {
+    "tools/admin_transport.py": "deb074bab727446361613510de2fcfee0b8a16f2e3745ab3c8c8cffd04c72f04",
+    "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+    "tools/run_native_infrastructure_probe.py": "ecc87eea3004eb315d5a2967ab6d6ad5a16f29388c2fe100c7e83d1b9565dff8"
+  },
+  "environment": {
+    "upstream_version": "15.3",
+    "map_size": [128, 128],
+    "seed": 20261021,
+    "landscape": 0,
+    "company_id": 0,
+    "content": "OpenGFX2 Classic 0.8.1; standard vehicles/industries; no gameplay NewGRFs",
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "source_save": "artifacts/control-probe/20261021T180450Z-f8fc9132/control-probe-final.sav",
+    "source_save_sha256": "9bca2fd418e4e28c1af044ceea9acff1b57cafd601774c294b2a9623fcf2bb59",
+    "settings_and_resource_hashes": "Each raw manifest phases entry records config/content/resource hashes."
+  },
+  "runs": [
+    {
+      "run": "20261023T215235Z-f535454c",
+      "manifest_sha256": "1199cd3ceabce5ffe11dcbc78d76787e7469565cf1a67df46dc396120ff2a326",
+      "station_axis": 0,
+      "depot_direction": 0,
+      "elapsed_seconds": 8.664
+    },
+    {
+      "run": "20261023T215251Z-e59be4e7",
+      "manifest_sha256": "0cf19f9ff2963183d3c0ab09781fd52497e5a27d79a4812478cf7f07f0c5b6d7",
+      "station_axis": 1,
+      "depot_direction": 1,
+      "elapsed_seconds": 9.147
+    },
+    {
+      "run": "20261023T215251Z-7afa0a5b",
+      "manifest_sha256": "69a8288c02b8104f50336530d095d87e38505ee19431e423d1f539bfd0116fb0",
+      "station_axis": 0,
+      "depot_direction": 2,
+      "elapsed_seconds": 9.216
+    },
+    {
+      "run": "20261023T215251Z-be38e788",
+      "manifest_sha256": "36c791fdceb349e953a9699de5f3a3e85c72b72a76948e1f21460d91cab4e267",
+      "station_axis": 1,
+      "depot_direction": 3,
+      "elapsed_seconds": 9.171
+    }
+  ],
+  "result_all_runs": {
+    "status": "success",
+    "station_tile": 8254,
+    "station_length": 2,
+    "created_station_id": 1,
+    "station_actual_cost": 750,
+    "depot_tile": 8251,
+    "created_depot_id": 0,
+    "depot_actual_cost": 540,
+    "money_before": 99160,
+    "money_after": 97870,
+    "loan_before_and_after": 100000,
+    "successful_sequence": 2,
+    "admitted_infrastructure_records_retained": 4,
+    "schema2_records_checked_before_and_after_schema3_reload": 64,
+    "source_saves_and_normal_profile_unchanged": true,
+    "secrets_removed": true
+  },
+  "sequence_regression": "artifacts/native-sequence-probe/20261023T214829Z-6b0d5a99/manifest.json",
+  "unit_tests_passed": 135,
+  "limitations": [
+    "Real-engine station construction exercised length 2, not all lengths 1-7.",
+    "No train purchase, orders mutation, catchment validation, or complete connected native route.",
+    "No whole-job budget/reserve or automatic rollback.",
+    "Pending-save/crash-gap and corrupt-save negative fault injection remain open."
+  ]
+}

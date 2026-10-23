@@ -42,6 +42,8 @@ COPILOT_COMPANY_ALL = 0xFF
 _COPILOT_IDENTITY = 0
 _COPILOT_BUILD_SINGLE_RAIL = 1
 _COPILOT_OPERATION_STATUS = 2
+_COPILOT_BUILD_INFRASTRUCTURE = 11
+_COPILOT_INFRASTRUCTURE_STATUS = 12
 _COPILOT_VEHICLE_EVENTS = 3
 _COPILOT_TILE_SNAPSHOT = 4
 _COPILOT_INDUSTRY_SNAPSHOT = 5
@@ -380,6 +382,73 @@ class AdminClient:
         )
         return response
 
+    def copilot_build_infrastructure(
+        self,
+        *,
+        world_id: str,
+        company_id: int,
+        tile: int,
+        rail_type: int,
+        orientation: int,
+        infrastructure_kind: int,
+        length: int,
+        max_cost: int,
+        expected_sequence: int,
+        expected_head_hi: int,
+        expected_head_lo: int,
+        operation_hi: int,
+        operation_lo: int,
+        payload_hash_hi: int,
+        payload_hash_lo: int,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Build one bounded native station or depot."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        tile = self._check_uint("tile", tile, 32)
+        rail_type = self._check_uint("rail_type", rail_type, 8)
+        orientation = self._check_uint("orientation", orientation, 8)
+        infrastructure_kind = self._check_uint("infrastructure_kind", infrastructure_kind, 8)
+        length = self._check_uint("length", length, 8)
+        if infrastructure_kind not in (1, 2):
+            raise ValueError("infrastructure_kind must be 1 (station) or 2 (depot)")
+        if infrastructure_kind == 1 and orientation not in (0, 1):
+            raise ValueError("station orientation must be 0 or 1")
+        if infrastructure_kind == 2 and orientation > 3:
+            raise ValueError("depot orientation must be from 0 through 3")
+        if infrastructure_kind == 1 and not 1 <= length <= 7:
+            raise ValueError("station length must be from 1 through 7")
+        if infrastructure_kind == 2 and length != 1:
+            raise ValueError("depot length must be 1")
+        max_cost = self._check_int64("max_cost", max_cost)
+        expected_sequence = self._check_uint("expected_sequence", expected_sequence, 64)
+        expected_head_hi = self._check_uint("expected_head_hi", expected_head_hi, 64)
+        expected_head_lo = self._check_uint("expected_head_lo", expected_head_lo, 64)
+        operation_hi = self._check_uint("operation_hi", operation_hi, 64)
+        operation_lo = self._check_uint("operation_lo", operation_lo, 64)
+        payload_hash_hi = self._check_uint("payload_hash_hi", payload_hash_hi, 64)
+        payload_hash_lo = self._check_uint("payload_hash_lo", payload_hash_lo, 64)
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIBIBBBBqQQQQQQQ",
+            protocol_version, _COPILOT_BUILD_INFRASTRUCTURE, request_id,
+            company_id, tile, rail_type, orientation, infrastructure_kind, length,
+            max_cost, expected_sequence, expected_head_hi, expected_head_lo,
+            operation_hi, operation_lo, payload_hash_hi, payload_hash_lo,
+        ) + world
+        response = self._copilot_operation_request(
+            _COPILOT_BUILD_INFRASTRUCTURE, "copilot_build_infrastructure",
+            request_id, payload, timeout,
+            {"company_id": company_id, "tile": tile,
+             "infrastructure_kind": infrastructure_kind, "length": length},
+        )
+        self._validate_copilot_operation_correlation(
+            response, world_id, operation_hi, operation_lo
+        )
+        return response
+
     def copilot_operation_status(
         self,
         *,
@@ -409,6 +478,29 @@ class AdminClient:
             request_id,
             payload,
             timeout,
+        )
+        self._validate_copilot_operation_correlation(
+            response, world_id, operation_hi, operation_lo
+        )
+        return response
+
+    def copilot_infrastructure_status(
+        self, *, world_id: str, operation_hi: int, operation_lo: int,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None, timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Read a retained rail, station, or depot operation outcome."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        operation_hi = self._check_uint("operation_hi", operation_hi, 64)
+        operation_lo = self._check_uint("operation_lo", operation_lo, 64)
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIQQ", protocol_version, _COPILOT_INFRASTRUCTURE_STATUS,
+            request_id, operation_hi, operation_lo,
+        ) + world
+        response = self._copilot_operation_request(
+            _COPILOT_INFRASTRUCTURE_STATUS, "copilot_infrastructure_status",
+            request_id, payload, timeout,
         )
         self._validate_copilot_operation_correlation(
             response, world_id, operation_hi, operation_lo
@@ -1575,7 +1667,27 @@ class AdminClient:
             raise AdminProtocolError("truncated Copilot operation response")
         values = struct.unpack_from(operation_format, payload, position)
         position += operation_size
-        if position != len(payload):
+        infrastructure_kind = 0
+        infrastructure_length = 0
+        created_asset_id = 0xFFFFFFFF
+        if expected_kind in (_COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS):
+            extension_format = "<BBI"
+            if position + struct.calcsize(extension_format) != len(payload):
+                raise AdminProtocolError("malformed Copilot infrastructure response extension")
+            infrastructure_kind, infrastructure_length, created_asset_id = struct.unpack_from(
+                extension_format, payload, position
+            )
+            if infrastructure_kind == 0:
+                if (expected_kind != _COPILOT_INFRASTRUCTURE_STATUS
+                        or infrastructure_length != 0 or created_asset_id != 0xFFFFFFFF):
+                    raise AdminProtocolError("invalid rail infrastructure extension")
+            elif infrastructure_kind == 1 and not 1 <= infrastructure_length <= 7:
+                raise AdminProtocolError("invalid Copilot station length")
+            elif infrastructure_kind == 2 and infrastructure_length != 1:
+                raise AdminProtocolError("invalid Copilot depot length")
+            elif infrastructure_kind not in (1, 2):
+                raise AdminProtocolError("invalid Copilot infrastructure kind")
+        elif position != len(payload):
             raise AdminProtocolError("Copilot operation response has trailing data")
         (
             sequence,
@@ -1605,6 +1717,8 @@ class AdminClient:
         ) = values
         if valid_tile not in (0, 1) or has_rail not in (0, 1) or company_valid not in (0, 1):
             raise AdminProtocolError("invalid Copilot operation boolean marker")
+        if state not in _COPILOT_OPERATION_STATE_NAMES:
+            raise AdminProtocolError("invalid Copilot operation state")
         response.update(
             {
                 "world_id": world_id,
@@ -1648,6 +1762,20 @@ class AdminClient:
                 },
             }
         )
+        if expected_kind in (_COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS):
+            if infrastructure_kind == 1 and track not in (0, 1):
+                raise AdminProtocolError("invalid Copilot station orientation")
+            if infrastructure_kind == 2 and track > 3:
+                raise AdminProtocolError("invalid Copilot depot orientation")
+            response["orientation"] = track
+            response["infrastructure_kind"] = infrastructure_kind
+            response["length"] = infrastructure_length
+            response["created_asset_id"] = created_asset_id
+            if infrastructure_kind in (1, 2):
+                if state == 2 and created_asset_id == 0xFFFFFFFF:
+                    raise AdminProtocolError("completed infrastructure operation lacks created asset ID")
+                if state != 2 and created_asset_id != 0xFFFFFFFF:
+                    raise AdminProtocolError("noncompleted infrastructure operation has created asset ID")
         return response
 
     @staticmethod
