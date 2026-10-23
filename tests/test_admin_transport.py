@@ -616,6 +616,145 @@ class AdminTransportTests(unittest.TestCase):
                 client.close()
                 server_sock.close()
 
+    def test_copilot_industry_snapshot_round_trip_decodes_cargo_and_page(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    struct.unpack_from("<HBIIB", payload),
+                    (COPILOT_PROTOCOL_VERSION, 5, 43, 2, 16),
+                )
+                self.assertEqual(payload[struct.calcsize("<HBIIB"):], b"world-123\0")
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 5, 43, 0)
+                response += b"world-123\0" + struct.pack("<IIB", 456, 2, 1)
+                response += struct.pack("<HBI", 77, 4, 1024) + bytes([2, 0, 3, 2, 1, 2])
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_industry_snapshot("world-123", 2, 16, request_id=43)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(
+                {key: result[key] for key in ("world_id", "frame", "start_index", "count")},
+                {"world_id": "world-123", "frame": 456, "start_index": 2, "count": 1},
+            )
+            self.assertEqual(result["industries"], [{
+                "industry_id": 77, "industry_type": 4, "tile": 1024,
+                "produced_cargo": [0, 3], "accepted_cargo": [1, 2],
+            }])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_industry_snapshot_rejects_invalid_bounds_and_records(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for count in (0, 17, True):
+                with self.subTest(count=count), self.assertRaises(ValueError):
+                    client.copilot_industry_snapshot("world-123", 0, count)
+        finally:
+            client.close()
+            server_sock.close()
+
+        cases = [
+            (struct.pack("<IIB", 10, 0, 17), b"", "industry limit"),
+            (struct.pack("<IIB", 10, 0, 1) + b"\x01", b"", "truncated Copilot industry snapshot record"),
+            (struct.pack("<IIB", 10, 0, 1) + struct.pack("<HBI", 1, 2, 3) + bytes([17]), b"", "produced cargo list"),
+            (struct.pack("<IIB", 10, 0, 1) + struct.pack("<HBI", 1, 2, 3) + bytes([1, 255, 0]), b"", "invalid cargo type"),
+            (struct.pack("<IIB", 10, 0, 0), b"x", "trailing data"),
+        ]
+        for fixed, suffix, message in cases:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 5, 44, 0)
+                response += b"world-123\0" + fixed + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_industry_snapshot("world-123", 0, 1, request_id=44)
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_copilot_rail_catalog_round_trip_is_bounded_and_correlated(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    struct.unpack_from("<HBIBIB", payload),
+                    (COPILOT_PROTOCOL_VERSION, 6, 45, 3, 2, 16),
+                )
+                self.assertEqual(payload[struct.calcsize("<HBIBIB"):], b"world-123\0")
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 6, 45, 0)
+                response += b"world-123\0" + struct.pack("<IBQIB", 789, 3, 5, 2, 1)
+                response += struct.pack(
+                    "<HBBQBIQQQHHHB", 17, 1, 0, 3, 0, 120, 1 << 3,
+                    45000, 1200, 100, 2400, 80, 2,
+                )
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_rail_catalog("world-123", 3, 2, 16, request_id=45)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(
+                {key: result[key] for key in ("world_id", "frame", "company_id",
+                                               "company_railtypes", "start_index", "count")},
+                {"world_id": "world-123", "frame": 789, "company_id": 3,
+                 "company_railtypes": 5, "start_index": 2, "count": 1},
+            )
+            self.assertEqual(result["engines"], [{
+                "engine_id": 17, "buildable": True, "railveh_type": 0,
+                "railtypes": 3, "default_cargo": 0, "default_capacity": 120,
+                "refit_mask": 1 << 3, "purchase_cost": 45000, "running_cost": 1200,
+                "max_speed": 100, "power": 2400, "weight": 80, "shorten_factor": 2,
+            }])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_rail_catalog_rejects_invalid_bounds_and_records(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for count in (0, 17, True):
+                with self.subTest(count=count), self.assertRaises(ValueError):
+                    client.copilot_rail_catalog("world-123", 0, 0, count)
+        finally:
+            client.close()
+            server_sock.close()
+
+        fixed = struct.pack("<IBQIB", 10, 0, 1, 0, 1)
+        bad_record = struct.pack("<HBBQBIQQQHHHB", 1, 2, 0, 1, 255, 0,
+                                 0, 10, 1, 10, 100, 50, 0)
+        cases = [
+            (struct.pack("<IBQIB", 10, 0, 1, 0, 17), b"", "engine limit"),
+            (fixed, b"", "truncated Copilot rail catalog record"),
+            (fixed + bad_record, b"", "buildable marker"),
+            (fixed + struct.pack("<HBBQBIQQQHHHB", 1, 1, 3, 1, 255, 0,
+                                 0, 10, 1, 10, 100, 50, 0), b"", "vehicle class"),
+            (fixed + struct.pack("<HBBQBIQQQHHHB", 1, 1, 0, 1, 64, 0,
+                                 0, 10, 1, 10, 100, 50, 0), b"", "default cargo"),
+            (fixed + struct.pack("<HBBQBIQQQHHHB", 1, 1, 0, 1, 255, 0,
+                                 0, 0x8000000000000000, 1, 10, 100, 50, 0), b"", "Money range"),
+            (struct.pack("<IBQIB", 10, 0, 1, 0, 0), b"x", "trailing data"),
+        ]
+        for page, suffix, message in cases:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 6, 46, 0)
+                response += b"world-123\0" + page + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_rail_catalog("world-123", 0, 0, 1, request_id=46)
+            finally:
+                client.close()
+                server_sock.close()
+
 
 if __name__ == "__main__":
     unittest.main()

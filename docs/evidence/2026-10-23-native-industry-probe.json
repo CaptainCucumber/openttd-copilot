@@ -1,0 +1,235 @@
+{
+  "artifact": "artifacts/native-industry-probe/20261023T181812Z-53cf83e7/manifest.json",
+  "binary_sha256": "1d7deb2689033da08a8ce99e478181c4c890350f810a399271f37d571cf36bfe",
+  "checks": [
+    "snapshot_reload",
+    "tile_window_sweep",
+    "typed_industry_snapshot"
+  ],
+  "client_source_hashes": {
+    "tools/admin_transport.py": "dd52c4193b5f6bd2cb166ec53661341ce3ddbb13518546fbff76ec1dd309ac2f",
+    "tools/native_industry_catalog.py": "958e059a20103a4b23ff57c515b739bf4d9d70db5c288bfeb31c470167c858f4",
+    "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+    "tools/run_native_industry_probe.py": "f0dbc523c765c31f9e64ce32e7c02470c5e471127685523aad047e42a55e9ada"
+  },
+  "coal_pair": {
+    "cargo_id": 1,
+    "destination": {
+      "accepted_cargo": [
+        1
+      ],
+      "industry_id": 12,
+      "industry_type": 1,
+      "produced_cargo": [],
+      "tile": 3371
+    },
+    "source": {
+      "accepted_cargo": [],
+      "industry_id": 0,
+      "industry_type": 0,
+      "produced_cargo": [
+        1
+      ],
+      "tile": 12404
+    }
+  },
+  "company": {
+    "id": 0,
+    "is_ai": false,
+    "loan": 100000,
+    "money": 99160,
+    "name": "Copilot Probe Human Transport"
+  },
+  "content": "OpenGFX2 Classic 0.8.1; no gameplay NewGRFs",
+  "elapsed_seconds": 2.139,
+  "engine_commit": "9428e3ecdd98d066feb3f984bdeb266fe4a4c711",
+  "engine_revision": "20261023-m2d-industry-snapshot-g9428e3ecdd",
+  "engine_source_hashes": {
+    "src/network/network_admin.cpp": "21fe72654e40020fd99c87d9f213c1c76f3d42e1ad58fa0c824931dc0c97ade3",
+    "src/network/network_admin.h": "e4ecae133cda6cb0c337ddc1938b1524726dfeb97407e5cde2c4092a7bf0157b"
+  },
+  "failed_predecessor": "artifacts/native-industry-probe/20261023T181250Z-fce131d6/ (GetTileOwner assertion on house tile)",
+  "gate": "M2d read-only industry and tile-window checkpoint",
+  "industry_count": 13,
+  "industry_records": [
+    {
+      "accepted_cargo": [],
+      "industry_id": 0,
+      "industry_type": 0,
+      "produced_cargo": [
+        1
+      ],
+      "tile": 12404
+    },
+    {
+      "accepted_cargo": [
+        1
+      ],
+      "industry_id": 1,
+      "industry_type": 1,
+      "produced_cargo": [],
+      "tile": 9880
+    },
+    {
+      "accepted_cargo": [
+        7
+      ],
+      "industry_id": 2,
+      "industry_type": 2,
+      "produced_cargo": [
+        5
+      ],
+      "tile": 9826
+    },
+    {
+      "accepted_cargo": [],
+      "industry_id": 3,
+      "industry_type": 3,
+      "produced_cargo": [
+        7
+      ],
+      "tile": 15060
+    },
+    {
+      "accepted_cargo": [
+        3
+      ],
+      "industry_id": 4,
+      "industry_type": 4,
+      "produced_cargo": [
+        5
+      ],
+      "tile": 12069
+    },
+    {
+      "accepted_cargo": [
+        4,
+        6,
+        9
+      ],
+      "industry_id": 5,
+      "industry_type": 6,
+      "produced_cargo": [
+        5
+      ],
+      "tile": 9140
+    },
+    {
+      "accepted_cargo": [
+        8
+      ],
+      "industry_id": 6,
+      "industry_type": 8,
+      "produced_cargo": [
+        9
+      ],
+      "tile": 4696
+    },
+    {
+      "accepted_cargo": [],
+      "industry_id": 7,
+      "industry_type": 9,
+      "produced_cargo": [
+        6,
+        4
+      ],
+      "tile": 11566
+    },
+    {
+      "accepted_cargo": [],
+      "industry_id": 8,
+      "industry_type": 11,
+      "produced_cargo": [
+        3
+      ],
+      "tile": 5970
+    },
+    {
+      "accepted_cargo": [],
+      "industry_id": 9,
+      "industry_type": 18,
+      "produced_cargo": [
+        8
+      ],
+      "tile": 7731
+    },
+    {
+      "accepted_cargo": [
+        3
+      ],
+      "industry_id": 10,
+      "industry_type": 4,
+      "produced_cargo": [
+        5
+      ],
+      "tile": 11112
+    },
+    {
+      "accepted_cargo": [
+        7
+      ],
+      "industry_id": 11,
+      "industry_type": 2,
+      "produced_cargo": [
+        5
+      ],
+      "tile": 5810
+    },
+    {
+      "accepted_cargo": [
+        1
+      ],
+      "industry_id": 12,
+      "industry_type": 1,
+      "produced_cargo": [],
+      "tile": 3371
+    }
+  ],
+  "map": {
+    "height": 128,
+    "landscape": 0,
+    "width": 128
+  },
+  "normal_profile_unchanged": true,
+  "openttd_version": "15.3",
+  "secret_files_removed": true,
+  "seed": 20261021,
+  "source_save_unchanged": true,
+  "status": "success",
+  "tile_window": {
+    "atomic": false,
+    "frame_max": 25,
+    "frame_min": 20,
+    "origin": {
+      "x": 62,
+      "y": 64
+    },
+    "pages": [
+      {
+        "count": 32,
+        "frame": 21,
+        "start_tile": 8254
+      },
+      {
+        "count": 3,
+        "frame": 22,
+        "start_tile": 8286
+      },
+      {
+        "count": 32,
+        "frame": 23,
+        "start_tile": 8382
+      },
+      {
+        "count": 3,
+        "frame": 24,
+        "start_tile": 8414
+      }
+    ],
+    "size": {
+      "height": 2,
+      "width": 35
+    }
+  },
+  "world_id": "6BAAC8B739403503F1A7714B8CC47013"
+}

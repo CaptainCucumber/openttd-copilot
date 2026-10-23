@@ -1,18 +1,21 @@
 # Custom OpenTTD engine
 
-M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
-[`CaptainCucumber/OpenTTD:copilot/m2d-tile-snapshot`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-tile-snapshot),
-commit `bf789a968cdf47ac54237a917402821d24e6dff6`. It extends the M2c
+M2 uses a narrow fork of OpenTTD 15.3. The current published engine branch is
+[`copilot/m2d-industry-snapshot`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-industry-snapshot), commit
+`9428e3ecdd98d066feb3f984bdeb266fe4a4c711`. It extends the industry/owner
+commits `55c0047690ccb2ba2bc4fa6688cb3b981fad89ab` and
+`4af552687f1bf06e9eb00df4a1312b8c740654cb`, plus the M2d tile
+commit `bf789a968cdf47ac54237a917402821d24e6dff6`, which extends the M2c
 commit `37f88cc03d88a99273297b2691f88c16f6926fc4`, itself based on M2b, M2a and upstream
 `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All four commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0004 in order to the upstream revision if not using the fork branch.
+All seven commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0007 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
 ```sh
-git clone --branch copilot/m2d-tile-snapshot \
+git clone --branch copilot/m2d-industry-snapshot \
   https://github.com/CaptainCucumber/OpenTTD.git vendor/openttd-copilot-engine
 cmake -S vendor/openttd-copilot-engine -B build/openttd-m2a \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -31,8 +34,16 @@ Protocol version 3 keeps the authenticated, loopback-only Admin boundary and
 includes identity, one typed single-rail mutation, operation-status, and paged
 vehicle-event requests. An additive read-only request returns up to 32 contiguous
 tile records per page with tile validity/type, ownership, slope, height, and
-plain/crossing rail geometry. See [tile probe instructions](../docs/NATIVE_TILE_PROBE.md)
-and [report](../docs/M2D_TILE_REPORT.md).
+plain/crossing rail geometry. A later fix treats house and industry tiles as
+unowned, avoiding an OpenTTD owner-lookup assertion. A second read-only request
+returns up to 16 industry IDs, types, anchor tiles, and produced/accepted cargo
+IDs per page. See [tile probe instructions](../docs/NATIVE_TILE_PROBE.md),
+[industry probe instructions](../docs/NATIVE_INDUSTRY_PROBE.md), and the
+[industry report](../docs/M2D_INDUSTRY_REPORT.md).
+Another additive query returns up to 16 company-specific train engine records
+per page with buildability, rail/cargo compatibility, default capacity, and
+prices; see the [catalog report](../docs/M2D_RAIL_CATALOG_REPORT.md) and
+[probe](../docs/NATIVE_RAIL_CATALOG_PROBE.md).
 The wrapper posts through OpenTTD's normal command pipeline and rejects costs
 above the supplied cap before execution. A versioned COPL save chunk stores
 world/operation identity and the terminal outcome; an external fsynced journal

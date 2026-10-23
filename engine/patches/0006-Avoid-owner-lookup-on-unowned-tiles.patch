@@ -1,0 +1,26 @@
+From 4af552687f1bf06e9eb00df4a1312b8c740654cb Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 11:13:23 -0700
+Subject: [PATCH] Avoid owner lookup on unowned house and industry tiles
+
+---
+ src/network/network_admin.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 66ef50ad6..fc9cba00e 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -726,7 +726,8 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotTiles(uint8_t requ
+ 		TileIndex tile{raw_tile};
+ 		bool valid = IsValidTile(tile);
+ 		TileType type = valid ? GetTileType(tile) : MP_VOID;
+-		Owner owner = valid ? GetTileOwner(tile) : OWNER_NONE;
++		/* Houses and industries have no company owner; GetTileOwner asserts there. */
++		Owner owner = valid && type != MP_HOUSE && type != MP_INDUSTRY ? GetTileOwner(tile) : OWNER_NONE;
+ 		Slope slope = valid ? GetTileSlope(tile) : SLOPE_FLAT;
+ 		uint height = valid ? TileHeight(tile) : 0;
+ 		bool rail = valid && (IsPlainRailTile(tile) || IsLevelCrossingTile(tile));
+-- 
+2.49.0
+

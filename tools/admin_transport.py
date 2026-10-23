@@ -44,9 +44,13 @@ _COPILOT_BUILD_SINGLE_RAIL = 1
 _COPILOT_OPERATION_STATUS = 2
 _COPILOT_VEHICLE_EVENTS = 3
 _COPILOT_TILE_SNAPSHOT = 4
+_COPILOT_INDUSTRY_SNAPSHOT = 5
+_COPILOT_RAIL_CATALOG = 6
 _MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
 _MAX_COPILOT_EVENTS = 16
 _MAX_COPILOT_TILE_SNAPSHOT_COUNT = 32
+_MAX_COPILOT_INDUSTRY_SNAPSHOT_COUNT = 16
+_MAX_COPILOT_RAIL_CATALOG_COUNT = 16
 _COPILOT_OPERATION_STATE_NAMES = {
     0: "empty",
     1: "pending",
@@ -576,6 +580,258 @@ class AdminClient:
                 "tiles": tiles,
             }
         )
+        return response
+
+    def copilot_industry_snapshot(
+        self,
+        world_id: str,
+        start_index: int,
+        count: int,
+        timeout: float | None = None,
+        request_id: int | None = None,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+    ) -> dict[str, Any]:
+        """Read one bounded page of industry IDs, locations, and cargo types.
+
+        ``start_index`` is an ordinal in the engine's industry-pool iteration.
+        Continue at ``start_index + count`` until a short page is returned; if
+        the total is an exact multiple of the page size, one final empty page
+        signals exhaustion. Locations are the industry's anchor tile, not its
+        full footprint. Pages are individually frame-stamped, not atomic.
+        """
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        start_index = self._check_uint("start_index", start_index, 32)
+        if (
+            isinstance(count, bool)
+            or not isinstance(count, int)
+            or not 1 <= count <= _MAX_COPILOT_INDUSTRY_SNAPSHOT_COUNT
+        ):
+            raise ValueError(
+                f"count must be an integer from 1 through {_MAX_COPILOT_INDUSTRY_SNAPSHOT_COUNT}"
+            )
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIIB", protocol_version, _COPILOT_INDUSTRY_SNAPSHOT,
+            request_id, start_index, count
+        ) + world
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        self.events.append({
+            "time": time.time(), "direction": "sent", "packet_type": "copilot_industry_snapshot",
+            "packet_length": len(payload) + _HEADER_SIZE, "request_id": request_id,
+            "protocol_version": protocol_version, "start_index": start_index, "count": count,
+        })
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_industry_snapshot(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append({
+                    "time": time.time(), "direction": "received", "packet_type": "copilot_industry_snapshot",
+                    "packet_length": len(response_payload) + _HEADER_SIZE, "request_id": request_id,
+                    "status": response["status"],
+                })
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                if response["world_id"] != world_id:
+                    raise AdminProtocolError("Copilot industry snapshot response world ID mismatch")
+                if response["start_index"] != start_index or response["count"] > count:
+                    raise AdminProtocolError("Copilot industry snapshot response range mismatch")
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+
+    @staticmethod
+    def _decode_copilot_industry_snapshot(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version, "request_kind": request_kind, "request_id": request_id, "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_INDUSTRY_SNAPSHOT:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_size = struct.calcsize("<IIB")
+        if position + fixed_size > len(payload):
+            raise AdminProtocolError("truncated Copilot industry snapshot response")
+        frame, start_index, count = struct.unpack_from("<IIB", payload, position)
+        position += fixed_size
+        if count > _MAX_COPILOT_INDUSTRY_SNAPSHOT_COUNT:
+            raise AdminProtocolError("Copilot industry snapshot response exceeds industry limit")
+        industries: list[dict[str, Any]] = []
+        for _ in range(count):
+            if position + 8 > len(payload):
+                raise AdminProtocolError("truncated Copilot industry snapshot record")
+            industry_id, industry_type, tile = struct.unpack_from("<HBI", payload, position)
+            position += 7
+            produced_count = payload[position]
+            position += 1
+            if produced_count > 16 or position + produced_count + 1 > len(payload):
+                raise AdminProtocolError("invalid or truncated produced cargo list")
+            produced = list(payload[position:position + produced_count])
+            position += produced_count
+            accepted_count = payload[position]
+            position += 1
+            if accepted_count > 16 or position + accepted_count > len(payload):
+                raise AdminProtocolError("invalid or truncated accepted cargo list")
+            accepted = list(payload[position:position + accepted_count])
+            position += accepted_count
+            if 255 in produced or 255 in accepted:
+                raise AdminProtocolError("invalid cargo type in industry snapshot")
+            industries.append({
+                "industry_id": industry_id, "industry_type": industry_type, "tile": tile,
+                "produced_cargo": produced, "accepted_cargo": accepted,
+            })
+        if position != len(payload):
+            raise AdminProtocolError("Copilot industry snapshot response has trailing data")
+        response.update({
+            "world_id": world_id, "frame": frame, "start_index": start_index,
+            "count": count, "industries": industries,
+        })
+        return response
+
+    def copilot_rail_catalog(
+        self,
+        world_id: str,
+        company_id: int,
+        start_index: int,
+        count: int,
+        timeout: float | None = None,
+        request_id: int | None = None,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+    ) -> dict[str, Any]:
+        """Read a bounded rail-engine page; prices are nonnegative engine money units."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        start_index = self._check_uint("start_index", start_index, 32)
+        if (
+            isinstance(count, bool)
+            or not isinstance(count, int)
+            or not 1 <= count <= _MAX_COPILOT_RAIL_CATALOG_COUNT
+        ):
+            raise ValueError(
+                f"count must be an integer from 1 through {_MAX_COPILOT_RAIL_CATALOG_COUNT}"
+            )
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIBIB", protocol_version, _COPILOT_RAIL_CATALOG,
+            request_id, company_id, start_index, count
+        ) + world
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        self.events.append({
+            "time": time.time(), "direction": "sent", "packet_type": "copilot_rail_catalog",
+            "packet_length": len(payload) + _HEADER_SIZE, "request_id": request_id,
+            "protocol_version": protocol_version, "company_id": company_id,
+            "start_index": start_index, "count": count,
+        })
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_rail_catalog(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append({
+                    "time": time.time(), "direction": "received", "packet_type": "copilot_rail_catalog",
+                    "packet_length": len(response_payload) + _HEADER_SIZE, "request_id": request_id,
+                    "status": response["status"],
+                })
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                if response["world_id"] != world_id:
+                    raise AdminProtocolError("Copilot rail catalog response world ID mismatch")
+                if response["company_id"] != company_id:
+                    raise AdminProtocolError("Copilot rail catalog response company ID mismatch")
+                if response["start_index"] != start_index or response["count"] > count:
+                    raise AdminProtocolError("Copilot rail catalog response range mismatch")
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+
+    @staticmethod
+    def _decode_copilot_rail_catalog(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version, "request_kind": request_kind, "request_id": request_id, "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_RAIL_CATALOG:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_format = "<IBQIB"
+        fixed_size = struct.calcsize(fixed_format)
+        if position + fixed_size > len(payload):
+            raise AdminProtocolError("truncated Copilot rail catalog response")
+        frame, company_id, company_railtypes, start_index, count = struct.unpack_from(
+            fixed_format, payload, position
+        )
+        position += fixed_size
+        if count > _MAX_COPILOT_RAIL_CATALOG_COUNT:
+            raise AdminProtocolError("Copilot rail catalog response exceeds engine limit")
+        record_format = "<HBBQBIQQQHHHB"
+        record_size = struct.calcsize(record_format)
+        if position + count * record_size > len(payload):
+            raise AdminProtocolError("truncated Copilot rail catalog record")
+        engines: list[dict[str, Any]] = []
+        for _ in range(count):
+            (engine_id, buildable, railveh_type, railtypes, default_cargo, default_capacity,
+             refit_mask, purchase_cost, running_cost, max_speed, power, weight,
+             shorten_factor) = struct.unpack_from(record_format, payload, position)
+            position += record_size
+            if buildable not in (0, 1):
+                raise AdminProtocolError("invalid buildable marker in rail catalog")
+            if railveh_type not in (0, 1, 2):
+                raise AdminProtocolError("invalid rail vehicle class in rail catalog")
+            if default_cargo != 255 and default_cargo >= 64:
+                raise AdminProtocolError("invalid default cargo in rail catalog")
+            if purchase_cost > 0x7FFFFFFFFFFFFFFF or running_cost > 0x7FFFFFFFFFFFFFFF:
+                raise AdminProtocolError("engine cost exceeds the signed Money range")
+            engines.append({
+                "engine_id": engine_id, "buildable": bool(buildable),
+                "railveh_type": railveh_type, "railtypes": railtypes,
+                "default_cargo": default_cargo, "default_capacity": default_capacity,
+                "refit_mask": refit_mask, "purchase_cost": purchase_cost,
+                "running_cost": running_cost, "max_speed": max_speed,
+                "power": power, "weight": weight, "shorten_factor": shorten_factor,
+            })
+        if position != len(payload):
+            raise AdminProtocolError("Copilot rail catalog response has trailing data")
+        response.update({
+            "world_id": world_id, "frame": frame, "company_id": company_id,
+            "company_railtypes": company_railtypes, "start_index": start_index,
+            "count": count, "engines": engines,
+        })
         return response
 
     def _copilot_vehicle_events_request(
