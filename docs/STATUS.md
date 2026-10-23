@@ -5,7 +5,7 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through the M2d industry and rail-catalog seams are on `origin/main`. This session adds station/depot and train-part readback. The clean engine branch is published at `5f8b9d56af8f03e7794ef941e0172cbdff85c0de`; Copilot repository publication is recorded in the work log. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified at handoff.
+- Planning and implementation checkpoints through the M2d train-order seam are on `origin/main`. This session adds native train-order readback. The clean engine branch is published at `5f8e025d70c9eb6faeca1bc797b1377039ed0ca8`; Copilot repository publication for this checkpoint is pending. Preserve the no-reply Git identity for both repositories.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
@@ -20,7 +20,9 @@ Updated: 2026-10-23, America/Vancouver.
 
 **M2d now has industry and company rail-catalog read-only checkpoints.** Protocol-v3 industry pages report ID/type, anchor tile, and produced/accepted cargo IDs; the copied control save returned 13 industries. Rail catalog pages returned 116 train definitions, 14 currently buildable for human company 0, with compatibility and price fields. A wider tile sweep exposed and corrected an earlier assertion on house/industry owner lookup. The clean committed fork passed copied-save query and reload gates with no gameplay mutation. See the [industry report](M2D_INDUSTRY_REPORT.md), [catalog report](M2D_RAIL_CATALOG_REPORT.md), and their [industry](evidence/2026-10-23-native-industry-probe.json) and [catalog](evidence/2026-10-23-native-rail-catalog-probe.json) evidence.
 
-**M2d also has read-only existing-asset checkpoints.** Company rail station/depot pages read a copied control station and a depot plus coal-accepting destination station in a copied service save. Bounded train-part pages returned a two-part locomotive/wagon consist with actual cargo and capacity. All four observation probes passed against the clean `5f8b9d56af` engine build. See the [rail assets](M2D_RAIL_ASSETS_REPORT.md) and [train parts](M2D_TRAIN_PARTS_REPORT.md) reports. These observations do not prove native purchase, orders, station placement, or route construction.
+**M2d also has read-only existing-asset checkpoints.** Company rail station/depot pages read a copied control station and a depot plus coal-accepting destination station in a copied service save. Bounded train-part pages returned a two-part locomotive/wagon consist with actual cargo and capacity. These probes passed against the clean `5f8b9d56af` engine build. See the [rail assets](M2D_RAIL_ASSETS_REPORT.md) and [train parts](M2D_TRAIN_PARTS_REPORT.md) reports. These observations do not prove native purchase, station placement, or route construction.
+
+**M2d now includes train-order readback.** Protocol-v3 kind 9 pages up to 16 orders for an explicit owned primary train and reports engine-decoded type, destination, load/unload policy, and non-stop flags. Non-applicable fields are explicitly marked unavailable for other order types. OpenTTD 15.3 on a copied service save returned the full-load order to station 0 and no-load/unload order to station 1, unchanged after reload. Wrong-world, missing-company, and missing-train requests were rejected. See the [train-order report](M2D_TRAIN_ORDERS_REPORT.md) and [source-hashed evidence](evidence/2026-10-23-native-train-orders-probe.json). This observes configuration; it does not construct or validate a route.
 
 The first model-free local chat seam remains a disposable fixture demonstration. It opens a generated map, reads a bounded industry summary, waits for the supported coal request, runs the one-train vehicle probe after `build`, and shows the live/completed world. It is not the M2 route planner or a production adapter.
 
@@ -30,17 +32,17 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
-| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d observation slices proven** | Identity, one typed mutation, vehicle-tagged service observation, tiles, industries, rail catalog, existing rail assets, and train parts proven; planner and native complete-route construction remain open. |
+| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d observation slices proven** | Identity, one typed mutation, vehicle-tagged service observation, tiles, industries, rail catalog, existing rail assets, train parts, and train orders proven; planner and native complete-route construction remain open. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
 | M5: usable local alpha | Planned | No implementation |
 
 ## Next work, in order
 
-1. **M2d — Deterministic complete rail job:** add industry footprints/names, station tile geometry, train orders, and relevant settings; then station/depot search, directed route planning, whole-job pricing, sequential typed execution, and two verified full-load deliveries. Tile, industry cargo, company rail catalog, existing station/depot, and train-part pages are available. Revalidate non-atomic observations before construction.
+1. **M2d — Deterministic complete rail job:** add industry footprints/names, complete station tile geometry, and relevant settings; then station/depot search, directed route planning, whole-job pricing, sequential typed execution, and two verified full-load deliveries. Tile, industry cargo, company rail catalog, existing station/depot, train-part, and train-order pages are available. Revalidate non-atomic observations before construction.
 2. **M3 recovery tests:** fault-inject the pending-save and mutation/save/journal windows; do not retry an uncertain operation without reconciliation.
 
-M1 and M2a–M2c are complete. The bridge only mutates one clear flat rail tile per world; M2's planning and native end-to-end railway gate remain open.
+M1 and M2a–M2c are complete. M2d has read-only data seams and the bridge still mutates only one clear flat rail tile per world; planning and native end-to-end railway gates remain open.
 
 ## Implemented and tested checkpoint
 
@@ -59,6 +61,7 @@ M1 and M2a–M2c are complete. The bridge only mutates one clear flat rail tile 
 - `tools/run_native_rail_catalog_probe.py`: read-only M2d human-company rail catalog gate. Final regression run `artifacts/native-rail-catalog-probe/20261023T183111Z-70babcc2/` passed against the same clean fork and observed 116 train definitions, 14 currently buildable. Wrong-world/missing-company rejection and fresh-process reload passed. No mutation request was sent.
 - `tools/run_native_rail_assets_probe.py`: clean-build gate `artifacts/native-rail-assets-probe/20261023T183111Z-bd545e5d/` read the control station and service-world depot/two stations, including coal acceptance at the destination; wrong-world/missing-company and copied-save reload passed.
 - `tools/run_native_train_parts_probe.py`: clean-build gate `artifacts/native-train-parts-probe/20261023T183058Z-927cf8e9/` returned no control-world train and one service-world two-part consist (primary train 2, wagon 3) with reciprocal links and coal cargo/capacity. No gameplay mutation request was sent.
+- `tools/run_native_train_orders_probe.py`: clean-build gate `artifacts/native-train-orders-probe/20261023T200105Z-b32c26c8/` observed train 2's two orders: full load at station 0, then no-load/unload at station 1. Typed wrong-world, missing-company, and missing-train rejections and copied-save reload persistence passed. Normal config/saves and the source service save were unchanged.
 - Normal profile configuration and three original saves retain identical content hashes and modification times. Failed setup attempts are retained and described in the work log.
 
 ## Confirmed decisions and provisional defaults
@@ -82,4 +85,4 @@ The user answered both initial questions during this session. Remaining environm
 
 ## Known uncertainties
 
-General native mutation compatibility beyond one clear flat tile; complete-job cost accounting; pending-operation save/load fault injection; mutation/journal/save crash windows; rejected/uncertain-operation resolution beyond the tested cases; event-ring overflow and save/reload continuity in a real game; route-planner coverage; backwards/forwards handling of saves written by the custom build. Read-only pages can span frames. Tile rail bits exclude station/depot geometry; industry anchors omit footprints/names; current station acceptance does not prove candidate catchment; train parts omit orders and purchase identity. Catalog values still need purchase/refit validation and resulting consist readback. M2c proves vehicle-tagged observation in an isolated GameScript-built service, not native complete-route construction.
+General native mutation compatibility beyond one clear flat tile; complete-job cost accounting; pending-operation save/load fault injection; mutation/journal/save crash windows; rejected/uncertain-operation resolution beyond the tested cases; event-ring overflow and save/reload continuity in a real game; route-planner coverage; backwards/forwards handling of saves written by the custom build. Read-only pages can span frames. Tile rail bits exclude station/depot geometry; industry anchors omit footprints/names; current station acceptance does not prove candidate catchment; train and order pages do not prove purchase identity or route reachability. Catalog values still need purchase/refit validation and resulting consist readback. M2c proves vehicle-tagged observation in an isolated GameScript-built service, not native complete-route construction.

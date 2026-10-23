@@ -48,6 +48,7 @@ _COPILOT_INDUSTRY_SNAPSHOT = 5
 _COPILOT_RAIL_CATALOG = 6
 _COPILOT_RAIL_ASSETS = 7
 _COPILOT_TRAIN_PARTS = 8
+_COPILOT_TRAIN_ORDERS = 9
 _MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
 _MAX_COPILOT_EVENTS = 16
 _MAX_COPILOT_TILE_SNAPSHOT_COUNT = 32
@@ -55,6 +56,7 @@ _MAX_COPILOT_INDUSTRY_SNAPSHOT_COUNT = 16
 _MAX_COPILOT_RAIL_CATALOG_COUNT = 16
 _MAX_COPILOT_RAIL_ASSET_COUNT = 16
 _MAX_COPILOT_TRAIN_PART_COUNT = 16
+_MAX_COPILOT_TRAIN_ORDER_COUNT = 16
 _MAX_COPILOT_TRAIN_SCAN_BUDGET = 256
 _COPILOT_INITIAL_VEHICLE_CURSOR = 0xFFFFFFFF
 _COPILOT_OPERATION_STATE_NAMES = {
@@ -1032,6 +1034,117 @@ class AdminClient:
             if packet_type == _SERVER_GAMESCRIPT:
                 message = self._decode_gamescript(response_payload, "received", len(response_payload) + _HEADER_SIZE)
                 self._preserve_response(message)
+
+    def copilot_train_orders(
+        self, world_id: str, company_id: int, vehicle_id: int,
+        start_index: int = 0, count: int = _MAX_COPILOT_TRAIN_ORDER_COUNT,
+        timeout: float | None = None, request_id: int | None = None,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+    ) -> dict[str, Any]:
+        """Read a bounded page of a primary train's observed order list."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        vehicle_id = self._check_uint("vehicle_id", vehicle_id, 32)
+        if vehicle_id > 0xFFFFF:
+            raise ValueError("vehicle_id must be a legal vehicle ID")
+        start_index = self._check_uint("start_index", start_index, 16)
+        if (isinstance(count, bool) or not isinstance(count, int) or
+                not 1 <= count <= _MAX_COPILOT_TRAIN_ORDER_COUNT):
+            raise ValueError(f"count must be an integer from 1 through {_MAX_COPILOT_TRAIN_ORDER_COUNT}")
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack("<HBIBIHB", protocol_version, _COPILOT_TRAIN_ORDERS,
+                              request_id, company_id, vehicle_id, start_index, count) + world
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        packet_name = "copilot_train_orders"
+        self.events.append({"time": time.time(), "direction": "sent", "packet_type": packet_name,
+                            "packet_length": len(payload) + _HEADER_SIZE, "request_id": request_id,
+                            "company_id": company_id, "vehicle_id": vehicle_id,
+                            "start_index": start_index, "count": count})
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_train_orders(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append({"time": time.time(), "direction": "received", "packet_type": packet_name,
+                                    "packet_length": len(response_payload) + _HEADER_SIZE,
+                                    "request_id": request_id, "status": response["status"]})
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                if (response["world_id"] != world_id or response["company_id"] != company_id
+                        or response["vehicle_id"] != vehicle_id
+                        or response["start_index"] != start_index):
+                    raise AdminProtocolError("Copilot train orders response selector mismatch")
+                if response["count"] > count or start_index + response["count"] > response["total_orders"]:
+                    raise AdminProtocolError("Copilot train orders response exceeds requested range")
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(response_payload, "received", len(response_payload) + _HEADER_SIZE)
+                self._preserve_response(message)
+
+    @staticmethod
+    def _decode_copilot_train_orders(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {"version": version, "request_kind": request_kind,
+                                    "request_id": request_id, "status": status}
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_TRAIN_ORDERS:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_format = "<IBIHHB"
+        fixed_size = struct.calcsize(fixed_format)
+        if position + fixed_size > len(payload):
+            raise AdminProtocolError("truncated Copilot train orders response")
+        frame, company_id, vehicle_id, total_orders, start_index, count = struct.unpack_from(
+            fixed_format, payload, position)
+        position += fixed_size
+        if count > _MAX_COPILOT_TRAIN_ORDER_COUNT or start_index > total_orders:
+            raise AdminProtocolError("invalid Copilot train order page range")
+        record_format = "<BIBBB"
+        record_size = struct.calcsize(record_format)
+        if position + count * record_size > len(payload):
+            raise AdminProtocolError("truncated Copilot train order record")
+        orders = []
+        for _ in range(count):
+            order_type, destination_id, load_type, unload_type, nonstop_flags = struct.unpack_from(
+                record_format, payload, position)
+            position += record_size
+            if order_type > 8:
+                raise AdminProtocolError("invalid Copilot train order type")
+            has_destination = order_type in (1, 2, 6)
+            if has_destination == (destination_id == 0xFFFFFFFF):
+                raise AdminProtocolError("invalid Copilot train order destination")
+            if order_type == 1:
+                if load_type not in (0, 2, 3, 4) or unload_type not in (0, 1, 2, 4):
+                    raise AdminProtocolError("invalid Copilot train order load/unload policy")
+            elif load_type != 0xFF or unload_type != 0xFF:
+                raise AdminProtocolError("non-station Copilot train order has load/unload policy")
+            if has_destination:
+                if nonstop_flags > 3:
+                    raise AdminProtocolError("invalid Copilot train order stop flags")
+            elif nonstop_flags != 0xFF:
+                raise AdminProtocolError("non-goto Copilot train order has stop flags")
+            orders.append({"order_type": order_type, "destination_id": destination_id,
+                           "load_type": load_type, "unload_type": unload_type,
+                           "nonstop_flags": nonstop_flags})
+        if position != len(payload):
+            raise AdminProtocolError("Copilot train orders response has trailing data")
+        response.update({"world_id": world_id, "frame": frame, "company_id": company_id,
+                         "vehicle_id": vehicle_id, "total_orders": total_orders,
+                         "start_index": start_index, "count": count, "orders": orders})
+        return response
 
     @staticmethod
     def _decode_copilot_train_parts(payload: bytes) -> dict[str, Any]:

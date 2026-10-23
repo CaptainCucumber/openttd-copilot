@@ -894,6 +894,92 @@ class AdminTransportTests(unittest.TestCase):
                 client.close()
                 server_sock.close()
 
+    def test_copilot_train_orders_page_and_bounds(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            orders = struct.pack("<BIBBB", 1, 0, 2, 0, 0)
+            orders += struct.pack("<BIBBB", 1, 1, 4, 1, 0)
+
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(struct.unpack_from("<HBIBIHB", payload),
+                                 (COPILOT_PROTOCOL_VERSION, 9, 51, 0, 2, 0, 16))
+                self.assertEqual(payload[struct.calcsize("<HBIBIHB"):], b"world-123\0")
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 9, 51, 0)
+                response += b"world-123\0" + struct.pack("<IBIHHB", 900, 0, 2, 2, 0, 2)
+                response += orders
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_train_orders("world-123", 0, 2, request_id=51)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual((result["frame"], result["total_orders"], result["count"]),
+                             (900, 2, 2))
+            self.assertEqual(result["orders"], [
+                {"order_type": 1, "destination_id": 0, "load_type": 2,
+                 "unload_type": 0, "nonstop_flags": 0},
+                {"order_type": 1, "destination_id": 1, "load_type": 4,
+                 "unload_type": 1, "nonstop_flags": 0},
+            ])
+        finally:
+            client.close()
+            server_sock.close()
+
+        client, server_sock = connected_client(timeout=1)
+        try:
+            response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 9, 53, 0)
+            response += b"world-123\0" + struct.pack("<IBIHHB", 901, 0, 2, 1, 0, 1)
+            response += struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0xFF, 0xFF, 0xFF)
+            server_sock.sendall(frame(130, response))
+            result = client.copilot_train_orders("world-123", 0, 2, request_id=53)
+            self.assertEqual(result["orders"], [{
+                "order_type": 7, "destination_id": 0xFFFFFFFF,
+                "load_type": 0xFF, "unload_type": 0xFF, "nonstop_flags": 0xFF,
+            }])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_train_orders_rejects_bad_bounds_and_records(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for kwargs in ({"vehicle_id": 0x100000}, {"start_index": 0x10000},
+                           {"count": 0}, {"count": 17}):
+                with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                    client.copilot_train_orders("world-123", 0, **{"vehicle_id": 2, **kwargs})
+        finally:
+            client.close()
+            server_sock.close()
+
+        fixed = struct.pack("<IBIHHB", 800, 0, 2, 1, 0, 1)
+        invalid = [
+            (fixed, b"", "truncated Copilot train order record"),
+            (struct.pack("<IBIHHB", 800, 0, 2, 1, 2, 0), b"", "page range"),
+            (fixed + struct.pack("<BIBBB", 9, 0, 2, 0, 0), b"", "order type"),
+            (fixed + struct.pack("<BIBBB", 1, 0xFFFFFFFF, 2, 0, 0), b"", "destination"),
+            (fixed + struct.pack("<BIBBB", 1, 0, 1, 0, 0), b"", "load/unload"),
+            (fixed + struct.pack("<BIBBB", 1, 0, 2, 0, 4), b"", "stop flags"),
+            (fixed + struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0, 0xFF, 0xFF), b"",
+             "non-station"),
+            (fixed + struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0xFF, 0xFF, 0), b"",
+             "non-goto"),
+            (fixed + struct.pack("<BIBBB", 1, 0, 2, 0, 0), b"x", "trailing data"),
+        ]
+        for page, suffix, message in invalid:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 9, 52, 0)
+                response += b"world-123\0" + page + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_train_orders("world-123", 0, 2, request_id=52)
+            finally:
+                client.close()
+                server_sock.close()
+
 
 if __name__ == "__main__":
     unittest.main()

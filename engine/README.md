@@ -2,13 +2,13 @@
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
 [`copilot/m2d-industry-snapshot`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-industry-snapshot), commit
-`5f8b9d56af8f03e7794ef941e0172cbdff85c0de`. It descends from the M2d
+`5f8e025d70c9eb6faeca1bc797b1377039ed0ca8`. It descends from the M2d
 tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All nine commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0009 in order to the upstream revision if not using the fork branch.
+All eleven commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0011 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
@@ -46,7 +46,12 @@ Read-only asset pages report existing company rail station platforms, current
 acceptance masks, and depots. A separate bounded vehicle-pool scan reports
 owned train consist parts and their links, cargo, and capacity. See the
 [assets report](../docs/M2D_RAIL_ASSETS_REPORT.md) and
-[train-parts report](../docs/M2D_TRAIN_PARTS_REPORT.md).
+[train-parts report](../docs/M2D_TRAIN_PARTS_REPORT.md). A separate bounded
+read-only request reports up to 16 engine-decoded orders for an explicit
+primary train, including type, destination, load/unload policy, and non-stop
+flags. Pages are frame-stamped and do not prove route reachability. See the
+[train-orders report](../docs/M2D_TRAIN_ORDERS_REPORT.md) and
+[probe instructions](../docs/NATIVE_TRAIN_ORDERS_PROBE.md).
 The wrapper posts through OpenTTD's normal command pipeline and rejects costs
 above the supplied cap before execution. A versioned COPL save chunk stores
 world/operation identity and the terminal outcome; an external fsynced journal

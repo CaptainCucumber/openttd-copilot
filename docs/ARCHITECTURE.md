@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: M2a identity, M2b bounded mutation, and M2c vehicle-tagged observation complete, 2026-10-23. M2d has read-only tile, industry, human-company rail catalog, station/depot, and train-part checkpoints, but complete route construction remains open. The custom OpenTTD 15.3 build exposes bounded world/company identity, one typed rail mutation, paged train departure/industry delivery events, and read-only world pages through authenticated loopback-only Admin packets independent of GameScript. See the [rail assets report](M2D_RAIL_ASSETS_REPORT.md), [train-parts report](M2D_TRAIN_PARTS_REPORT.md), and [D021](DECISIONS.md#d021--observe-bounded-train-consist-parts-without-inferring-orders).
+Status: M2a identity, M2b bounded mutation, and M2c vehicle-tagged observation complete, 2026-10-23. M2d has read-only tile, industry, human-company rail catalog, station/depot, train-part, and train-order checkpoints, but complete route construction remains open. The custom OpenTTD 15.3 build exposes bounded world/company identity, one typed rail mutation, paged train departure/industry delivery events, and read-only world/asset/configuration pages through authenticated loopback-only Admin packets independent of GameScript. See the [rail assets report](M2D_RAIL_ASSETS_REPORT.md), [train-parts report](M2D_TRAIN_PARTS_REPORT.md), [train-orders report](M2D_TRAIN_ORDERS_REPORT.md), and [D022](DECISIONS.md#d022--read-bounded-train-orders-without-expanding-mutation-scope).
 
 ## Responsibilities
 

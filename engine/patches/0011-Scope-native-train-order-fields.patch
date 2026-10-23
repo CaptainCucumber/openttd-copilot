@@ -1,0 +1,33 @@
+From 5f8e025d70c9eb6faeca1bc797b1377039ed0ca8 Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 13:05:02 -0700
+Subject: [PATCH] Scope train order fields by order type
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/network/network_admin.cpp | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 168c97e1d..2ffad6bc6 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -991,11 +991,12 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotTrainOrders(uint8_
+ 	response->Send_uint8(count);
+ 	for (uint16_t index = start_index; index < start_index + count; ++index) {
+ 		const Order &order = orders[index];
++		const bool station_order = order.IsType(OT_GOTO_STATION);
+ 		response->Send_uint8(to_underlying(order.GetType()));
+ 		response->Send_uint32(order.IsGotoOrder() ? order.GetDestination().base() : UINT32_MAX);
+-		response->Send_uint8(to_underlying(order.GetLoadType()));
+-		response->Send_uint8(to_underlying(order.GetUnloadType()));
+-		response->Send_uint8(order.GetNonStopType().base());
++		response->Send_uint8(station_order ? to_underlying(order.GetLoadType()) : UINT8_MAX);
++		response->Send_uint8(station_order ? to_underlying(order.GetUnloadType()) : UINT8_MAX);
++		response->Send_uint8(order.IsGotoOrder() ? order.GetNonStopType().base() : UINT8_MAX);
+ 	}
+ 	this->SendPacket(std::move(response));
+ 	return NETWORK_RECV_STATUS_OKAY;
+-- 
+2.49.0
+

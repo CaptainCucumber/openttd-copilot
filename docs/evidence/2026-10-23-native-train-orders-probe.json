@@ -1,0 +1,46 @@
+{
+  "artifact": "artifacts/native-train-orders-probe/20261023T200530Z-4dd7b9ba/manifest.json",
+  "binary_sha256": "4b7222f241b1b0ae5cad89bbe30227a4b3b60aeb68c5738029b3cf74a75b4090",
+  "checks": [
+    "service_train_orders",
+    "train_orders_reload"
+  ],
+  "elapsed_seconds": 1.612,
+  "engine_commit": "5f8e025d70c9eb6faeca1bc797b1377039ed0ca8",
+  "engine_revision": "20261023-m2d-industry-snapshot-g5f8e025d70",
+  "engine_source_hashes": {
+    "src/network/network_admin.cpp": "97e41cf3ed102d0eb23c0522d42aedc5ac04a3a0f7567a427b90ce81c324c4ee",
+    "src/network/network_admin.h": "e958537b30edc6835495e251f3cf107f32618e5fc20f841d91f1e69c30c3fe5a"
+  },
+  "gate": "M2d read-only native primary-train order snapshot",
+  "normal_profile_unchanged": true,
+  "openttd_version": "15.3",
+  "orders": [
+    {
+      "destination_id": 0,
+      "load_type": 2,
+      "nonstop_flags": 0,
+      "order_type": 1,
+      "unload_type": 0
+    },
+    {
+      "destination_id": 1,
+      "load_type": 4,
+      "nonstop_flags": 0,
+      "order_type": 1,
+      "unload_type": 1
+    }
+  ],
+  "runtime_checks": {
+    "missing_company_status": 3,
+    "missing_train_status": 7,
+    "source_save_unchanged": true,
+    "wrong_world_status": 5,
+    "reload_matches": true,
+    "temporary_secrets_removed": true
+  },
+  "seed": 20261021,
+  "service_save_sha256": "6ba172a071a87863dce334e26c696d0a1c3285730120bc8a130904283fd425b4",
+  "status": "success",
+  "train_id": 2
+}
