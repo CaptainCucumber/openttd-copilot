@@ -5,7 +5,7 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through the M2d industry-details slice are tracked on `origin/main`. The clean engine branch is published at `211e780180c021b208a87d2612f4c24be9f743a6`. Both repositories use the required no-reply Git identity.
+- Implementation and records through the M2d sequential-operation checkpoint are tracked on `origin/main`. The clean engine branch `copilot/m2d-sequential-rail` is published at `bded382135c91932c86f354f071b4f101af3b85e`. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
@@ -13,6 +13,8 @@ Updated: 2026-10-23, America/Vancouver.
 **M2a is complete: the selected native bridge now has a measured read-only seam.** A custom OpenTTD 15.3 branch based directly on revision `14ec60f…` adds one authenticated, versioned, loopback-only identity request/response independent of the GameScript slot. The custom build identified the world and sole human company from an isolated copy of the representative autosave, rejected an unsupported bridge version, and remained responsive while a saved foreign GameScript advanced from tick 10 to 13 with zero mutations. See the [M2a report](M2A_REPORT.md), [probe instructions](NATIVE_BRIDGE_PROBE.md), and [evidence](evidence/2026-10-23-native-bridge-probe.json).
 
 **M2b is complete as a bounded one-piece checkpoint, not a railway builder.** Protocol v2 posts one capped single-rail command through normal OpenTTD command validation, returns actual cost and tile/company readback, and saves world/operation sequence and outcome. The committed custom binary passed cap rejection, one 90-unit build, duplicate replay, save/reload replay, and older-save classification in an isolated copied world. See the [M2b report](M2B_REPORT.md), [probe instructions](NATIVE_MUTATION_PROBE.md), and [evidence](evidence/2026-10-23-native-mutation-probe.json). Fault-injected pending-save recovery and the mutation/save crash gap remain open.
+
+**M2d now supports bounded sequential native rail operations.** The clean custom build constructed two capped rail pieces for 90 units each, retained both outcomes across later commands and reload, and rejected changed-ID payloads and stale requests. COPL schema 2 retains 64 admitted records without eviction; all 64 were queried individually after reload, with exact old-ID replay causing no new charge. A completed schema-1 M2b save migrated and accepted a second command; older-save detection and source/profile preservation passed. This remains a rail-primitive checkpoint, not a route builder or whole-job budget. See [the sequence report](M2D_SEQUENCE_REPORT.md), [probe](NATIVE_SEQUENCE_PROBE.md), and [source-hashed evidence](evidence/2026-10-23-native-sequence-probe.json).
 
 **M2c is complete as a vehicle-observation checkpoint.** Protocol v3 reports train departure load/capacity and exact industry-accepted cargo with the paying vehicle ID through a bounded, paged, runtime-only event ring. The committed custom binary observed the isolated fixture's assigned train leave its mine twice at 30/30 coal and deliver to the intended power-station industry on both trips. The GameScript still built and operated that fixture; native full-route construction remains open. See the [M2c report](M2C_REPORT.md), [probe instructions](NATIVE_VEHICLE_PROBE.md), and [evidence](evidence/2026-10-23-native-vehicle-probe.json).
 
@@ -32,17 +34,17 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
-| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d observation slices proven** | Identity, one typed mutation, vehicle-tagged service observation, tiles, industries, rail catalog, existing rail assets, train parts, and train orders proven; planner and native complete-route construction remain open. |
+| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d observations and bounded rail sequencing proven** | Identity, retained capped rail commands, vehicle-tagged service observation, tiles, industries, rail catalog, existing rail assets, train parts, and train orders proven; planner and native complete-route construction remain open. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
 | M5: usable local alpha | Planned | No implementation |
 
 ## Next work, in order
 
-1. **M2d — Playable deterministic rail job:** replace the demo's synthetic businesses and fixed route with existing-world industry resolution, station/depot candidate search, directed route planning, whole-job pricing, sequential typed execution, and two verified full-load deliveries. The native command/persistence boundary must be extended safely before multi-command construction. Tile, industry name/bounds/cargo, company rail catalog, existing station/depot, train-part, and train-order pages are available; exact industry occupied tiles and station tile geometry remain observation gaps. Revalidate non-atomic observations before construction.
+1. **M2d — Native station/depot construction:** extend the retained typed-command boundary with capped station/depot commands, authoritative created-asset identity, and readback. Keep pending/uncertain/full-history refusal and normal engine validation. Follow with train purchase/configuration and the deterministic existing-business railway planner: station/depot candidate search, directed routing, whole-job pricing/reserve, sequential execution, and two verified full-load deliveries. Tile, industry name/bounds/cargo, rail catalog, existing assets, train parts, and orders are available; exact industry occupied tiles and station geometry remain observation gaps. Revalidate non-atomic observations before construction.
 2. **M3 recovery tests:** fault-inject the pending-save and mutation/save/journal windows; do not retry an uncertain operation without reconciliation.
 
-M1 and M2a–M2c are complete. A controlled fixture can build and verify a playable train service through the GameScript test harness. The production native bridge still mutates only one clear flat rail tile per world; arbitrary business selection, route planning, native end-to-end railway construction, and M3 recovery gates remain open.
+M1 and M2a–M2c are complete. A controlled fixture can build and verify a playable train service through the GameScript test harness. The native bridge now supports sequential flat-clear rail pieces within a non-evicting 64-record history; arbitrary business selection, station/depot/train construction, route planning, whole-job budget, native end-to-end railway construction, and M3 recovery gates remain open.
 
 ## Implemented and tested checkpoint
 
@@ -62,6 +64,7 @@ M1 and M2a–M2c are complete. A controlled fixture can build and verify a playa
 - `tools/run_native_rail_assets_probe.py`: clean-build gate `artifacts/native-rail-assets-probe/20261023T183111Z-bd545e5d/` read the control station and service-world depot/two stations, including coal acceptance at the destination; wrong-world/missing-company and copied-save reload passed.
 - `tools/run_native_train_parts_probe.py`: clean-build gate `artifacts/native-train-parts-probe/20261023T183058Z-927cf8e9/` returned no control-world train and one service-world two-part consist (primary train 2, wagon 3) with reciprocal links and coal cargo/capacity. No gameplay mutation request was sent.
 - `tools/run_native_train_orders_probe.py`: clean-build gate `artifacts/native-train-orders-probe/20261023T200105Z-b32c26c8/` observed train 2's two orders: full load at station 0, then no-load/unload at station 1. Typed wrong-world, missing-company, and missing-train rejections and copied-save reload persistence passed. Normal config/saves and the source service save were unchanged.
+- `tools/run_native_sequence_probe.py`: clean-engine gate `artifacts/native-sequence-probe/20261023T213034Z-f2d4546a/` passed nine checks in 11.716 seconds. Two 90-unit native builds reduced cash 99,160 -> 98,980, with loan unchanged at 100,000. All 64 admitted outcomes survived individual reload checks; journal-full, stale/conflict, schema-1 migration, old-ID replay, older-save detection, and source/profile preservation passed. All 122 Python tests pass.
 - Normal profile configuration and three original saves retain identical content hashes and modification times. Failed setup attempts are retained and described in the work log.
 
 ## Confirmed decisions and provisional defaults

@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: M1 and M2a–M2c complete; M2d is in progress.** A new MCP entry point lets a compatible AI client open a disposable OpenTTD map, request the supported coal-railway demo, and inspect verified job status. The current playable job is still a controlled GameScript fixture: it creates test coal industries and a straight railway, rather than planning between arbitrary businesses. The native bridge still mutates only one rail tile per world.
+**Status: M1 and M2a–M2c complete; M2d is in progress.** An MCP entry point lets a compatible AI client open a disposable OpenTTD map, request the supported coal-railway demo, and inspect verified job status. The current playable job is still a controlled GameScript fixture: it creates test coal industries and a straight railway, rather than planning between arbitrary businesses. The native bridge now supports bounded sequential rail pieces with retained outcomes, but cannot yet construct stations, depots, trains, or a complete route.
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -28,6 +28,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [M2b mutation report](docs/M2B_REPORT.md) | Single-piece mutation, saved outcome evidence, and recovery limits |
 | [M2c vehicle report](docs/M2C_REPORT.md) | Vehicle-tagged full departures and deliveries in the isolated fixture |
 | [M2d tile report](docs/M2D_TILE_REPORT.md) | Bounded read-only tile data for the future planner |
+| [M2d sequence report](docs/M2D_SEQUENCE_REPORT.md) | Sequential capped native rail commands and retained outcomes across reload |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 

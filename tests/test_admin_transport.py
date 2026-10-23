@@ -429,6 +429,7 @@ class AdminTransportTests(unittest.TestCase):
             9: "journal is busy",
             10: "was not found",
             11: "stale Copilot world journal position",
+            12: "journal is full",
         }
         for status, message in messages.items():
             client, server_sock = connected_client(timeout=1)

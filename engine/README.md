@@ -1,19 +1,20 @@
 # Custom OpenTTD engine
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
-[`copilot/m2d-industry-snapshot`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-industry-snapshot), commit
-`211e780180c021b208a87d2612f4c24be9f743a6`. It descends from the M2d
+[`copilot/m2d-sequential-rail`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-sequential-rail), commit
+`bded382135c91932c86f354f071b4f101af3b85e`. It descends from industry-details
+commit `211e780180c021b208a87d2612f4c24be9f743a6`, the M2d
 tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All twelve commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0012 in order to the upstream revision if not using the fork branch.
+All thirteen commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0013 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
 ```sh
-git clone --branch copilot/m2d-industry-snapshot \
+git clone --branch copilot/m2d-sequential-rail \
   https://github.com/CaptainCucumber/OpenTTD.git vendor/openttd-copilot-engine
 cmake -S vendor/openttd-copilot-engine -B build/openttd-m2a \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -60,8 +61,16 @@ flags. Pages are frame-stamped and do not prove route reachability. See the
 The wrapper posts through OpenTTD's normal command pipeline and rejects costs
 above the supplied cap before execution. A versioned COPL save chunk stores
 world/operation identity and the terminal outcome; an external fsynced journal
-records intent before send. The first slice allows one operation on a flat,
-clear tile per world. It is not a general command transport or route builder.
+records intent before send. The sequential checkpoint retains up to 64 admitted
+operations without eviction, each still restricted to one rail piece on a flat,
+clear tile. Rejected attempts preserve the last-success head but consume a
+record. Pending/uncertain work blocks new admission; a full journal explicitly
+rejects new IDs while preserving old status/replay. COPL schema 2 persists the
+history and migrates schema-1 saves. Historical replies contain original outcome
+fields and current global position/live readback, not historical snapshots.
+External intent remains one retained fsynced file per operation. This is not a
+general command transport, whole-job budget, or route builder. See
+[the sequence probe](../docs/NATIVE_SEQUENCE_PROBE.md).
 See [M2b probe instructions](../docs/NATIVE_MUTATION_PROBE.md) and
 [report](../docs/M2B_REPORT.md) for tested and untested recovery boundaries.
 The runtime-only event ring reports train station departures and accepted

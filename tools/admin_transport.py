@@ -103,6 +103,7 @@ class CopilotBridgeError(AdminTransportError):
         9: "Copilot operation journal is busy",
         10: "Copilot operation was not found",
         11: "stale Copilot world journal position",
+        12: "Copilot operation journal is full; retained outcomes cannot be evicted",
     }
 
     def __init__(self, status: int) -> None:

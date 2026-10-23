@@ -1,0 +1,67 @@
+{
+  "status": "success",
+  "scope": "M2d bounded sequential flat-clear rail operations, not a complete railway",
+  "raw_manifest": "artifacts/native-sequence-probe/20261023T213034Z-f2d4546a/manifest.json",
+  "elapsed_seconds": 11.716,
+  "engine": {
+    "version": "15.3 custom build",
+    "commit": "bded382135c91932c86f354f071b4f101af3b85e",
+    "revision": "20261023-m2d-sequential-rail-gbded382135",
+    "clean": true,
+    "binary_sha256": "4b60ede3538ce236d57b9d8f1219cac4c75a9d016b3baaa2caca4e828e612f1e"
+  },
+  "fixture": {
+    "map": "128x128 temperate",
+    "seed": 20261021,
+    "company_id": 0,
+    "tiles": [8255, 8254],
+    "rail_type": 0,
+    "track": 1,
+    "per_command_cap": 1000,
+    "actual_costs": [90, 90],
+    "cash": [99160, 99070, 98980],
+    "loan_unchanged": 100000,
+    "sequence": [0, 1, 2]
+  },
+  "checks": {
+    "historical_replay_without_mutation": true,
+    "changed_payload_conflict_status": 8,
+    "stale_position_status": 11,
+    "rejections_preserve_successful_head": true,
+    "retained_records": 64,
+    "completed_records": 2,
+    "rejected_records": 62,
+    "journal_full_status": 12,
+    "records_individually_verified_after_reload": 64,
+    "schema1_migration_and_new_operation_reload": true,
+    "migrated_old_id_build_replay_after_reload": true,
+    "older_save_detected": true,
+    "main_source_save_unchanged": true,
+    "legacy_source_save_unchanged": true,
+    "normal_profile_unchanged": true,
+    "temporary_secret_files_removed": true,
+    "python_tests": 122
+  },
+  "source_sha256": {
+    "tools/admin_transport.py": "4bc0bd5d36974ef62c86e9eaef0520fb409811a34ec21d9d5235be01e453e955",
+    "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+    "tools/run_native_mutation_probe.py": "c76b6a03a4634c3652d8412d57e0f9a6a465f8bf6ff662a260534814c9bc6141",
+    "tools/run_native_sequence_probe.py": "bec32705931ff433dc0d3c5fa2d52726ad50305281057c32cae54fcd2deeceab",
+    "engine/src/copilot_cmd.cpp": "6d1f1900564196e23ea6a362b69928452d11961aaf1482dfec980db751e87a1d",
+    "engine/src/copilot_cmd.h": "1aedcbfd3d1373b8d1dd35efbaba2fcb92b968fe58aec5ad7eda60094234d84e",
+    "engine/src/network/network_admin.cpp": "1e19051ab7f29dc63f4c06712717441f97c44d89171872c678cf2aa6f1b68649",
+    "engine/src/network/network_admin.h": "c4799573b4013d8848c552cd4bd327e1c57a671e8ab17b15a79e43122c3d6a8f",
+    "engine/src/saveload/copilot_sl.cpp": "e17cbde7fb1b33958d4d02976afa96047225b12b18e4ff48025528ab07161e9b"
+  },
+  "not_proven": [
+    "connected route or native train service",
+    "station, depot, train purchase or order commands",
+    "existing-industry routing",
+    "whole-job budget and operating reserve",
+    "pending-save fault injection",
+    "mutation/save crash-gap closure",
+    "corrupt-save negative fixtures",
+    "multiplayer synchronization",
+    "stock-build save compatibility"
+  ]
+}

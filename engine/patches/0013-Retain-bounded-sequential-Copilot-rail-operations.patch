@@ -1,0 +1,329 @@
+From bded382135c91932c86f354f071b4f101af3b85e Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 14:26:13 -0700
+Subject: [PATCH] Retain bounded sequential Copilot rail operations
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/copilot_cmd.cpp           | 23 ++++++++++
+ src/copilot_cmd.h             | 12 +++---
+ src/network/network_admin.cpp | 81 ++++++++++++++++++++---------------
+ src/network/network_admin.h   |  3 +-
+ src/saveload/copilot_sl.cpp   | 48 ++++++++++++++++++---
+ 5 files changed, 122 insertions(+), 45 deletions(-)
+
+diff --git a/src/copilot_cmd.cpp b/src/copilot_cmd.cpp
+index f40ecde8b..d02ba72eb 100644
+--- a/src/copilot_cmd.cpp
++++ b/src/copilot_cmd.cpp
+@@ -18,10 +18,33 @@
+ #include "safeguards.h"
+ 
+ CopilotOperation _copilot_operation;
++std::vector<CopilotOperation> _copilot_operation_history;
+ 
+ void ResetCopilotOperation()
+ {
+ 	_copilot_operation = {};
++	_copilot_operation_history.clear();
++}
++
++const CopilotOperation *FindCopilotOperation(uint64_t operation_hi, uint64_t operation_lo)
++{
++	if (_copilot_operation.state != to_underlying(CopilotOperationState::Empty) &&
++			_copilot_operation.operation_hi == operation_hi && _copilot_operation.operation_lo == operation_lo) {
++		return &_copilot_operation;
++	}
++	for (const CopilotOperation &operation : _copilot_operation_history) {
++		if (operation.operation_hi == operation_hi && operation.operation_lo == operation_lo) return &operation;
++	}
++	return nullptr;
++}
++
++const CopilotOperation *GetCopilotHead()
++{
++	if (_copilot_operation.state == to_underlying(CopilotOperationState::Completed)) return &_copilot_operation;
++	for (auto it = _copilot_operation_history.rbegin(); it != _copilot_operation_history.rend(); ++it) {
++		if (it->state == to_underlying(CopilotOperationState::Completed)) return &*it;
++	}
++	return nullptr;
+ }
+ 
+ CommandCost CmdCopilotBuildSingleRail(DoCommandFlags flags, TileIndex tile, RailType rail_type, Track track,
+diff --git a/src/copilot_cmd.h b/src/copilot_cmd.h
+index 134d88463..934d009db 100644
+--- a/src/copilot_cmd.h
++++ b/src/copilot_cmd.h
+@@ -14,6 +14,8 @@
+ #include "rail_type.h"
+ #include "track_type.h"
+ 
++constexpr size_t COPILOT_MAX_OPERATIONS = 64;
++
+ enum class CopilotOperationState : uint8_t {
+ 	Empty = 0,
+ 	Pending = 1,
+@@ -22,12 +24,9 @@ enum class CopilotOperationState : uint8_t {
+ 	Uncertain = 4,
+ };
+ 
+-/**
+- * M2b deliberately retains one operation. A second distinct operation is
+- * refused instead of silently evicting recovery evidence.
+- */
++/** Retained operation outcome; sequence is the successful-operation count at its completion. */
+ struct CopilotOperation {
+-	uint16_t schema = 1;
++	uint16_t schema = 2;
+ 	uint8_t state = to_underlying(CopilotOperationState::Empty);
+ 	uint8_t company = 0xFF;
+ 	uint32_t tile = 0;
+@@ -45,8 +44,11 @@ struct CopilotOperation {
+ };
+ 
+ extern CopilotOperation _copilot_operation;
++extern std::vector<CopilotOperation> _copilot_operation_history;
+ 
+ void ResetCopilotOperation();
++const CopilotOperation *FindCopilotOperation(uint64_t operation_hi, uint64_t operation_lo);
++const CopilotOperation *GetCopilotHead();
+ 
+ CommandCost CmdCopilotBuildSingleRail(DoCommandFlags flags, TileIndex tile, RailType rail_type, Track track,
+ 		Money max_cost, uint64_t operation_hi, uint64_t operation_lo,
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 65f1d02d1..2f1300e6c 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -94,6 +94,7 @@ enum CopilotAdminResult : uint8_t {
+ 	COPILOT_ADMIN_OPERATION_BUSY = 9,
+ 	COPILOT_ADMIN_OPERATION_NOT_FOUND = 10,
+ 	COPILOT_ADMIN_STALE_POSITION = 11,
++	COPILOT_ADMIN_JOURNAL_FULL = 12,
+ };
+ 
+ static constexpr size_t COPILOT_ADMIN_INDUSTRY_NAME_MAX_BYTES = 96;
+@@ -601,8 +602,9 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotIdentity(uint16_t
+ 
+ 	response->Send_string(_game_session_stats.savegame_id);
+ 	response->Send_uint64(_copilot_operation.sequence);
+-	response->Send_uint64(_copilot_operation.sequence > 0 ? _copilot_operation.operation_hi : 0);
+-	response->Send_uint64(_copilot_operation.sequence > 0 ? _copilot_operation.operation_lo : 0);
++	const CopilotOperation *head = GetCopilotHead();
++	response->Send_uint64(head != nullptr ? head->operation_hi : 0);
++	response->Send_uint64(head != nullptr ? head->operation_lo : 0);
+ 	response->Send_uint32(_frame_counter);
+ 	response->Send_uint32(_settings_game.game_creation.generation_seed);
+ 	response->Send_uint32(TimerGameCalendar::date.base());
+@@ -628,7 +630,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotIdentity(uint16_t
+ 	return NETWORK_RECV_STATUS_OKAY;
+ }
+ 
+-NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotOperation(uint8_t request_kind, uint32_t request_id, uint8_t raw_result)
++NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotOperation(uint8_t request_kind, uint32_t request_id, uint8_t raw_result, const CopilotOperation *operation)
+ {
+ 	auto response = std::make_unique<Packet>(this, ADMIN_PACKET_SERVER_COPILOT);
+ 	response->Send_uint16(COPILOT_ADMIN_VERSION);
+@@ -642,23 +644,25 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotOperation(uint8_t
+ 
+ 	response->Send_string(_game_session_stats.savegame_id);
+ 	response->Send_uint64(_copilot_operation.sequence);
+-	response->Send_uint64(_copilot_operation.sequence > 0 ? _copilot_operation.operation_hi : 0);
+-	response->Send_uint64(_copilot_operation.sequence > 0 ? _copilot_operation.operation_lo : 0);
+-	response->Send_uint8(_copilot_operation.state);
+-	response->Send_uint64(_copilot_operation.operation_hi);
+-	response->Send_uint64(_copilot_operation.operation_lo);
+-	response->Send_uint64(_copilot_operation.payload_hash_hi);
+-	response->Send_uint64(_copilot_operation.payload_hash_lo);
+-	response->Send_uint8(_copilot_operation.company);
+-	response->Send_uint32(_copilot_operation.tile);
+-	response->Send_uint8(_copilot_operation.rail_type);
+-	response->Send_uint8(_copilot_operation.track);
+-	response->Send_uint64(static_cast<uint64_t>(_copilot_operation.max_cost));
+-	response->Send_uint64(static_cast<uint64_t>(_copilot_operation.actual_cost));
+-	response->Send_uint32(_copilot_operation.error_message);
+-	response->Send_uint32(_copilot_operation.completed_frame);
+-
+-	TileIndex tile{_copilot_operation.tile};
++	const CopilotOperation *head = GetCopilotHead();
++	response->Send_uint64(head != nullptr ? head->operation_hi : 0);
++	response->Send_uint64(head != nullptr ? head->operation_lo : 0);
++	if (operation == nullptr) operation = &_copilot_operation;
++	response->Send_uint8(operation->state);
++	response->Send_uint64(operation->operation_hi);
++	response->Send_uint64(operation->operation_lo);
++	response->Send_uint64(operation->payload_hash_hi);
++	response->Send_uint64(operation->payload_hash_lo);
++	response->Send_uint8(operation->company);
++	response->Send_uint32(operation->tile);
++	response->Send_uint8(operation->rail_type);
++	response->Send_uint8(operation->track);
++	response->Send_uint64(static_cast<uint64_t>(operation->max_cost));
++	response->Send_uint64(static_cast<uint64_t>(operation->actual_cost));
++	response->Send_uint32(operation->error_message);
++	response->Send_uint32(operation->completed_frame);
++
++	TileIndex tile{operation->tile};
+ 	bool valid_tile = tile != 0 && tile < Map::Size() && IsValidTile(tile);
+ 	bool has_rail = valid_tile && (IsPlainRailTile(tile) || IsLevelCrossingTile(tile));
+ 	TrackBits tracks = TRACK_BIT_NONE;
+@@ -675,7 +679,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotOperation(uint8_t
+ 	response->Send_uint8(to_underlying(tracks));
+ 	response->Send_uint8(to_underlying(rail_type));
+ 
+-	const Company *company = Company::GetIfValid(CompanyID{_copilot_operation.company});
++	const Company *company = Company::GetIfValid(CompanyID{operation->company});
+ 	response->Send_bool(company != nullptr);
+ 	response->Send_uint64(company == nullptr ? 0 : static_cast<uint64_t>(company->money));
+ 	response->Send_uint64(company == nullptr ? 0 : static_cast<uint64_t>(company->current_loan));
+@@ -1090,11 +1094,11 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 		if (world_id != _game_session_stats.savegame_id) {
+ 			return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_WORLD_MISMATCH);
+ 		}
+-		if (_copilot_operation.state == to_underlying(CopilotOperationState::Empty) ||
+-				_copilot_operation.operation_hi != operation_hi || _copilot_operation.operation_lo != operation_lo) {
++		const CopilotOperation *operation = FindCopilotOperation(operation_hi, operation_lo);
++		if (operation == nullptr) {
+ 			return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_OPERATION_NOT_FOUND);
+ 		}
+-		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_OK);
++		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_OK, operation);
+ 	}
+ 
+ 	if (request_kind == COPILOT_ADMIN_OBSERVATIONS) {
+@@ -1293,17 +1297,18 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 	if (world_id.empty() || world_id != _game_session_stats.savegame_id) {
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_WORLD_MISMATCH);
+ 	}
+-	if (_copilot_operation.state != to_underlying(CopilotOperationState::Empty) &&
+-			_copilot_operation.operation_hi == operation_hi && _copilot_operation.operation_lo == operation_lo) {
+-		bool same = _copilot_operation.payload_hash_hi == payload_hash_hi &&
+-				_copilot_operation.payload_hash_lo == payload_hash_lo && _copilot_operation.company == company_id.base() &&
+-				_copilot_operation.tile == raw_tile && _copilot_operation.rail_type == raw_rail_type &&
+-				_copilot_operation.track == raw_track && _copilot_operation.max_cost == max_cost_value;
++	const CopilotOperation *existing = FindCopilotOperation(operation_hi, operation_lo);
++	if (existing != nullptr) {
++		bool same = existing->payload_hash_hi == payload_hash_hi &&
++				existing->payload_hash_lo == payload_hash_lo && existing->company == company_id.base() &&
++				existing->tile == raw_tile && existing->rail_type == raw_rail_type &&
++				existing->track == raw_track && existing->max_cost == max_cost_value;
+ 		return this->SendCopilotOperation(request_kind, request_id,
+-				same ? COPILOT_ADMIN_OK : COPILOT_ADMIN_OPERATION_CONFLICT);
++				same ? COPILOT_ADMIN_OK : COPILOT_ADMIN_OPERATION_CONFLICT, existing);
+ 	}
+-	uint64_t current_head_hi = _copilot_operation.sequence > 0 ? _copilot_operation.operation_hi : 0;
+-	uint64_t current_head_lo = _copilot_operation.sequence > 0 ? _copilot_operation.operation_lo : 0;
++	const CopilotOperation *head = GetCopilotHead();
++	uint64_t current_head_hi = head != nullptr ? head->operation_hi : 0;
++	uint64_t current_head_lo = head != nullptr ? head->operation_lo : 0;
+ 	if (expected_sequence != _copilot_operation.sequence || expected_head_hi != current_head_hi || expected_head_lo != current_head_lo) {
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_STALE_POSITION);
+ 	}
+@@ -1319,9 +1324,17 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_INVALID_ARGUMENT);
+ 	}
+ 
+-	if (_copilot_operation.state != to_underlying(CopilotOperationState::Empty)) {
++	if (_copilot_operation.state == to_underlying(CopilotOperationState::Pending) ||
++			_copilot_operation.state == to_underlying(CopilotOperationState::Uncertain)) {
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_OPERATION_BUSY);
+ 	}
++	if (_copilot_operation_history.size() + 1 >= COPILOT_MAX_OPERATIONS &&
++			_copilot_operation.state != to_underlying(CopilotOperationState::Empty)) {
++		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_JOURNAL_FULL);
++	}
++	if (_copilot_operation.state != to_underlying(CopilotOperationState::Empty)) {
++		_copilot_operation_history.push_back(_copilot_operation);
++	}
+ 
+ 	_copilot_operation.state = to_underlying(CopilotOperationState::Pending);
+ 	_copilot_operation.company = company_id.base();
+diff --git a/src/network/network_admin.h b/src/network/network_admin.h
+index 9e885e4ea..e7065bec9 100644
+--- a/src/network/network_admin.h
++++ b/src/network/network_admin.h
+@@ -17,6 +17,7 @@
+ extern AdminID _redirect_console_to_admin;
+ 
+ class ServerNetworkAdminSocketHandler;
++struct CopilotOperation;
+ /** Pool with all admin connections. */
+ using NetworkAdminSocketPool = Pool<ServerNetworkAdminSocketHandler, AdminID, 2, PoolType::NetworkAdmin>;
+ extern NetworkAdminSocketPool _networkadminsocket_pool;
+@@ -44,7 +45,7 @@ protected:
+ 	NetworkRecvStatus SendAuthRequest();
+ 	NetworkRecvStatus SendEnableEncryption();
+ 	NetworkRecvStatus SendCopilotIdentity(uint16_t requested_version, uint8_t request_kind, uint32_t request_id, CompanyID company_id);
+-	NetworkRecvStatus SendCopilotOperation(uint8_t request_kind, uint32_t request_id, uint8_t result);
++	NetworkRecvStatus SendCopilotOperation(uint8_t request_kind, uint32_t request_id, uint8_t result, const CopilotOperation *operation = nullptr);
+ 	NetworkRecvStatus SendCopilotObservations(uint8_t request_kind, uint32_t request_id, uint8_t result, CompanyID company_id, VehicleID vehicle_id, uint64_t cursor);
+ 	NetworkRecvStatus SendCopilotTiles(uint8_t request_kind, uint32_t request_id, uint8_t result, uint32_t start_tile, uint8_t count);
+ 	NetworkRecvStatus SendCopilotIndustries(uint8_t request_kind, uint32_t request_id, uint8_t result, uint32_t start_index, uint8_t count);
+diff --git a/src/saveload/copilot_sl.cpp b/src/saveload/copilot_sl.cpp
+index 8053ca84d..81a383d77 100644
+--- a/src/saveload/copilot_sl.cpp
++++ b/src/saveload/copilot_sl.cpp
+@@ -39,18 +39,56 @@ struct COPLChunkHandler : ChunkHandler {
+ 		SlTableHeader(_copilot_operation_desc);
+ 		SlSetArrayIndex(0);
+ 		SlObject(&_copilot_operation, _copilot_operation_desc);
++		for (size_t i = 0; i < _copilot_operation_history.size(); i++) {
++			SlSetArrayIndex(i + 1);
++			SlObject(&_copilot_operation_history[i], _copilot_operation_desc);
++		}
+ 	}
+ 
+ 	void Load() const override
+ 	{
+ 		const std::vector<SaveLoad> slt = SlTableHeader(_copilot_operation_desc);
+-		if (SlIterateArray() == -1) return;
++		int index = SlIterateArray();
++		if (index == -1) return;
++		if (index != 0) SlErrorCorrupt("Missing COPL active entry");
+ 		SlObject(&_copilot_operation, slt);
+-		if (SlIterateArray() != -1) SlErrorCorrupt("Too many COPL entries");
+-		if (_copilot_operation.schema != 1) SlErrorCorrupt("Unsupported COPL schema");
+-		if (_copilot_operation.state > to_underlying(CopilotOperationState::Uncertain)) {
+-			SlErrorCorrupt("Invalid COPL operation state");
++		bool legacy = _copilot_operation.schema == 1;
++		if (!legacy && _copilot_operation.schema != 2) SlErrorCorrupt("Unsupported COPL schema");
++		_copilot_operation_history.clear();
++		while ((index = SlIterateArray()) != -1) {
++			if (legacy || _copilot_operation_history.size() + 1 >= COPILOT_MAX_OPERATIONS ||
++					index != static_cast<int>(_copilot_operation_history.size() + 1)) {
++				SlErrorCorrupt("Invalid COPL history size or index");
++			}
++			CopilotOperation operation;
++			SlObject(&operation, slt);
++			if (operation.schema != 2) SlErrorCorrupt("Unsupported COPL history schema");
++			_copilot_operation_history.push_back(operation);
+ 		}
++
++		uint64_t sequence = 0;
++		auto validate = [&](const CopilotOperation &operation, bool active) {
++			auto state = static_cast<CopilotOperationState>(operation.state);
++			if (state == CopilotOperationState::Empty) {
++				if (!active || !_copilot_operation_history.empty() || operation.sequence != 0) {
++					SlErrorCorrupt("Invalid empty COPL operation");
++				}
++				return;
++			}
++			if (operation.state > to_underlying(CopilotOperationState::Uncertain) ||
++					(!active && state != CopilotOperationState::Completed && state != CopilotOperationState::Rejected)) {
++				SlErrorCorrupt("Invalid COPL operation state");
++			}
++			if (operation.operation_hi == 0 && operation.operation_lo == 0) SlErrorCorrupt("Invalid COPL operation ID");
++			if (FindCopilotOperation(operation.operation_hi, operation.operation_lo) != &operation) {
++				SlErrorCorrupt("Duplicate COPL operation ID");
++			}
++			if (state == CopilotOperationState::Completed) sequence++;
++			if (operation.sequence != sequence) SlErrorCorrupt("Invalid COPL sequence");
++		};
++		for (const CopilotOperation &operation : _copilot_operation_history) validate(operation, false);
++		validate(_copilot_operation, true);
++		_copilot_operation.schema = 2;
+ 		/* The network command queue is not reconstructed as an operation retry.
+ 		 * A saved pending intent has an unknown outcome after load. */
+ 		if (_copilot_operation.state == to_underlying(CopilotOperationState::Pending)) {
+-- 
+2.49.0
+
