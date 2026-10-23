@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: M1 and M2a–M2c complete; M2d is in progress.** The custom OpenTTD 15.3 bridge reads world/company identity and bounded tile pages, builds one capped rail piece with saved outcome readback, and observes vehicle-tagged departures and deliveries. It cannot yet build a complete railway through the native bridge. The local chat demo still uses a disposable GameScript-built fixture.
+**Status: M1 and M2a–M2c complete; M2d is in progress.** A new MCP entry point lets a compatible AI client open a disposable OpenTTD map, request the supported coal-railway demo, and inspect verified job status. The current playable job is still a controlled GameScript fixture: it creates test coal industries and a straight railway, rather than planning between arbitrary businesses. The native bridge still mutates only one rail tile per world.
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -53,22 +53,22 @@ The next checkpoint also verifies bounded Admin requests and recovery across dis
 
 The five-world stock-adapter throughput checkpoint is documented in [the M1 throughput probe](docs/THROUGHPUT_PROBE.md).
 
-The first local chat seam is now available for the supported disposable coal
-fixture. It is deliberately model-free while the deterministic route builder is
-being completed:
+The AI-facing playable demo uses a local stdio MCP server. Configure a
+compatible MCP host to launch `tools/mcp_server.py` from this checkout, then
+ask it to open the demo map, build a coal railway between a coal mine and power
+station with full-load departures, and poll `get_build_status`. The server
+opens a new disposable map and, after the build tool is called, runs the
+existing real-engine demo and opens the completed save. See
+[the playable demo guide](docs/MCP_PLAYABLE_DEMO.md) for configuration and
+scope.
+
+The standalone rule-based CLI remains available:
 
 ```sh
 python3 -B tools/copilot_chat.py
 ```
 
-The command opens the disposable map first. Enter `Build a railway carrying
-coal from a coal mine to a power station. Wait for a full load.`, then type
-`build`. The command runs the vehicle probe in that same world and opens the
-completed disposable save when verification finishes, so you can watch the
-route and train while the job is running. It does not attach to or modify
-normal saves. Unsupported requests are rejected before any game action. Use
-`--no-show` when running without a graphical session.
-
-The launcher closes stale Copilot demo windows and brings the current Cocoa
-window to the front so an older completed route cannot be mistaken for the new
-map.
+It opens the same controlled fixture. Neither demo attaches to or modifies
+normal saves. The standalone CLI is not an LLM; the MCP option lets the
+connected AI client handle conversation while the deterministic backend
+validates the narrow supported intent.
