@@ -2,13 +2,13 @@
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
 [`copilot/m2d-industry-snapshot`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-industry-snapshot), commit
-`5f8e025d70c9eb6faeca1bc797b1377039ed0ca8`. It descends from the M2d
+`211e780180c021b208a87d2612f4c24be9f743a6`. It descends from the M2d
 tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All eleven commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0011 in order to the upstream revision if not using the fork branch.
+All twelve commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0012 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
@@ -38,6 +38,11 @@ returns up to 16 industry IDs, types, anchor tiles, and produced/accepted cargo
 IDs per page. See [tile probe instructions](../docs/NATIVE_TILE_PROBE.md),
 [industry probe instructions](../docs/NATIVE_INDUSTRY_PROBE.md), and the
 [industry report](../docs/M2D_INDUSTRY_REPORT.md).
+An additional read-only request returns up to eight industries per page with
+their UTF-8 cached name, explicit truncation marker, `TileArea` width/height,
+anchor, and cargo lists. The rectangle bounds the industry location but does
+not claim that every enclosed tile is occupied. See the
+[industry details report](../docs/M2D_INDUSTRY_DETAILS_REPORT.md).
 Another additive query returns up to 16 company-specific train engine records
 per page with buildability, rail/cargo compatibility, default capacity, and
 prices; see the [catalog report](../docs/M2D_RAIL_CATALOG_REPORT.md) and

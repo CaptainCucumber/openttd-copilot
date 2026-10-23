@@ -45,6 +45,7 @@ _COPILOT_OPERATION_STATUS = 2
 _COPILOT_VEHICLE_EVENTS = 3
 _COPILOT_TILE_SNAPSHOT = 4
 _COPILOT_INDUSTRY_SNAPSHOT = 5
+_COPILOT_INDUSTRY_DETAILS = 10
 _COPILOT_RAIL_CATALOG = 6
 _COPILOT_RAIL_ASSETS = 7
 _COPILOT_TRAIN_PARTS = 8
@@ -53,6 +54,8 @@ _MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
 _MAX_COPILOT_EVENTS = 16
 _MAX_COPILOT_TILE_SNAPSHOT_COUNT = 32
 _MAX_COPILOT_INDUSTRY_SNAPSHOT_COUNT = 16
+_MAX_COPILOT_INDUSTRY_DETAIL_COUNT = 8
+_MAX_COPILOT_INDUSTRY_NAME_BYTES = 96
 _MAX_COPILOT_RAIL_CATALOG_COUNT = 16
 _MAX_COPILOT_RAIL_ASSET_COUNT = 16
 _MAX_COPILOT_TRAIN_PART_COUNT = 16
@@ -712,6 +715,137 @@ class AdminClient:
             "world_id": world_id, "frame": frame, "start_index": start_index,
             "count": count, "industries": industries,
         })
+        return response
+
+    def copilot_industry_details(
+        self,
+        world_id: str,
+        start_index: int,
+        count: int = _MAX_COPILOT_INDUSTRY_DETAIL_COUNT,
+        timeout: float | None = None,
+        request_id: int | None = None,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+    ) -> dict[str, Any]:
+        """Read bounded industry names, location bounds, and cargo types.
+
+        The reported location is OpenTTD's industry TileArea bounding
+        rectangle; it does not assert every tile inside the rectangle is
+        occupied by industry. Names are UTF-8 and may be explicitly truncated
+        at a code-point boundary.
+        """
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        start_index = self._check_uint("start_index", start_index, 32)
+        if (isinstance(count, bool) or not isinstance(count, int) or
+                not 1 <= count <= _MAX_COPILOT_INDUSTRY_DETAIL_COUNT):
+            raise ValueError(
+                f"count must be an integer from 1 through {_MAX_COPILOT_INDUSTRY_DETAIL_COUNT}"
+            )
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack("<HBIIB", protocol_version, _COPILOT_INDUSTRY_DETAILS,
+                              request_id, start_index, count) + world
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        packet_name = "copilot_industry_details"
+        self.events.append({"time": time.time(), "direction": "sent", "packet_type": packet_name,
+                            "packet_length": len(payload) + _HEADER_SIZE, "request_id": request_id,
+                            "start_index": start_index, "count": count})
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_industry_details(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append({"time": time.time(), "direction": "received", "packet_type": packet_name,
+                                    "packet_length": len(response_payload) + _HEADER_SIZE,
+                                    "request_id": request_id, "status": response["status"]})
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                if response["world_id"] != world_id:
+                    raise AdminProtocolError("Copilot industry details response world ID mismatch")
+                if response["start_index"] != start_index or response["count"] > count:
+                    raise AdminProtocolError("Copilot industry details response range mismatch")
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+
+    @staticmethod
+    def _decode_copilot_industry_details(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {"version": version, "request_kind": request_kind,
+                                    "request_id": request_id, "status": status}
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_INDUSTRY_DETAILS:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_format = "<IIB"
+        fixed_size = struct.calcsize(fixed_format)
+        if position + fixed_size > len(payload):
+            raise AdminProtocolError("truncated Copilot industry details response")
+        frame, start_index, count = struct.unpack_from(fixed_format, payload, position)
+        position += fixed_size
+        if count > _MAX_COPILOT_INDUSTRY_DETAIL_COUNT:
+            raise AdminProtocolError("Copilot industry details response exceeds industry limit")
+
+        industries: list[dict[str, Any]] = []
+        for _ in range(count):
+            fixed_format = "<HBIHH"
+            fixed_size = struct.calcsize(fixed_format)
+            if position + fixed_size > len(payload):
+                raise AdminProtocolError("truncated Copilot industry detail record")
+            industry_id, industry_type, tile, width, height = struct.unpack_from(
+                fixed_format, payload, position)
+            position += fixed_size
+            name, position = AdminClient._decode_copilot_cstring(
+                payload, position, "industry name", _MAX_COPILOT_INDUSTRY_NAME_BYTES + 1)
+            if position >= len(payload):
+                raise AdminProtocolError("truncated Copilot industry name truncation marker")
+            name_truncated = payload[position]
+            position += 1
+            if name_truncated not in (0, 1):
+                raise AdminProtocolError("invalid Copilot industry name truncation marker")
+            if industry_type >= 240 or tile == 0xFFFFFFFF or width == 0 or height == 0:
+                raise AdminProtocolError("invalid Copilot industry location or type")
+            if position >= len(payload):
+                raise AdminProtocolError("truncated produced cargo count")
+            produced_count = payload[position]
+            position += 1
+            if produced_count > 16 or position + produced_count + 1 > len(payload):
+                raise AdminProtocolError("invalid or truncated produced cargo list")
+            produced = list(payload[position:position + produced_count])
+            position += produced_count
+            accepted_count = payload[position]
+            position += 1
+            if accepted_count > 16 or position + accepted_count > len(payload):
+                raise AdminProtocolError("invalid or truncated accepted cargo list")
+            accepted = list(payload[position:position + accepted_count])
+            position += accepted_count
+            if any(cargo >= 64 for cargo in produced + accepted):
+                raise AdminProtocolError("invalid cargo type in industry details")
+            industries.append({
+                "industry_id": industry_id, "industry_type": industry_type,
+                "tile": tile, "location_width": width, "location_height": height,
+                "name": name, "name_truncated": bool(name_truncated),
+                "produced_cargo": produced, "accepted_cargo": accepted,
+            })
+        if position != len(payload):
+            raise AdminProtocolError("Copilot industry details response has trailing data")
+        response.update({"world_id": world_id, "frame": frame, "start_index": start_index,
+                         "count": count, "industries": industries})
         return response
 
     def copilot_rail_catalog(
@@ -1598,13 +1732,18 @@ class AdminClient:
         return response
 
     @staticmethod
-    def _decode_copilot_cstring(payload: bytes, position: int, label: str) -> tuple[str, int]:
+    def _decode_copilot_cstring(
+        payload: bytes,
+        position: int,
+        label: str,
+        max_bytes: int = _MAX_COPILOT_WORLD_ID_BYTES,
+    ) -> tuple[str, int]:
         end = payload.find(b"\x00", position)
         if end < 0:
             raise AdminProtocolError(f"Copilot {label} lacks NUL terminator")
         if end == position:
             raise AdminProtocolError(f"Copilot {label} is empty")
-        if end - position >= _MAX_COPILOT_WORLD_ID_BYTES:
+        if end - position >= max_bytes:
             raise AdminProtocolError(f"Copilot {label} is too long")
         try:
             value = payload[position:end].decode("utf-8")

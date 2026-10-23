@@ -78,7 +78,7 @@ A custom bridge must use the engine's normal command pipeline on the game thread
 
 ### M2 — Complete one railway without an LLM
 
-Status: **In progress. M2a identity, M2b one-piece mutation, and M2c vehicle-tagged observation completed 2026-10-23. M2d has read-only tile, industry, company rail-catalog, station/depot, train-part, and train-order checkpoints; the complete rail job remains open.**
+Status: **In progress. M2a identity, M2b one-piece mutation, and M2c vehicle-tagged observation completed 2026-10-23. M2d has read-only tile, industry name/bounds/cargo, company rail-catalog, station/depot, train-part, and train-order checkpoints; the complete rail job remains open. Industry bounds are not exact occupied-tile footprints.**
 
 **Depends on:** M1 adapter and observation contract.
 

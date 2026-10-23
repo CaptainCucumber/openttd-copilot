@@ -2,6 +2,10 @@
 
 Status: **read-only checkpoint passed; M2 remains in progress**, 2026-10-23.
 
+This report records the original kind-5 cargo-page and wider tile-window
+checkpoint. The additive kind-10 names and location-bounds checkpoint is
+documented separately in the [industry details report](M2D_INDUSTRY_DETAILS_REPORT.md).
+
 The OpenTTD 15.3 fork adds protocol-v3 request kind 5 for paged industry IDs,
 types, anchor tiles, and valid produced/accepted cargo IDs. A page contains at
 most 16 records and its own frame. The Python tile-window reader combines

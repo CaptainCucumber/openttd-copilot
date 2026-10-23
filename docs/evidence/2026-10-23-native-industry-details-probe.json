@@ -1,0 +1,71 @@
+{
+  "artifact": "artifacts/native-industry-probe/20261023T201424Z-a96fafa0/manifest.json",
+  "binary_sha256": "3e3dd35058e7c2823245d8fcd4d116bf64f66b5d3323a3de931c637449f3ff8c",
+  "client_source_hashes": {
+    "tools/admin_transport.py": "2eac46cba52a0e6fe4a110176cf3e3185d0d4872efd5eb9f5b3ce97bd8b285b9",
+    "tools/native_industry_catalog.py": "958e059a20103a4b23ff57c515b739bf4d9d70db5c288bfeb31c470167c858f4",
+    "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+    "tools/run_native_industry_probe.py": "1baa6330389450b732d0edf5d3b0432c2f365f8f05f1d5b0ef94c1dc266c54b4"
+  },
+  "checks": [
+    "typed_industry_snapshot",
+    "tile_window_sweep",
+    "snapshot_reload"
+  ],
+  "coal_pair": {
+    "cargo_id": 1,
+    "destination": {
+      "accepted_cargo": [1],
+      "industry_id": 12,
+      "industry_type": 1,
+      "location_height": 2,
+      "location_width": 4,
+      "name": "Great Beninghall Power Station",
+      "name_truncated": false,
+      "produced_cargo": [],
+      "tile": 3371
+    },
+    "source": {
+      "accepted_cargo": [],
+      "industry_id": 0,
+      "industry_type": 0,
+      "location_height": 4,
+      "location_width": 3,
+      "name": "Madhattan Coal Mine",
+      "name_truncated": false,
+      "produced_cargo": [1],
+      "tile": 12404
+    }
+  },
+  "company": {
+    "id": 0,
+    "is_ai": false,
+    "loan": 100000,
+    "money": 99160,
+    "operation_sequence": 0
+  },
+  "content": "OpenGFX2 Classic 0.8.1; no gameplay NewGRFs",
+  "elapsed_seconds": 2.277,
+  "engine_commit": "211e780180c021b208a87d2612f4c24be9f743a6",
+  "engine_revision": "20261023-m2d-industry-snapshot-g211e780180",
+  "engine_source_hashes": {
+    "src/network/network_admin.cpp": "d9419dfb3759e3d94ecbffe8ae8be38e95ea2f8dded2ac15202021d728dde2fe",
+    "src/network/network_admin.h": "150e37b7cff7268371c1a38df2f75cd49b5c19d00c6515e953dc68819ea1378a"
+  },
+  "industry_count": 13,
+  "all_names_nonempty": true,
+  "all_bounds_positive_and_within_map": true,
+  "all_names_truncated": false,
+  "kind5_kind10_fields_match": true,
+  "map": {
+    "height": 128,
+    "landscape": 0,
+    "width": 128
+  },
+  "normal_profile_unchanged": true,
+  "openttd_version": "15.3",
+  "secret_files_removed": true,
+  "seed": 20261021,
+  "source_save_unchanged": true,
+  "world_id": "6BAAC8B739403503F1A7714B8CC47013"
+}

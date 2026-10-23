@@ -678,6 +678,89 @@ class AdminTransportTests(unittest.TestCase):
                 client.close()
                 server_sock.close()
 
+    def test_copilot_industry_details_round_trip_name_bounds_and_cargo(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(struct.unpack_from("<HBIIB", payload),
+                                 (COPILOT_PROTOCOL_VERSION, 10, 54, 3, 8))
+                self.assertEqual(payload[struct.calcsize("<HBIIB"):], b"world-123\0")
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 10, 54, 0)
+                response += b"world-123\0" + struct.pack("<IIB", 789, 3, 1)
+                response += struct.pack("<HBIHH", 77, 4, 1024, 3, 2)
+                response += "Coal Mine — North".encode("utf-8") + b"\0"
+                response += bytes([0, 1, 0, 2, 1, 2])
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_industry_details("world-123", 3, request_id=54)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual((result["world_id"], result["frame"], result["start_index"],
+                              result["count"]), ("world-123", 789, 3, 1))
+            self.assertEqual(result["industries"], [{
+                "industry_id": 77, "industry_type": 4, "tile": 1024,
+                "location_width": 3, "location_height": 2,
+                "name": "Coal Mine — North", "name_truncated": False,
+                "produced_cargo": [0], "accepted_cargo": [1, 2],
+            }])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_industry_details_accepts_explicit_truncation(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 10, 55, 0)
+            response += b"world-123\0" + struct.pack("<IIB", 790, 0, 1)
+            response += struct.pack("<HBIHH", 1, 2, 3, 2, 1)
+            response += b"A" * 96 + b"\0" + bytes([1, 0, 0])
+            server_sock.sendall(frame(130, response))
+            result = client.copilot_industry_details("world-123", 0, 1, request_id=55)
+            self.assertEqual(result["industries"][0]["name"], "A" * 96)
+            self.assertTrue(result["industries"][0]["name_truncated"])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_industry_details_rejects_bad_bounds_and_records(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for count in (0, 9, True):
+                with self.subTest(count=count), self.assertRaises(ValueError):
+                    client.copilot_industry_details("world-123", 0, count)
+        finally:
+            client.close()
+            server_sock.close()
+
+        fixed = struct.pack("<HBIHH", 1, 2, 3, 2, 1)
+        valid_suffix = bytes([0, 0, 0])
+        invalid = [
+            (b"", b"", "truncated Copilot industry detail record"),
+            (fixed + b"\x01", b"", "lacks NUL terminator"),
+            (fixed + b"\xff\0" + valid_suffix, b"", "not UTF-8"),
+            (fixed + b"name\0" + bytes([2]) + valid_suffix, b"", "truncation marker"),
+            (struct.pack("<HBIHH", 1, 2, 3, 0, 1) + b"name\0" + bytes([0]) + valid_suffix,
+             b"", "location or type"),
+            (fixed + b"name\0" + bytes([0, 1, 64, 0, 0]), b"", "cargo type"),
+            (fixed + b"name\0" + bytes([0, 0, 0, 0]) + b"x", b"", "trailing data"),
+        ]
+        for record, suffix, message in invalid:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 10, 56, 0)
+                response += b"world-123\0" + struct.pack("<IIB", 10, 0, 1)
+                response += record + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_industry_details("world-123", 0, 1, request_id=56)
+            finally:
+                client.close()
+                server_sock.close()
+
     def test_copilot_rail_catalog_round_trip_is_bounded_and_correlated(self) -> None:
         client, server_sock = connected_client(timeout=1)
         try:
