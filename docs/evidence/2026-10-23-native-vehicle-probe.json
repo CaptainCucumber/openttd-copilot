@@ -1,0 +1,172 @@
+{
+  "checks": {
+    "loan_preserved": true,
+    "native_vehicle_tagged_two_cycle_gate": true,
+    "normal_profile_unchanged": true,
+    "purchase_reload_replay": true,
+    "stock_fixture_two_cycle_gate": true,
+    "temporary_secret_files_removed": true
+  },
+  "elapsed_seconds": 160.388,
+  "engine": {
+    "binary_sha256": "1b31bfd9af0386667a3acfbd36c63ee36591d749328a370eaffc469af35a2bbd",
+    "commit": "37f88cc03d88a99273297b2691f88c16f6926fc4",
+    "revision": "20261023-m2c-vehicle-observation-g37f88cc03d",
+    "version": "15.3 custom build"
+  },
+  "fixture": {
+    "capacity": 30,
+    "cargo_id": 1,
+    "company_id": 0,
+    "destination_industry": 11,
+    "destination_station": 1,
+    "seed": 20261021,
+    "source_station": 0,
+    "train_id": 2
+  },
+  "native_observation": {
+    "events": [
+      {
+        "amount": 30,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 3268,
+        "industry": 65535,
+        "kind": "departure",
+        "seq": 0,
+        "station": 0,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 3912,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 1,
+        "station": 1,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 3952,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 2,
+        "station": 1,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 3992,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 3,
+        "station": 1,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 4032,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 4,
+        "station": 1,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 4072,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 5,
+        "station": 1,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 4112,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 6,
+        "station": 1,
+        "vehicle": 2
+      },
+      {
+        "amount": 30,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 5052,
+        "industry": 65535,
+        "kind": "departure",
+        "seq": 7,
+        "station": 0,
+        "vehicle": 2
+      },
+      {
+        "amount": 5,
+        "capacity": 30,
+        "cargo": 1,
+        "company": 0,
+        "frame": 5730,
+        "industry": 11,
+        "kind": "delivery",
+        "seq": 8,
+        "station": 1,
+        "vehicle": 2
+      }
+    ],
+    "gap_observed": false,
+    "page_limit": 16,
+    "protocol_version": 3,
+    "ring_capacity": 256,
+    "runtime_epoch": 8569518989903868003,
+    "summary": {
+      "deliveries": 2,
+      "departures": 2,
+      "scope": "vehicle_tagged_native",
+      "vehicle": 2
+    }
+  },
+  "not_proven": [
+    "native complete-route construction",
+    "general non-isolated service reliability",
+    "event persistence through save/load",
+    "256-event ring overflow in a real game",
+    "mutation/save crash-gap recovery"
+  ],
+  "raw_manifest": "artifacts/native-vehicle-probe/20261023T172550Z-485cd1fd/manifest.json",
+  "scope": "M2c vehicle-tagged native observation during isolated stock-script-built two-cycle service",
+  "source_sha256": {
+    "engine/src/copilot_observation.cpp": "d8eab6b941ebf19aea2263364a70e33347186f161bc45ec4bf3bef6d0175b80d",
+    "engine/src/copilot_observation.h": "48e2fc139a0fceae2152ad582531c48688c77f18e1813b351a719cbcb511d2d6",
+    "engine/src/economy.cpp": "6d32e7e36f43d3c9bedb729f4270cfda5ee0ae2df9bd3d48efb70792f787fc67",
+    "engine/src/network/network_admin.cpp": "9f68fe675d343a38810468a28c3e09b4378bbed284ac01d446bd46f3c86345de",
+    "engine/src/network/network_admin.h": "89dc489d0056c8373909364dc71620c6812c20f49c51e6d08e42bfed37477d4d",
+    "engine/src/vehicle.cpp": "f62910c9255f3c4c22f0f877c8160ff6cccc894f1775ffb884ca5d92af485474",
+    "game/copilot_vehicle/main.nut": "714743c854b6bf3303b5bf941e715d393614c32b4cfc5fdaaefab15d45431d43",
+    "tools/admin_transport.py": "ea97c157d9349337d170c8616634052dfec0974432ca74432b19dd8e5bd63711",
+    "tools/run_native_vehicle_probe.py": "30843453e7f74d3adb66a3929a9eacb53580f2c449b76f384a06e1b4efebf11b",
+    "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+  },
+  "status": "success"
+}

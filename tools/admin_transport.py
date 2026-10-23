@@ -37,12 +37,14 @@ _SERVER_COPILOT = 130
 _UPDATE_GAMESCRIPT = 9
 _UPDATE_AUTOMATIC = 1 << 6
 MAX_PENDING_RESPONSES = 64
-COPILOT_PROTOCOL_VERSION = 2
+COPILOT_PROTOCOL_VERSION = 3
 COPILOT_COMPANY_ALL = 0xFF
 _COPILOT_IDENTITY = 0
 _COPILOT_BUILD_SINGLE_RAIL = 1
 _COPILOT_OPERATION_STATUS = 2
+_COPILOT_VEHICLE_EVENTS = 3
 _MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
+_MAX_COPILOT_EVENTS = 16
 _COPILOT_OPERATION_STATE_NAMES = {
     0: "empty",
     1: "pending",
@@ -395,6 +397,93 @@ class AdminClient:
         )
         return response
 
+    def copilot_vehicle_events(
+        self,
+        world_id: str,
+        company_id: int,
+        vehicle_id: int,
+        cursor: int = 0,
+        epoch: int | None = None,
+        timeout: float | None = None,
+        request_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Read a bounded page of vehicle-tagged departure and delivery events.
+
+        ``epoch`` is accepted for callers carrying a prior observation epoch;
+        the native v3 request identifies the page with only the cursor, so it
+        is validated for compatibility but is not sent on the wire.
+        """
+        request_id = self._check_copilot_request_header(COPILOT_PROTOCOL_VERSION, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        vehicle_id = self._check_uint("vehicle_id", vehicle_id, 32)
+        cursor = self._check_uint("cursor", cursor, 64)
+        if epoch is not None:
+            self._check_uint("epoch", epoch, 64)
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIBIQ",
+            COPILOT_PROTOCOL_VERSION,
+            _COPILOT_VEHICLE_EVENTS,
+            request_id,
+            company_id,
+            vehicle_id,
+            cursor,
+        ) + world
+        response = self._copilot_vehicle_events_request(
+            request_id, payload, timeout, {"company_id": company_id, "vehicle_id": vehicle_id, "cursor": cursor}
+        )
+        if response["world_id"] != world_id:
+            raise AdminProtocolError("Copilot vehicle events response world ID mismatch")
+        return response
+
+    def _copilot_vehicle_events_request(
+        self,
+        request_id: int,
+        payload: bytes,
+        timeout: float | None,
+        event_fields: dict[str, Any],
+    ) -> dict[str, Any]:
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        sent_event = {
+            "time": time.time(),
+            "direction": "sent",
+            "packet_type": "copilot_vehicle_events",
+            "packet_length": len(payload) + _HEADER_SIZE,
+            "request_id": request_id,
+            "protocol_version": COPILOT_PROTOCOL_VERSION,
+        }
+        sent_event.update(event_fields)
+        self.events.append(sent_event)
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_vehicle_events(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append(
+                    {
+                        "time": time.time(),
+                        "direction": "received",
+                        "packet_type": "copilot_vehicle_events",
+                        "packet_length": len(response_payload) + _HEADER_SIZE,
+                        "request_id": request_id,
+                        "status": response["status"],
+                    }
+                )
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+
+
     def _copilot_operation_request(
         self,
         request_kind: int,
@@ -653,6 +742,88 @@ class AdminClient:
                     "money": money,
                     "loan": loan,
                 },
+            }
+        )
+        return response
+
+    @staticmethod
+    def _decode_copilot_vehicle_events(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version,
+            "request_kind": request_kind,
+            "request_id": request_id,
+            "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_VEHICLE_EVENTS:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_format = "<QQQIBB"
+        fixed_size = struct.calcsize(fixed_format)
+        if position + fixed_size > len(payload):
+            raise AdminProtocolError("truncated Copilot vehicle events response")
+        epoch, oldest_seq, next_seq, frame, gap, event_count = struct.unpack_from(
+            fixed_format, payload, position
+        )
+        position += fixed_size
+        if gap not in (0, 1):
+            raise AdminProtocolError("invalid Copilot vehicle events gap marker")
+        if event_count > _MAX_COPILOT_EVENTS:
+            raise AdminProtocolError("Copilot vehicle events response exceeds event limit")
+        if next_seq < oldest_seq:
+            raise AdminProtocolError("invalid Copilot vehicle event sequence bounds")
+
+        event_format = "<QBIIBHBIIH"
+        event_size = struct.calcsize(event_format)
+        if position + event_count * event_size > len(payload):
+            raise AdminProtocolError("truncated Copilot vehicle event record")
+        events: list[dict[str, Any]] = []
+        kind_names = {1: "departure", 2: "delivery"}
+        previous_seq = -1
+        for _ in range(event_count):
+            values = struct.unpack_from(event_format, payload, position)
+            position += event_size
+            seq, kind, event_frame, vehicle, company, station, cargo, amount, capacity, industry = values
+            if kind not in kind_names:
+                raise AdminProtocolError(f"unknown Copilot vehicle event kind {kind}")
+            if not oldest_seq <= seq < next_seq or seq <= previous_seq:
+                raise AdminProtocolError("Copilot vehicle events are outside bounds or unordered")
+            previous_seq = seq
+            events.append(
+                {
+                    "seq": seq,
+                    "kind": kind_names[kind],
+                    "frame": event_frame,
+                    "vehicle": vehicle,
+                    "company": company,
+                    "station": station,
+                    "cargo": cargo,
+                    "amount": amount,
+                    "capacity": capacity,
+                    "industry": industry,
+                }
+            )
+        if position != len(payload):
+            raise AdminProtocolError("Copilot vehicle events response has trailing data")
+        response.update(
+            {
+                "world_id": world_id,
+                "epoch": epoch,
+                "oldest_seq": oldest_seq,
+                "next_seq": next_seq,
+                "frame": frame,
+                "gap": bool(gap),
+                "events": events,
             }
         )
         return response

@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: M2a identity and M2b bounded mutation complete, 2026-10-23. The custom OpenTTD 15.3 build exposes bounded world/company identity and one typed rail mutation through authenticated loopback-only Admin packets independent of GameScript. Vehicle events and general route construction remain unimplemented. See the [M2b report](M2B_REPORT.md) and [D015](DECISIONS.md#d015--bound-the-first-native-mutation-and-persist-its-identity).
+Status: M2a identity, M2b bounded mutation, and M2c vehicle-tagged observation complete, 2026-10-23. The custom OpenTTD 15.3 build exposes bounded world/company identity, one typed rail mutation, and paged train departure/industry delivery events through authenticated loopback-only Admin packets independent of GameScript. General route construction remains unimplemented. See the [M2c report](M2C_REPORT.md) and [D016](DECISIONS.md#d016--observe-vehicle-tagged-service-events-in-the-native-bridge).
 
 ## Responsibilities
 
@@ -20,13 +20,13 @@ The implementation uses a Python service for protocol handling and the future pl
 | Option | Strength | Cost / limitation | Position |
 |---|---|---|---|
 | Standard GameScript + Admin interface | Supported company-context commands and normal game validation | Cannot attach Copilot to an ordinary save; saved scripts retain the sole slot; no general vehicle ID on delivery telemetry | Retain as reference and regression fixture, not production adapter |
-| Small custom OpenTTD bridge | Independent of GameScript slot; existing-save attachment and one native rail mutation proven; can add direct vehicle-tagged events | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected in M1; bounded mutation proven in M2b** |
+| Small custom OpenTTD bridge | Independent of GameScript slot; existing-save attachment, one native rail mutation, and vehicle-tagged service events proven | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected in M1; M2a–M2c checkpoints proven** |
 | NoAI controller | Established autonomous company API | An autonomous AI company differs from assisting the player's company | Reference/test tool, not initial product adapter |
 | Screenshot/mouse automation | Can use ordinary UI | Fragile execution and limited authoritative state | Visual QA only |
 
 The stock experiment hosts a local game and connects the normal client to the human company. Do not assume the Admin interface alone is a general construction API: the GameScript performs gameplay operations. The adapter contract should permit replacement without rewriting the planner.
 
-The selected bridge is deliberately narrow. M2a added protocol v1 identity packets 11 and 130 to the authenticated Admin connection and rejected non-loopback peers. M2b protocol v2 adds a typed single-rail request and operation-status query. A wrapper posts through OpenTTD's normal command pipeline, quotes and checks the cap before execution, and returns authoritative cost plus tile/company readback after the callback. A versioned COPL save chunk persists world/operation sequence and terminal outcome; an external fsynced journal records intent before send. The current command admits only a flat clear tile, one operation per world. Vehicle-tagged cargo events remain planned. The Python service retains intent parsing, future planning, budgets, journaling, and verification. Only copied saves have been tested; stock-build compatibility is not established.
+The selected bridge is deliberately narrow. M2a added protocol v1 identity packets 11 and 130 to the authenticated Admin connection and rejected non-loopback peers. M2b protocol v2 adds a typed single-rail request and operation-status query. A wrapper posts through OpenTTD's normal command pipeline, quotes and checks the cap before execution, and returns authoritative cost plus tile/company readback after the callback. A versioned COPL save chunk persists world/operation sequence and terminal outcome; an external fsynced journal records intent before send. M2c protocol v3 adds paged vehicle-tagged station departures and exact accepted-industry deliveries. Its bounded observation ring is runtime-only and reports gaps; it does not extend the persisted COPL chunk. The current command admits only a flat clear tile, one operation per world. The Python service retains intent parsing, future planning, budgets, journaling, and verification. Only copied saves have been tested; stock-build compatibility is not established.
 
 ## Intent and identity
 

@@ -4,7 +4,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from run_vehicle_probe import validate_service_events
+from run_vehicle_probe import validate_service_events, validate_native_service_events
 from run_control_probe import ProbeError
 
 
@@ -71,6 +71,41 @@ class VehicleEvidenceTests(unittest.TestCase):
             with self.subTest(events=events):
                 with self.assertRaises(ProbeError):
                     validate_service_events(events, self.fixture, 7, self.telemetry)
+
+
+class NativeVehicleEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture = {"company": 0, "cargo": 1, "source_station": 3,
+                        "destination_station": 4, "destination_industry": 2}
+        self.events = [
+            {"seq": 0, "kind": "departure", "frame": 20, "vehicle": 7, "company": 0,
+             "station": 3, "cargo": 1, "amount": 30, "capacity": 30, "industry": 65535},
+            {"seq": 1, "kind": "delivery", "frame": 40, "vehicle": 7, "company": 0,
+             "station": 4, "cargo": 1, "amount": 5, "capacity": 30, "industry": 2},
+            {"seq": 2, "kind": "departure", "frame": 60, "vehicle": 7, "company": 0,
+             "station": 3, "cargo": 1, "amount": 30, "capacity": 30, "industry": 65535},
+            {"seq": 3, "kind": "delivery", "frame": 80, "vehicle": 7, "company": 0,
+             "station": 4, "cargo": 1, "amount": 5, "capacity": 30, "industry": 2},
+        ]
+
+    def test_two_vehicle_tagged_cycles(self):
+        result = validate_native_service_events(self.events, self.fixture, 7)
+        self.assertEqual((result["departures"], result["deliveries"]), (2, 2))
+
+    def test_wrong_vehicle_destination_or_partial_departure(self):
+        for index, field, value in [(1, "vehicle", 8), (1, "industry", 9),
+                                    (0, "amount", 29), (2, "station", 9)]:
+            with self.subTest(index=index, field=field):
+                events = copy.deepcopy(self.events)
+                events[index][field] = value
+                with self.assertRaises(ProbeError):
+                    validate_native_service_events(events, self.fixture, 7)
+
+    def test_missing_or_replayed_event(self):
+        for events in [self.events[:2], self.events[1:], self.events[:2] * 2]:
+            with self.subTest(events=events):
+                with self.assertRaises(ProbeError):
+                    validate_native_service_events(events, self.fixture, 7)
 
 
 if __name__ == "__main__":

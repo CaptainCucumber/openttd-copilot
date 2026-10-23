@@ -63,22 +63,72 @@ def validate_service_events(events, fixture, vehicle, telemetry):
             "vehicle": vehicle, "scope": "isolated_one_train"}
 
 
+def validate_native_service_events(events, fixture, vehicle):
+    """Require two ordered full departures and accepted industry deliveries."""
+    awaiting_delivery = False
+    cycle_delivered = False
+    departures = 0
+    deliveries = 0
+    last_seq = -1
+    last_frame = 0
+    for event in events:
+        require(event["seq"] > last_seq and event["frame"] >= last_frame,
+                "native events are not ordered")
+        last_seq, last_frame = event["seq"], event["frame"]
+        require(event["vehicle"] == vehicle and event["company"] == fixture["company"]
+                and event["cargo"] == fixture["cargo"], "native event identity mismatch")
+        if event["kind"] == "departure":
+            if event["station"] == fixture["source_station"]:
+                require(not awaiting_delivery, "source departure before destination delivery")
+                require(event["capacity"] > 0 and event["amount"] == event["capacity"],
+                        "assigned train left source without a full load")
+                departures += 1
+                awaiting_delivery = True
+                cycle_delivered = False
+        elif event["kind"] == "delivery":
+            require(event["station"] == fixture["destination_station"]
+                    and event["industry"] == fixture["destination_industry"]
+                    and event["amount"] > 0, "cargo was not accepted at requested destination")
+            require(awaiting_delivery or cycle_delivered,
+                    "accepted cargo has no full-load departure")
+            # Cargo packets may be delivered in pieces during one station stop.
+            if not cycle_delivered:
+                deliveries += 1
+                cycle_delivered = True
+            awaiting_delivery = False
+        else:
+            raise base.ProbeError("unknown native telemetry event")
+    require(departures >= 2 and deliveries >= 2,
+            "two vehicle-tagged full departures and deliveries are required")
+    return {"departures": departures, "deliveries": deliveries,
+            "vehicle": vehicle, "scope": "vehicle_tagged_native"}
+
+
 class VehicleExperiment(Experiment):
     probe_kind = "vehicle-probe"
     script_source = ROOT / "game/copilot_vehicle"
     script_name = "Copilot Vehicle Probe"
 
-    def __init__(self, binary, timeout, seed, visible=False, wait_file=None):
+    def __init__(self, binary, timeout, seed, visible=False, wait_file=None,
+                 native_telemetry=False, resource_binary=None):
         super().__init__(binary, timeout, seed)
         self.visible_client = visible
         self.wait_file = Path(wait_file).resolve() if wait_file else None
+        self.native_telemetry = native_telemetry
+        self.resource_binary = resource_binary
         self.manifest["scope"] = "S3b disposable one-train fixture; no general per-vehicle delivery event or crash-gap proof"
         self.manifest["limits"].update(fixture_cap=20000, purchase_cap=50000,
                                        max_telemetry_events=32)
         self.write()
 
     def stage(self, profile, port, admin_port=None):
-        config, metadata = super().stage(profile, port, admin_port)
+        runtime_binary = self.binary
+        if self.resource_binary is not None:
+            self.binary = self.resource_binary
+        try:
+            config, metadata = super().stage(profile, port, admin_port)
+        finally:
+            self.binary = runtime_binary
         if admin_port is not None:
             shutil.copy2(ROOT / "game/copilot_lifecycle/main.nut",
                          profile / "game/copilot_probe/lifecycle.nut")
@@ -113,6 +163,8 @@ class VehicleExperiment(Experiment):
                  ("run_vehicle_probe.py", "run_lifecycle_probe.py", "run_control_probe.py",
                   "admin_transport.py", "lifecycle_journal.py")]
         paths += [ROOT / "game/copilot_lifecycle/main.nut", *sorted(self.script_source.glob("*.nut"))]
+        if self.native_telemetry:
+            paths.append(ROOT / "tools/run_native_vehicle_probe.py")
         self.manifest["source_hashes"] = {str(p.relative_to(ROOT)): base.sha256_file(p) for p in paths}
         hello = self.start_world("initial")
         self.manifest["engine_version"] = base.run_version(
@@ -240,6 +292,19 @@ class VehicleExperiment(Experiment):
         # Values pinned to OpenTTD 15.3 script_order.hpp, verified against readback.
         require(orders[0]["flags"] == 64 and orders[1]["flags"] == 132, "full-load/unload/no-load orders absent")
         self.check("consist_and_orders_readback", {"operation": configured, "vehicle": consist})
+        native_world = None
+        native_epoch = None
+        native_cursor = 0
+        native_events = []
+        if self.native_telemetry:
+            native_world = self.admin.copilot_identity(company_id=fixture["company"],
+                                                       timeout=self.remaining())["world_id"]
+            first_page = self.admin.copilot_vehicle_events(
+                world_id=native_world, company_id=fixture["company"], vehicle_id=vehicle_id,
+                cursor=0, timeout=self.remaining())
+            require(not first_page["gap"], "native telemetry has a gap before train start")
+            native_epoch = first_page["epoch"]
+            native_cursor = first_page["next_seq"]
         _, started = self.mutate(ledger, "start", session)
         self.check("train_started", started)
         observations = []
@@ -250,7 +315,23 @@ class VehicleExperiment(Experiment):
             require(not telemetry.get("error") and not telemetry.get("failure")
                     and telemetry.get("gap") is None,
                     f"telemetry failed: {telemetry}")
-            if telemetry.get("departures", 0) >= 2 and telemetry.get("deliveries", 0) >= 2:
+            if self.native_telemetry:
+                page = self.admin.copilot_vehicle_events(
+                    world_id=native_world, company_id=fixture["company"], vehicle_id=vehicle_id,
+                    cursor=native_cursor, timeout=self.remaining())
+                require(page["epoch"] == native_epoch and not page["gap"],
+                        "native telemetry epoch changed or events were lost")
+                native_events.extend(page["events"])
+                native_cursor = page["next_seq"]
+                self.manifest["last_native_telemetry"] = page
+                self.manifest["native_events"] = native_events
+                self.write()
+            if (telemetry.get("departures", 0) >= 2 and telemetry.get("deliveries", 0) >= 2
+                    and (not self.native_telemetry or
+                         sum(e["kind"] == "departure" and e["station"] == fixture["source_station"]
+                             for e in native_events) >= 2 and
+                         sum(e["kind"] == "delivery" and e["industry"] == fixture["destination_industry"]
+                             for e in native_events) >= 2)):
                 for index in range(telemetry["event_count"]):
                     observations.append(self.call("telemetry", world=world, index=index)["event"])
                 break
@@ -258,6 +339,12 @@ class VehicleExperiment(Experiment):
             time.sleep(0.25)
         summary = validate_service_events(observations, fixture, vehicle_id, telemetry)
         self.check("two_full_load_deliveries", {"summary": summary, "events": observations})
+        if self.native_telemetry:
+            native_summary = validate_native_service_events(native_events, fixture, vehicle_id)
+            self.check("two_vehicle_tagged_native_deliveries", {
+                "summary": native_summary, "events": native_events,
+                "epoch": native_epoch, "world_id": native_world,
+            })
         final = self.vehicle(world)
         require(final["loan"] == hello["loan"], "service changed loan")
         self.check("loan_preserved", final)

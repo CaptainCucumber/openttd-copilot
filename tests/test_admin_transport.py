@@ -309,7 +309,7 @@ class AdminTransportTests(unittest.TestCase):
         client, server_sock = connected_client(timeout=1)
         company = struct.pack("<BBqq", 0, 0, 987654, 100000) + b"Copper Transport\x00"
         response = (
-            struct.pack("<HBIB", 2, 0, 42, 0)
+            struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 0, 42, 0)
             + b"world-123\0"
             + struct.pack("<QQQIIIHHBB", 9, 10, 11, 123, 456, 789, 256, 512, 0, 1)
             + company
@@ -318,7 +318,7 @@ class AdminTransportTests(unittest.TestCase):
             def reply() -> None:
                 packet_type, payload = read_frame(server_sock)
                 self.assertEqual(packet_type, 11)
-                self.assertEqual(payload, struct.pack("<HBIB", 2, 0, 42, 255))
+                self.assertEqual(payload, struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 0, 42, 255))
                 server_sock.sendall(frame(130, response))
 
             thread = threading.Thread(target=reply)
@@ -345,11 +345,11 @@ class AdminTransportTests(unittest.TestCase):
     def test_copilot_identity_rejects_bridge_error_and_malformed_payload(self) -> None:
         client, server_sock = connected_client(timeout=1)
         try:
-            server_sock.sendall(frame(130, struct.pack("<HBIB", 2, 0, 7, 3)))
+            server_sock.sendall(frame(130, struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 0, 7, 3)))
             with self.assertRaisesRegex(CopilotBridgeError, "company was not found"):
                 client.copilot_identity(company_id=14, request_id=7)
 
-            server_sock.sendall(frame(130, struct.pack("<HBIB", 2, 0, 8, 0)))
+            server_sock.sendall(frame(130, struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 0, 8, 0)))
             with self.assertRaisesRegex(AdminProtocolError, "world ID"):
                 client.copilot_identity(request_id=8)
         finally:
@@ -366,7 +366,7 @@ class AdminTransportTests(unittest.TestCase):
                 values = struct.unpack_from("<HBIBIBBqQQQQQQQ", payload)
                 self.assertEqual(
                     values,
-                    (2, 1, 42, 0, 321, 1, 2, 500, 3, 10, 11, 5, 6, 7, 8),
+                    (COPILOT_PROTOCOL_VERSION, 1, 42, 0, 321, 1, 2, 500, 3, 10, 11, 5, 6, 7, 8),
                 )
                 self.assertEqual(payload[fixed_size:], b"world-123\0")
                 unrelated = b'{"v":1,"rid":"later","ok":true}\0'
@@ -405,7 +405,7 @@ class AdminTransportTests(unittest.TestCase):
                 self.assertEqual(packet_type, 11)
                 self.assertEqual(
                     payload,
-                    struct.pack("<HBIQQ", 2, 2, 77, 5, 6) + b"world-123\0",
+                    struct.pack("<HBIQQ", COPILOT_PROTOCOL_VERSION, 2, 77, 5, 6) + b"world-123\0",
                 )
                 server_sock.sendall(frame(130, operation_response(2, 77)))
 
@@ -433,7 +433,7 @@ class AdminTransportTests(unittest.TestCase):
         for status, message in messages.items():
             client, server_sock = connected_client(timeout=1)
             try:
-                server_sock.sendall(frame(130, struct.pack("<HBIB", 2, 2, status, status)))
+                server_sock.sendall(frame(130, struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 2, status, status)))
                 with self.assertRaisesRegex(CopilotBridgeError, message):
                     client.copilot_operation_status(
                         world_id="world-123", operation_hi=5, operation_lo=6,
@@ -472,6 +472,79 @@ class AdminTransportTests(unittest.TestCase):
         finally:
             client.close()
             server_sock.close()
+
+    def test_copilot_vehicle_events_round_trip(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                fixed = struct.unpack_from("<HBIBIQ", payload)
+                self.assertEqual(
+                    fixed,
+                    (COPILOT_PROTOCOL_VERSION, 3, 42, 0, 77, 12),
+                )
+                self.assertEqual(payload[struct.calcsize("<HBIBIQ"):], b"world-123\0")
+                response = struct.pack(
+                    "<HBIB", COPILOT_PROTOCOL_VERSION, 3, 42, 0
+                ) + b"world-123\0"
+                response += struct.pack("<QQQIBB", 1001, 4, 9, 321, 0, 2)
+                response += struct.pack(
+                    "<QBIIBHBIIH", 4, 1, 200, 77, 0, 12, 2, 500, 80, 33
+                )
+                response += struct.pack(
+                    "<QBIIBHBIIH", 8, 2, 320, 77, 0, 45, 1, 80, 80, 33
+                )
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_vehicle_events(
+                world_id="world-123", company_id=0, vehicle_id=77,
+                cursor=12, epoch=1000, request_id=42,
+            )
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(
+                {key: result[key] for key in ("epoch", "oldest_seq", "next_seq", "frame", "gap")},
+                {"epoch": 1001, "oldest_seq": 4, "next_seq": 9, "frame": 321, "gap": False},
+            )
+            self.assertEqual(
+                result["events"],
+                [
+                    {"seq": 4, "kind": "departure", "frame": 200, "vehicle": 77,
+                     "company": 0, "station": 12, "cargo": 2, "amount": 500,
+                     "capacity": 80, "industry": 33},
+                    {"seq": 8, "kind": "delivery", "frame": 320, "vehicle": 77,
+                     "company": 0, "station": 45, "cargo": 1, "amount": 80,
+                     "capacity": 80, "industry": 33},
+                ],
+            )
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_vehicle_events_rejects_bad_count_kind_gap_and_trailing_data(self) -> None:
+        cases = [
+            (struct.pack("<QQQIBB", 1, 0, 1, 10, 0, 17), b"", "event limit"),
+            (struct.pack("<QQQIBB", 1, 0, 1, 10, 2, 0), b"", "gap marker"),
+            (struct.pack("<QQQIBB", 1, 0, 1, 10, 0, 1)
+             + struct.pack("<QBIIBHBIIH", 1, 99, 10, 77, 0, 1, 1, 1, 1, 1), b"", "event kind"),
+            (struct.pack("<QQQIBB", 1, 0, 1, 10, 0, 0), b"x", "trailing data"),
+        ]
+        for fixed, suffix, message in cases:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 3, 9, 0)
+                response += b"world-123\0" + fixed + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_vehicle_events(
+                        world_id="world-123", company_id=0, vehicle_id=77, request_id=9
+                    )
+            finally:
+                client.close()
+                server_sock.close()
 
 
 if __name__ == "__main__":
