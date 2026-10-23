@@ -13,6 +13,7 @@ from tools.admin_transport import (
     AdminProtocolError,
     AdminServerError,
     AdminTransportError,
+    CopilotBridgeError,
     MAX_GAMESCRIPT_JSON_BYTES,
     MAX_PENDING_RESPONSES,
 )
@@ -281,6 +282,49 @@ class AdminTransportTests(unittest.TestCase):
             finally:
                 client.close()
                 server_sock.close()
+
+    def test_copilot_identity_round_trip_is_typed_and_correlated(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        company = struct.pack("<BBqq", 0, 0, 987654, 100000) + b"Copper Transport\x00"
+        response = struct.pack("<HBIBIIIHHBB", 1, 0, 42, 0, 123, 456, 789, 256, 512, 0, 1) + company
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(payload, struct.pack("<HBIB", 1, 0, 42, 255))
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_identity(request_id=42)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(result["frame"], 123)
+            self.assertEqual(result["seed"], 456)
+            self.assertEqual(result["map_width"], 256)
+            self.assertEqual(result["map_height"], 512)
+            self.assertEqual(
+                result["companies"],
+                [{"id": 0, "is_ai": False, "money": 987654, "loan": 100000, "name": "Copper Transport"}],
+            )
+            self.assertEqual([event["packet_type"] for event in client.events], ["copilot_identity"] * 2)
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_identity_rejects_bridge_error_and_malformed_payload(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            server_sock.sendall(frame(130, struct.pack("<HBIB", 1, 0, 7, 3)))
+            with self.assertRaisesRegex(CopilotBridgeError, "company was not found"):
+                client.copilot_identity(company_id=14, request_id=7)
+
+            server_sock.sendall(frame(130, struct.pack("<HBIB", 1, 0, 8, 0)))
+            with self.assertRaisesRegex(AdminProtocolError, "truncated"):
+                client.copilot_identity(request_id=8)
+        finally:
+            client.close()
+            server_sock.close()
 
 
 if __name__ == "__main__":

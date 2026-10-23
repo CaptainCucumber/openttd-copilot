@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: M1 complete. Real-engine evidence selects a narrow custom OpenTTD bridge; implementation starts in M2. A model-free disposable chat demo exists, but no general route planner or conversational Copilot yet.**
+**Status: M1 and M2a complete. The custom OpenTTD 15.3 bridge reads world/company identity from copied existing saves and coexists with a saved foreign GameScript. M2b mutation work is next; there is no general route planner or conversational Copilot yet.**
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -24,6 +24,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [Decision log](docs/DECISIONS.md) | Choices, assumptions, and conditions for revisiting them |
 | [Work log](docs/WORK_LOG.md) | Dated actions, results, and handoffs |
 | [M1 adapter report](docs/M1_REPORT.md) | Capability evidence, stock limitations, and the selected production boundary |
+| [M2a bridge report](docs/M2A_REPORT.md) | Native identity protocol, copied-save evidence, and the M2b boundary |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 
@@ -41,7 +42,7 @@ flowchart LR
     G --> H[Progress or precise failure report]
 ```
 
-Prove control of the player's company first, then build a complete railway from a structured request, then add natural language. The first adapter experiment targets the installed OpenTTD 15.3 through GameScript and its Admin interface. A small engine integration remains an option if that approach fails the capability or performance checks.
+Prove control of the player's company first, then build a complete railway from a structured request, then add natural language. The first adapter experiment targeted stock OpenTTD 15.3 through GameScript and its Admin interface. M1 measured essential gaps and selected a small engine integration. M2a implements its read-only seam; see the [engine fork and build instructions](engine/README.md).
 
 The first implementation checkpoint is an isolated rail/station control probe. See [running and inspecting the probe](docs/CONTROL_PROBE.md) and [current verification status](docs/STATUS.md). It uses the installed OpenTTD binary, copied graphics, and disposable profiles.
 

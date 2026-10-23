@@ -1,6 +1,6 @@
 # Acceptance and reliability plan
 
-Status: M1 evidence and adapter selection complete, 2026-10-22. The isolated control fixture passes rail/station accounting and readback. The lifecycle fixture passes 12 Admin/reconnect/pause/save checks, including replay after reload without additional cost. S3b passes purchase/order/replay and isolated one-train delivery checks; its attribution limit is a reason for the native bridge. S3c passes the five-world throughput workload. The environment probe proves that stock Copilot does not attach to an ordinary copied save and cannot displace/coexist beside a saved foreign GameScript. [M1 report](M1_REPORT.md), [environment evidence](evidence/2026-10-22-environment-probe.json). **The chosen bridge, end-to-end transport test, and release scenario suite below are not implemented or passed.**
+Status: M2a native read-only bridge complete, 2026-10-23. The custom build identifies a copied existing world and human company while remaining independent of a saved foreign GameScript. [M2a report](M2A_REPORT.md), [native evidence](evidence/2026-10-23-native-bridge-probe.json). **Typed native mutations, vehicle-tagged events, the end-to-end transport test, and the release scenario suite below are not implemented or passed.**
 
 ## What “reliable” means
 

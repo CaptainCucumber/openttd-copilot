@@ -1,0 +1,208 @@
+From 2850af59a5df2fe32aaff718b8e3dbb01808ecdd Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 08:06:54 -0700
+Subject: [PATCH] Add bounded Copilot identity bridge
+
+---
+ src/network/core/tcp_admin.cpp |  4 ++
+ src/network/core/tcp_admin.h   | 15 +++++++
+ src/network/network_admin.cpp  | 77 ++++++++++++++++++++++++++++++++++
+ src/network/network_admin.h    |  2 +
+ 4 files changed, 98 insertions(+)
+
+diff --git a/src/network/core/tcp_admin.cpp b/src/network/core/tcp_admin.cpp
+index 66d9789a6..3e8e3b7b1 100644
+--- a/src/network/core/tcp_admin.cpp
++++ b/src/network/core/tcp_admin.cpp
+@@ -56,6 +56,7 @@ NetworkRecvStatus NetworkAdminSocketHandler::HandlePacket(Packet &p)
+ 		case ADMIN_PACKET_ADMIN_PING:             return this->Receive_ADMIN_PING(p);
+ 		case ADMIN_PACKET_ADMIN_JOIN_SECURE:      return this->Receive_ADMIN_JOIN_SECURE(p);
+ 		case ADMIN_PACKET_ADMIN_AUTH_RESPONSE:    return this->Receive_ADMIN_AUTH_RESPONSE(p);
++		case ADMIN_PACKET_ADMIN_COPILOT:          return this->Receive_ADMIN_COPILOT(p);
+ 
+ 		case ADMIN_PACKET_SERVER_FULL:            return this->Receive_SERVER_FULL(p);
+ 		case ADMIN_PACKET_SERVER_BANNED:          return this->Receive_SERVER_BANNED(p);
+@@ -86,6 +87,7 @@ NetworkRecvStatus NetworkAdminSocketHandler::HandlePacket(Packet &p)
+ 		case ADMIN_PACKET_SERVER_PONG:            return this->Receive_SERVER_PONG(p);
+ 		case ADMIN_PACKET_SERVER_AUTH_REQUEST:    return this->Receive_SERVER_AUTH_REQUEST(p);
+ 		case ADMIN_PACKET_SERVER_ENABLE_ENCRYPTION: return this->Receive_SERVER_ENABLE_ENCRYPTION(p);
++		case ADMIN_PACKET_SERVER_COPILOT:         return this->Receive_SERVER_COPILOT(p);
+ 
+ 		default:
+ 			Debug(net, 0, "[tcp/admin] Received invalid packet type {} from '{}' ({})", type, this->admin_name, this->admin_version);
+@@ -134,6 +136,7 @@ NetworkRecvStatus NetworkAdminSocketHandler::Receive_ADMIN_GAMESCRIPT(Packet &)
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_ADMIN_PING(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_ADMIN_PING); }
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_ADMIN_JOIN_SECURE(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_ADMIN_JOIN_SECURE); }
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_ADMIN_AUTH_RESPONSE(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_ADMIN_AUTH_RESPONSE); }
++NetworkRecvStatus NetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_ADMIN_COPILOT); }
+ 
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_FULL(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_SERVER_FULL); }
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_BANNED(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_SERVER_BANNED); }
+@@ -164,3 +167,4 @@ NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_RCON_END(Packet &) {
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_PONG(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_SERVER_PONG); }
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_AUTH_REQUEST(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_SERVER_AUTH_REQUEST); }
+ NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_ENABLE_ENCRYPTION(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_SERVER_ENABLE_ENCRYPTION); }
++NetworkRecvStatus NetworkAdminSocketHandler::Receive_SERVER_COPILOT(Packet &) { return this->ReceiveInvalidPacket(ADMIN_PACKET_SERVER_COPILOT); }
+diff --git a/src/network/core/tcp_admin.h b/src/network/core/tcp_admin.h
+index d3a82bc24..5a5b11b44 100644
+--- a/src/network/core/tcp_admin.h
++++ b/src/network/core/tcp_admin.h
+@@ -32,6 +32,7 @@ enum PacketAdminType : uint8_t {
+ 	ADMIN_PACKET_ADMIN_EXTERNAL_CHAT,    ///< The admin sends a chat message from external source.
+ 	ADMIN_PACKET_ADMIN_JOIN_SECURE,      ///< The admin announces and starts a secure authentication handshake.
+ 	ADMIN_PACKET_ADMIN_AUTH_RESPONSE,    ///< The admin responds to the authentication request.
++	ADMIN_PACKET_ADMIN_COPILOT,          ///< The admin sends a bounded OpenTTD Copilot request.
+ 
+ 	ADMIN_PACKET_SERVER_FULL = 100,      ///< The server tells the admin it cannot accept the admin.
+ 	ADMIN_PACKET_SERVER_BANNED,          ///< The server tells the admin it is banned.
+@@ -64,6 +65,7 @@ enum PacketAdminType : uint8_t {
+ 	ADMIN_PACKET_SERVER_CMD_LOGGING,     ///< The server gives the admin copies of incoming command packets.
+ 	ADMIN_PACKET_SERVER_AUTH_REQUEST,    ///< The server gives the admin the used authentication method and required parameters.
+ 	ADMIN_PACKET_SERVER_ENABLE_ENCRYPTION, ///< The server tells that authentication has completed and requests to enable encryption with the keys of the last \c ADMIN_PACKET_ADMIN_AUTH_RESPONSE.
++	ADMIN_PACKET_SERVER_COPILOT,         ///< The server replies to a bounded OpenTTD Copilot request.
+ 
+ 	INVALID_ADMIN_PACKET = 0xFF,         ///< An invalid marker for admin packets.
+ };
+@@ -230,6 +232,18 @@ protected:
+ 	 */
+ 	virtual NetworkRecvStatus Receive_ADMIN_AUTH_RESPONSE(Packet &p);
+ 
++	/**
++	 * Send a bounded OpenTTD Copilot request. This extension is authenticated by
++	 * the enclosing Admin connection and is accepted from loopback peers only.
++	 * uint16_t Copilot protocol version.
++	 * uint8_t  Request kind.
++	 * uint32_t Correlation ID.
++	 * uint8_t  Company ID, or CompanyID::Invalid() to list all companies.
++	 * @param p The packet that was just received.
++	 * @return The state the network should have.
++	 */
++	virtual NetworkRecvStatus Receive_ADMIN_COPILOT(Packet &p);
++
+ 	/**
+ 	 * The server is full (connection gets closed).
+ 	 * @param p The packet that was just received.
+@@ -520,6 +534,7 @@ protected:
+ 	 * @param p The packet that was just received.
+ 	 */
+ 	virtual NetworkRecvStatus Receive_SERVER_ENABLE_ENCRYPTION(Packet &p);
++	virtual NetworkRecvStatus Receive_SERVER_COPILOT(Packet &p);
+ 
+ 	/**
+ 	 * Send a ping-reply (pong) to the admin that sent us the ping packet.
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 99ec918ef..ef2be25f6 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -43,6 +43,21 @@ static NetworkAuthenticationDefaultAuthorizedKeyHandler _admin_authorized_key_ha
+ /** The timeout for authorisation of the client. */
+ static const std::chrono::seconds ADMIN_AUTHORISATION_TIMEOUT(10);
+ 
++/** Version of the deliberately small OpenTTD Copilot Admin extension. */
++static constexpr uint16_t COPILOT_ADMIN_VERSION = 1;
++
++enum CopilotAdminRequest : uint8_t {
++	COPILOT_ADMIN_IDENTITY = 0,
++};
++
++enum CopilotAdminResult : uint8_t {
++	COPILOT_ADMIN_OK = 0,
++	COPILOT_ADMIN_UNSUPPORTED_VERSION = 1,
++	COPILOT_ADMIN_UNSUPPORTED_REQUEST = 2,
++	COPILOT_ADMIN_COMPANY_NOT_FOUND = 3,
++	COPILOT_ADMIN_LOOPBACK_REQUIRED = 4,
++};
++
+ 
+ /** Frequencies, which may be registered for a certain update type. */
+ static const AdminUpdateFrequencies _admin_update_type_frequencies[] = {
+@@ -521,6 +536,68 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_PING(Packet &p)
+ 	return this->SendPong(d1);
+ }
+ 
++NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotIdentity(uint16_t requested_version, uint8_t request_kind, uint32_t request_id, CompanyID company_id)
++{
++	CopilotAdminResult result = COPILOT_ADMIN_OK;
++	if (!this->address.IsInNetmask("127.0.0.0/8") && !this->address.IsInNetmask("::1/128")) {
++		result = COPILOT_ADMIN_LOOPBACK_REQUIRED;
++	} else if (requested_version != COPILOT_ADMIN_VERSION) {
++		result = COPILOT_ADMIN_UNSUPPORTED_VERSION;
++	} else if (request_kind != COPILOT_ADMIN_IDENTITY) {
++		result = COPILOT_ADMIN_UNSUPPORTED_REQUEST;
++	} else if (company_id != CompanyID::Invalid() && !Company::IsValidID(company_id)) {
++		result = COPILOT_ADMIN_COMPANY_NOT_FOUND;
++	}
++
++	auto response = std::make_unique<Packet>(this, ADMIN_PACKET_SERVER_COPILOT);
++	response->Send_uint16(COPILOT_ADMIN_VERSION);
++	response->Send_uint8(request_kind);
++	response->Send_uint32(request_id);
++	response->Send_uint8(result);
++	if (result != COPILOT_ADMIN_OK) {
++		this->SendPacket(std::move(response));
++		return NETWORK_RECV_STATUS_OKAY;
++	}
++
++	response->Send_uint32(_frame_counter);
++	response->Send_uint32(_settings_game.game_creation.generation_seed);
++	response->Send_uint32(TimerGameCalendar::date.base());
++	response->Send_uint16(Map::SizeX());
++	response->Send_uint16(Map::SizeY());
++	response->Send_uint8(to_underlying(_settings_game.game_creation.landscape));
++
++	uint8_t company_count = 0;
++	for (const Company *company : Company::Iterate()) {
++		if (company_id == CompanyID::Invalid() || company->index == company_id) company_count++;
++	}
++	response->Send_uint8(company_count);
++	for (const Company *company : Company::Iterate()) {
++		if (company_id != CompanyID::Invalid() && company->index != company_id) continue;
++		response->Send_uint8(company->index);
++		response->Send_bool(company->is_ai);
++		response->Send_uint64(static_cast<uint64_t>(company->money));
++		response->Send_uint64(static_cast<uint64_t>(company->current_loan));
++		response->Send_string(GetString(STR_COMPANY_NAME, company->index));
++	}
++
++	this->SendPacket(std::move(response));
++	return NETWORK_RECV_STATUS_OKAY;
++}
++
++NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet &p)
++{
++	if (this->status <= ADMIN_STATUS_AUTHENTICATE) return this->SendError(NETWORK_ERROR_NOT_EXPECTED);
++	if (p.RemainingBytesToTransfer() != sizeof(uint16_t) + sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint8_t)) {
++		return this->SendError(NETWORK_ERROR_ILLEGAL_PACKET);
++	}
++
++	uint16_t version = p.Recv_uint16();
++	uint8_t request_kind = p.Recv_uint8();
++	uint32_t request_id = p.Recv_uint32();
++	CompanyID company_id{p.Recv_uint8()};
++	return this->SendCopilotIdentity(version, request_kind, request_id, company_id);
++}
++
+ /**
+  * Send console output of other clients.
+  * @param origin The origin of the string.
+diff --git a/src/network/network_admin.h b/src/network/network_admin.h
+index b0b24af21..75b0baa9c 100644
+--- a/src/network/network_admin.h
++++ b/src/network/network_admin.h
+@@ -37,11 +37,13 @@ protected:
+ 	NetworkRecvStatus Receive_ADMIN_PING(Packet &p) override;
+ 	NetworkRecvStatus Receive_ADMIN_JOIN_SECURE(Packet &p) override;
+ 	NetworkRecvStatus Receive_ADMIN_AUTH_RESPONSE(Packet &p) override;
++	NetworkRecvStatus Receive_ADMIN_COPILOT(Packet &p) override;
+ 
+ 	NetworkRecvStatus SendProtocol();
+ 	NetworkRecvStatus SendPong(uint32_t d1);
+ 	NetworkRecvStatus SendAuthRequest();
+ 	NetworkRecvStatus SendEnableEncryption();
++	NetworkRecvStatus SendCopilotIdentity(uint16_t requested_version, uint8_t request_kind, uint32_t request_id, CompanyID company_id);
+ public:
+ 	std::array<AdminUpdateFrequencies, ADMIN_UPDATE_END> update_frequency{}; ///< Admin requested update intervals.
+ 	std::chrono::steady_clock::time_point connect_time{}; ///< Time of connection.
+-- 
+2.49.0
+

@@ -1,8 +1,8 @@
 """Small, deliberately bounded OpenTTD 15.3 Admin Network client.
 
-This module only implements the legacy loopback login, GameScript JSON, and
-ping packets needed by the control spike.  It does not expose RCON or the
-secure authentication protocols.
+This module implements the legacy loopback login, GameScript JSON, ping, and
+the bounded native Copilot identity packets used by the current probes. It does
+not expose RCON, arbitrary commands, or the secure authentication protocols.
 """
 
 from __future__ import annotations
@@ -27,14 +27,19 @@ _ADMIN_QUIT = 1
 _ADMIN_UPDATE_FREQUENCY = 2
 _ADMIN_GAMESCRIPT = 6
 _ADMIN_PING = 7
+_ADMIN_COPILOT = 11
 _SERVER_ERROR = 102
 _SERVER_PROTOCOL = 103
 _SERVER_WELCOME = 104
 _SERVER_GAMESCRIPT = 124
 _SERVER_PONG = 126
+_SERVER_COPILOT = 130
 _UPDATE_GAMESCRIPT = 9
 _UPDATE_AUTOMATIC = 1 << 6
 MAX_PENDING_RESPONSES = 64
+COPILOT_PROTOCOL_VERSION = 1
+COPILOT_COMPANY_ALL = 0xFF
+_COPILOT_IDENTITY = 0
 
 
 class AdminTransportError(RuntimeError):
@@ -52,6 +57,21 @@ class AdminServerError(AdminTransportError):
         self.code = code
         self.error_code = code
         super().__init__(message or f"OpenTTD Admin server error {code}")
+
+
+class CopilotBridgeError(AdminTransportError):
+    """The native Copilot bridge rejected a typed request."""
+
+    _MESSAGES = {
+        1: "unsupported Copilot protocol version",
+        2: "unsupported Copilot request",
+        3: "Copilot company was not found",
+        4: "Copilot bridge requires a loopback peer",
+    }
+
+    def __init__(self, status: int) -> None:
+        self.status = status
+        super().__init__(self._MESSAGES.get(status, f"Copilot bridge error {status}"))
 
 
 class AdminClient:
@@ -191,6 +211,129 @@ class AdminClient:
             if packet_type == _SERVER_GAMESCRIPT:
                 message = self._decode_gamescript(payload, "received", len(payload) + _HEADER_SIZE)
                 self._preserve_response(message)
+
+    def copilot_identity(
+        self,
+        company_id: int = COPILOT_COMPANY_ALL,
+        *,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Read bounded world/company identity from the native bridge."""
+        if isinstance(company_id, bool) or not isinstance(company_id, int) or not 0 <= company_id <= 0xFF:
+            raise ValueError("company_id must be an unsigned 8-bit integer")
+        if (
+            isinstance(protocol_version, bool)
+            or not isinstance(protocol_version, int)
+            or not 0 <= protocol_version <= 0xFFFF
+        ):
+            raise ValueError("protocol_version must be an unsigned 16-bit integer")
+        if request_id is None:
+            request_id = uuid.uuid4().int & 0xFFFFFFFF
+        if isinstance(request_id, bool) or not isinstance(request_id, int) or not 0 <= request_id <= 0xFFFFFFFF:
+            raise ValueError("request_id must be an unsigned 32-bit integer")
+
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        payload = struct.pack("<HBIB", protocol_version, _COPILOT_IDENTITY, request_id, company_id)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        self.events.append(
+            {
+                "time": time.time(),
+                "direction": "sent",
+                "packet_type": "copilot_identity",
+                "packet_length": len(payload) + _HEADER_SIZE,
+                "request_id": request_id,
+                "company_id": company_id,
+                "protocol_version": protocol_version,
+            }
+        )
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_identity(response_payload)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append(
+                    {
+                        "time": time.time(),
+                        "direction": "received",
+                        "packet_type": "copilot_identity",
+                        "packet_length": len(response_payload) + _HEADER_SIZE,
+                        "request_id": request_id,
+                        "status": response["status"],
+                    }
+                )
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+
+    @staticmethod
+    def _decode_copilot_identity(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version,
+            "request_kind": request_kind,
+            "request_id": request_id,
+            "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_IDENTITY:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+        if len(payload) < 26:
+            raise AdminProtocolError("truncated Copilot identity response")
+        frame, seed, calendar_date, width, height, landscape, company_count = struct.unpack_from(
+            "<IIIHHBB", payload, 8
+        )
+        position = 26
+        companies: list[dict[str, Any]] = []
+        for _ in range(company_count):
+            if position + 18 > len(payload):
+                raise AdminProtocolError("truncated Copilot company record")
+            company_id, is_ai, money, loan = struct.unpack_from("<BBqq", payload, position)
+            if is_ai not in (0, 1):
+                raise AdminProtocolError("invalid Copilot company AI marker")
+            position += 18
+            end = payload.find(b"\x00", position)
+            if end < 0:
+                raise AdminProtocolError("Copilot company name lacks NUL terminator")
+            try:
+                name = payload[position:end].decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise AdminProtocolError("Copilot company name is not UTF-8") from exc
+            position = end + 1
+            companies.append(
+                {"id": company_id, "is_ai": bool(is_ai), "money": money, "loan": loan, "name": name}
+            )
+        if position != len(payload):
+            raise AdminProtocolError("Copilot identity response has trailing data")
+        response.update(
+            {
+                "frame": frame,
+                "seed": seed,
+                "calendar_date": calendar_date,
+                "map_width": width,
+                "map_height": height,
+                "landscape": landscape,
+                "companies": companies,
+            }
+        )
+        return response
 
     def close(self) -> None:
         sock, self._sock = self._sock, None
@@ -506,10 +649,13 @@ def _reject_json_constant(value: str) -> None:
 
 __all__ = [
     "ADMIN_PROTOCOL_VERSION",
+    "COPILOT_COMPANY_ALL",
+    "COPILOT_PROTOCOL_VERSION",
     "AdminClient",
     "AdminProtocolError",
     "AdminServerError",
     "AdminTransportError",
+    "CopilotBridgeError",
     "COMPAT_MTU",
     "MAX_GAMESCRIPT_JSON_BYTES",
     "MAX_PENDING_RESPONSES",

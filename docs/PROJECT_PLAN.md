@@ -78,6 +78,8 @@ A custom bridge must use the engine's normal command pipeline on the game thread
 
 ### M2 — Complete one railway without an LLM
 
+Status: **In progress. M2a read-only native bridge completed 2026-10-23; M2b mutation work is next.**
+
 **Depends on:** M1 adapter and observation contract.
 
 Deliver typed transport intent; world snapshot; station/depot candidate search; directed rail routing; available train selection; costed operation plan; execution journal; readback; route monitoring. Use a structured fixture input so failures can be reproduced without model variability.

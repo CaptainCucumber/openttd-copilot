@@ -1,0 +1,89 @@
+{
+  "schema": "openttd-copilot-native-bridge-evidence-v1",
+  "date": "2026-10-23",
+  "status": "passed",
+  "scope": "M2a read-only native bridge attachment and saved foreign GameScript coexistence",
+  "raw_artifact": "artifacts/native-bridge-probe/20261023T160625Z-65d8877d",
+  "engine": {
+    "version": "15.3",
+    "upstream_revision": "14ec60f248547d4d062a1160f0fc26d742319888",
+    "fork": "https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2a-native-identity",
+    "commit": "2850af59a5df2fe32aaff718b8e3dbb01808ecdd",
+    "revision_string": "20261023-m2a-native-identity-g2850af59a5",
+    "binary_sha256": "259a92d9b99aba1c7d26a52c9cb2fce67278030d35a8056a7560b83cbed56381",
+    "patch_sha256": "255ddcc7569ccb245edf8f72a7d824c89f75fe3ef457dcf609138267bb00c718",
+    "checkout_clean": true,
+    "source_hashes": {
+      "src/network/core/tcp_admin.cpp": "4543f7a4c9f3b2bbf3c7d6734f07167ca3ebe07a9622ec3e4ec943888ac2ca97",
+      "src/network/core/tcp_admin.h": "562a268cb9dcc774d8752cb745e100288b65710bb6248ebc7a168dd6c29f7fb7",
+      "src/network/network_admin.cpp": "9cc036a2a3b8fd0400082191caa043113d71a4aa2aaf0eb873ce84bb123ffb76",
+      "src/network/network_admin.h": "1d6b158b540695f7fe4577bc7ea0496299abbfd6c30a1021faece4047d5ca1ef"
+    }
+  },
+  "bridge": {
+    "protocol_version": 1,
+    "admin_request_packet": 11,
+    "server_response_packet": 130,
+    "unsupported_version_rejected": true,
+    "authenticated_admin_connection": true,
+    "loopback_listeners_only": true,
+    "native_non_loopback_guard": true,
+    "mutation_requests": 0
+  },
+  "representative_save": {
+    "kind": "user autosave loaded only through an isolated copy",
+    "sha256": "277b1768d678ea5e19091819ae185fed03b8676523d1c7ed0f6d11c2897064fd",
+    "size": 92656,
+    "original_unchanged": true,
+    "world": {
+      "seed": 1096409515,
+      "calendar_date": 713445,
+      "map_width": 256,
+      "map_height": 256,
+      "landscape": 0
+    },
+    "selected_company": {
+      "id": 0,
+      "is_ai": false,
+      "money": 95975,
+      "loan": 100000,
+      "name": "Angry Shrimp Transport"
+    }
+  },
+  "foreign_gamescript_coexistence": {
+    "saved_script_loaded": true,
+    "marker": "foreign-environment-v1",
+    "tick_before": 10,
+    "tick_after": 13,
+    "mutation_count": 0,
+    "native_queries_succeeded": 2,
+    "fixture_save_commands": 1
+  },
+  "safety": {
+    "normal_profile_unchanged": true,
+    "temporary_secret_files_removed": true,
+    "original_save_path_passed_to_openttd": false,
+    "arbitrary_console_or_code_execution_exposed": false
+  },
+  "verification": {
+    "unit_tests_passed": 65,
+    "engine_compile_passed": true,
+    "engine_patch_reverse_check_passed": true,
+    "remote_engine_commit_verified": true
+  },
+  "source_hashes": {
+    "tools/admin_transport.py": "564ac08f45b19cc4d5a7e313f2790d32892c2dc12127c6a95b7afb523f490c5d",
+    "tools/run_native_bridge_probe.py": "13ee1decd333fcc0c62dfa5f54f1d9549c195ff763bb6eb55c82ae978f3a9832",
+    "tests/test_admin_transport.py": "0d5effa3c4d09441af44bd63e7f1fe88cbd82fbaeaadd6824488d4836a99e087",
+    "tests/test_native_bridge_probe.py": "8f1ee23ba2faff6ec4038961f0c165afd7aa0b910b41d1608f71386c613cf74a",
+    "engine/patches/0001-Add-bounded-Copilot-identity-bridge.patch": "255ddcc7569ccb245edf8f72a7d824c89f75fe3ef457dcf609138267bb00c718",
+    "game/foreign_environment/info.nut": "b54b00aef8ada8e983f9fdb3a70dc849b6a0d69c5f1bebbe0811535058652d51",
+    "game/foreign_environment/main.nut": "cd6070530dc923238c4b91632e5214afc29575839db16145e6d097b2d1803dab"
+  },
+  "limitations": [
+    "M2a exposes read-only identity only; no gameplay mutation exists",
+    "Observed seed and map fields are not a durable save lineage",
+    "The foreign coexistence fixture has no company; company selection is proven separately on the representative autosave",
+    "Stock-build round-trip compatibility, mutation recovery, and vehicle telemetry remain unproved"
+  ]
+}

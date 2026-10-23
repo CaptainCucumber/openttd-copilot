@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: M1 adapter decision complete, 2026-10-22. Stock fixtures verify construction/readback, bounded Admin transport, journalling, reconnect, pause, save identity, isolated vehicle service, and simple-operation throughput. Copied-save and coexistence evidence shows that stock GameScript cannot serve as the production adapter. A narrow native bridge is selected but not implemented. See the [M1 report](M1_REPORT.md) and [D013](DECISIONS.md#d013--select-a-narrow-native-openttd-bridge).
+Status: M2a read-only native bridge complete, 2026-10-23. The custom OpenTTD 15.3 build exposes bounded world/company identity through an authenticated loopback-only Admin packet family independent of GameScript. Mutations, durable identity, and vehicle events remain unimplemented. See the [M2a report](M2A_REPORT.md) and [D014](DECISIONS.md#d014--freeze-the-m2a-native-identity-boundary).
 
 ## Responsibilities
 
@@ -13,20 +13,20 @@ Status: M1 adapter decision complete, 2026-10-22. Stock fixtures verify construc
 | Game adapter | Validated observations and normal game commands | Bypass game rules or execute arbitrary model code |
 | Verifier | Actual assets, reachability, orders, loading, delivery, health | Equate successful construction with a working service |
 
-A practical initial implementation is a Python service for planning, protocol handling, SQLite job storage, and a terminal/CLI interface; Squirrel for a minimal GameScript adapter. If engine changes are needed, keep them in a narrow C++ bridge. These are provisional engineering choices; M1 may change them. MCP can expose the same high-level jobs later, but it is not the planning algorithm or the reliability layer.
+The implementation uses a Python service for protocol handling and the future planner, SQLite job storage, and terminal/CLI interface, backed by the narrow C++ bridge selected in M1. Squirrel remains only in reference/regression fixtures. MCP can expose the same high-level jobs later, but it is not the planning algorithm or the reliability layer.
 
 ## Integration options
 
 | Option | Strength | Cost / limitation | Position |
 |---|---|---|---|
 | Standard GameScript + Admin interface | Supported company-context commands and normal game validation | Cannot attach Copilot to an ordinary save; saved scripts retain the sole slot; no general vehicle ID on delivery telemetry | Retain as reference and regression fixture, not production adapter |
-| Small custom OpenTTD bridge | Independent of GameScript slot; direct observation and vehicle-tagged events; existing-save attachment | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected for production after M1 measurements** |
+| Small custom OpenTTD bridge | Independent of GameScript slot; existing-save attachment proven; can add direct vehicle-tagged events | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected in M1; read-only skeleton proven in M2a** |
 | NoAI controller | Established autonomous company API | An autonomous AI company differs from assisting the player's company | Reference/test tool, not initial product adapter |
 | Screenshot/mouse automation | Can use ordinary UI | Fragile execution and limited authoritative state | Visual QA only |
 
 The stock experiment hosts a local game and connects the normal client to the human company. Do not assume the Admin interface alone is a general construction API: the GameScript performs gameplay operations. The adapter contract should permit replacement without rewriting the planner.
 
-The selected bridge is deliberately narrow. It adds a versioned Copilot-specific Admin message family and a native controller independent of `Game::instance`; it is not a general remote console. Read-only queries and typed mutations are allowlisted. Mutations run on the game thread through OpenTTD's normal test/execute command pipeline and return authoritative costs plus readback. The bridge supplies stable world/operation identity and vehicle-tagged cargo events, while the external Python service retains intent parsing, planning, budgets, journaling, and verification. Local authentication and bounded messages remain mandatory. Any new saved state uses an explicit versioned save chunk and copied saves until compatibility is proven.
+The selected bridge is deliberately narrow. M2a adds protocol v1 identity packets 11 and 130 to the authenticated Admin connection and rejects non-loopback peers. It returns bounded observed world fields and explicit company records without touching `Game::instance`; it is not a general remote console. M2b will add allowlisted typed mutations on the game thread through OpenTTD's normal test/execute command pipeline and must return authoritative costs plus readback. Durable world/operation identity and vehicle-tagged cargo events are still planned, not implemented. The external Python service retains intent parsing, planning, budgets, journaling, and verification. Any new saved state uses an explicit versioned save chunk and copied saves until compatibility is proven.
 
 ## Intent and identity
 
@@ -48,7 +48,7 @@ Read the map incrementally by relevant region. Gather terrain height/slope, wate
 
 Responses carry protocol version, world/session identity, observation tick, and query scope. A multi-page scan must either use a consistent captured snapshot or disclose its tick range and recheck dependencies; a single timestamp on changing data is not a snapshot.
 
-The exact snapshot/revision mechanism is an M1 deliverable. Reject mismatched worlds and incompatible protocol versions. Keep world/save identity distinct from a transient network connection; reconnecting is not equivalent to loading a new game.
+M2a returns bounded observed identity inputs but not a durable snapshot or save lineage. M2b must persist versioned world/operation identity. Reject mismatched worlds and incompatible protocol versions. Keep world/save identity distinct from a transient network connection; reconnecting is not equivalent to loading a new game.
 
 ## Planning the railway
 

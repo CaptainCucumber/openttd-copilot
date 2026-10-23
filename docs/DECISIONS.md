@@ -102,7 +102,7 @@ Use a new entry when changing a substantial decision. Preserve superseded entrie
 
 ## D013 — Select a narrow native OpenTTD bridge
 
-- Date: 2026-10-22. Status: **accepted production adapter decision; implementation pending M2**. This resolves D003's and D009's adapter question.
+- Date: 2026-10-22. Status: **accepted production adapter decision; read-only skeleton implemented in M2a**. This resolves D003's and D009's adapter question.
 - Keep the external deterministic Python service for typed intent, planning, budgets, execution journaling, and verification. Replace the stock GameScript gameplay adapter with the smallest native OpenTTD bridge that closes the measured gaps.
 - Runtime basis: stock GameScript/Admin passes human-company construction, cost/readback, reconnect/save identity, lost-purchase replay, isolated service observation, and the five-run performance targets. It therefore remains valuable as a regression/reference fixture.
 - Runtime blockers: on an isolated copy of a representative OpenTTD 15.3 user autosave, the configured Copilot GameScript did not answer while Admin ping remained healthy. In the coexistence fixture, a saved foreign GameScript resumed with persisted state even though Copilot was configured and both scripts were installed. Stock delivery monitoring also lacks vehicle identity outside the isolated one-train scope. See the [M1 report](M1_REPORT.md) and [environment evidence](evidence/2026-10-22-environment-probe.json).
@@ -110,3 +110,13 @@ Use a new entry when changing a substantial decision. Preserve superseded entrie
 - Bridge boundary: add a versioned, authenticated, loopback-only Copilot Admin message family and native controller independent of the GameScript slot. Allow only bounded typed queries and mutations. Execute every gameplay mutation on the game thread through normal OpenTTD command test/execute validation; do not edit memory, bypass ownership/money/authority rules, or expose arbitrary console/code execution.
 - Bridge evidence required before building the full route: attach read-only to a copied existing save while its GameScript keeps running; identify the intended company/world; execute and read back one capped rail mutation; report vehicle-tagged load/departure/delivery events; persist versioned world/operation identity; and preserve explicit uncertain outcomes around any mutation/save crash gap.
 - Save compatibility: all development uses generated worlds or copies. Any bridge-specific save chunk is versioned. Do not overwrite an original save or claim stock-build round-trip compatibility until measured.
+
+## D014 — Freeze the M2a native identity boundary
+
+- Date: 2026-10-23. Status: **implemented and real-engine verified**.
+- Fork exact upstream revision `14ec60f248547d4d062a1160f0fc26d742319888`. Publish the engine commit separately and retain the identical mail patch in this repository. The M2a engine commit is `2850af59a5df2fe32aaff718b8e3dbb01808ecdd` on `CaptainCucumber/OpenTTD:copilot/m2a-native-identity`.
+- Extend the authenticated Admin transport with request packet 11 and response packet 130. Copilot protocol v1 is independent of OpenTTD Admin protocol v3. The request contains only version, typed request kind, correlation ID, and explicit company selector. Unknown versions, unknown request kinds, missing companies, and non-loopback peers receive bounded typed rejection.
+- Return only observed frame, seed, calendar date, map dimensions, landscape, and bounded company records. Company records contain ID, AI/human flag, signed cash, loan, and display name. Do not select a company by name or silently choose among multiple human companies.
+- The v1 handler requires an already active Admin connection, checks IPv4/IPv6 loopback, runs in the existing game-thread Admin receive path, and does not call the GameScript instance. It exposes no RCON, arbitrary console, code execution, or gameplay mutation.
+- Runtime result: the custom build reads world/company identity from an isolated representative autosave copy and rejects protocol v2. In a separate copied saved-world gate, the foreign GameScript remains loaded, advances tick 10 to 13, and reports zero mutations while two native queries succeed. See the [M2a report](M2A_REPORT.md).
+- Identity limit: M2a's observed seed/map/date fields are not a durable world lineage. M2b must add versioned persisted world/operation identity before recovery claims and must keep the first mutation allowlisted, capped, and routed through normal OpenTTD command validation.
