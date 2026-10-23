@@ -755,6 +755,145 @@ class AdminTransportTests(unittest.TestCase):
                 client.close()
                 server_sock.close()
 
+    def test_copilot_rail_assets_station_and_depot_pages(self) -> None:
+        for asset_kind, record_format, record in (
+            (0, "<HIIHHQ", (12, 100, 101, 2, 1, 1 << 5)),
+            (1, "<HIBB", (4, 202, 1, 0)),
+        ):
+            client, server_sock = connected_client(timeout=1)
+            try:
+                def reply() -> None:
+                    packet_type, payload = read_frame(server_sock)
+                    self.assertEqual(packet_type, 11)
+                    self.assertEqual(struct.unpack_from("<HBIBBIB", payload),
+                                     (COPILOT_PROTOCOL_VERSION, 7, 47, 3, asset_kind, 2, 16))
+                    self.assertEqual(payload[struct.calcsize("<HBIBBIB"):], b"world-123\0")
+                    response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 7, 47, 0)
+                    response += b"world-123\0" + struct.pack("<IBBIB", 789, 3, asset_kind, 2, 1)
+                    response += struct.pack(record_format, *record)
+                    server_sock.sendall(frame(130, response))
+
+                thread = threading.Thread(target=reply)
+                thread.start()
+                result = client.copilot_rail_assets("world-123", 3, asset_kind, 2, 16, request_id=47)
+                thread.join(timeout=1)
+                self.assertFalse(thread.is_alive())
+                self.assertEqual((result["company_id"], result["asset_kind"], result["frame"]),
+                                 (3, asset_kind, 789))
+                records = result["stations"] if asset_kind == 0 else result["depots"]
+                self.assertEqual(result["count"], 1)
+                self.assertEqual(len(records), 1)
+                if asset_kind == 0:
+                    self.assertEqual(records[0], {"station_id": 12, "base_tile": 100,
+                        "platform_tile": 101, "platform_width": 2, "platform_height": 1,
+                        "acceptance_mask": 1 << 5})
+                else:
+                    self.assertEqual(records[0], {"depot_id": 4, "tile": 202,
+                        "direction": 1, "rail_type": 0})
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_copilot_rail_assets_rejects_bad_bounds_and_response(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for args in (("world-123", 0, 2, 0, 1), ("world-123", 0, 0, 0, 0),
+                         ("world-123", 0, 0, 0, 17)):
+                with self.subTest(args=args), self.assertRaises(ValueError):
+                    client.copilot_rail_assets(*args)
+        finally:
+            client.close()
+            server_sock.close()
+
+        fixed = struct.pack("<IBBIB", 9, 0, 0, 0, 1)
+        cases = [(fixed, b"", "truncated Copilot rail station record"),
+                 (struct.pack("<IBBIB", 9, 0, 0, 0, 17), b"", "selector or count"),
+                 (struct.pack("<IBBIB", 9, 0, 0, 0, 0), b"x", "trailing data")]
+        for page, suffix, message in cases:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 7, 48, 0)
+                response += b"world-123\0" + page + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_rail_assets("world-123", 0, 0, 0, 1, request_id=48)
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_copilot_train_parts_page_and_bounds(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            record = struct.pack("<IBIIIHHIBBIH", 21, 3, 21, 0xFFFFFFFF,
+                                 22, 17, 4, 1234, 3, 1, 40, 30)
+
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(struct.unpack_from("<HBIBIBH", payload),
+                                 (COPILOT_PROTOCOL_VERSION, 8, 49, 3, 0xFFFFFFFF, 4, 32))
+                self.assertEqual(payload[struct.calcsize("<HBIBIBH"):], b"world-123\0")
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 8, 49, 0)
+                response += b"world-123\0" + struct.pack("<IBIBIB", 900, 3, 0xFFFFFFFF,
+                                                           1, 25, 0) + record
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_train_parts("world-123", 3, max_records=4,
+                                                scan_budget=32, request_id=49)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual((result["frame"], result["count"], result["next_after_id"],
+                              result["complete"]), (900, 1, 25, False))
+            self.assertEqual(result["parts"][0], {
+                "vehicle_id": 21, "owner": 3, "first_vehicle_id": 21,
+                "previous_vehicle_id": 0xFFFFFFFF, "next_vehicle_id": 22,
+                "engine_id": 17, "unit_number": 4, "tile": 1234,
+                "is_primary": True, "stopped": True, "crashed": False,
+                "in_depot": False, "cargo_type": 1, "cargo_amount": 40,
+                "cargo_capacity": 30,
+            })
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_train_parts_rejects_bad_bounds_and_records(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            for kwargs in ({"max_records": 0}, {"max_records": 17},
+                           {"scan_budget": 0}, {"scan_budget": 257},
+                           {"after_vehicle_id": 0x100000}):
+                with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                    client.copilot_train_parts("world-123", 0, **kwargs)
+        finally:
+            client.close()
+            server_sock.close()
+
+        fixed = struct.pack("<IBIBIB", 800, 0, 0xFFFFFFFF, 1, 20, 0)
+        bad = struct.pack("<IBIIIHHIBBIH", 21, 0, 22, 0xFFFFFFFF,
+                          0xFFFFFFFF, 17, 4, 1234, 1, 1, 20, 30)
+        cases = [(fixed, b"", "truncated Copilot train part record"),
+                 (struct.pack("<IBIBIB", 800, 0, 0xFFFFFFFF, 17, 20, 0), b"",
+                  "page count or completion"),
+                 (fixed + struct.pack("<IBIIIHHIBBIH", 21, 0, 21, 0xFFFFFFFF,
+                                      0xFFFFFFFF, 17, 4, 1234, 0x80, 255, 0, 0), b"",
+                  "state bits"),
+                 (fixed + bad, b"", "not its chain root"),
+                 (struct.pack("<IBIBIB", 800, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0), b"x",
+                  "trailing data")]
+        for page, suffix, message in cases:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 8, 50, 0)
+                response += b"world-123\0" + page + suffix
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_train_parts("world-123", 0, request_id=50)
+            finally:
+                client.close()
+                server_sock.close()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 # Run the M2d rail catalog probe
 
-Build the clean fork at `9428e3ecdd98d066feb3f984bdeb266fe4a4c711`
+Build the clean fork at `5f8b9d56af8f03e7794ef941e0172cbdff85c0de`
 using [engine/README.md](../engine/README.md), then run:
 
 ```sh

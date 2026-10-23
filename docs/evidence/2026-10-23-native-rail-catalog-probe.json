@@ -1,6 +1,6 @@
 {
-  "artifact": "artifacts/native-rail-catalog-probe/20261023T181812Z-3feed216/manifest.json",
-  "binary_sha256": "1d7deb2689033da08a8ce99e478181c4c890350f810a399271f37d571cf36bfe",
+  "artifact": "artifacts/native-rail-catalog-probe/20261023T183111Z-70babcc2/manifest.json",
+  "binary_sha256": "7b8fec48301aeaf1fa21442896f5c16c5d91cd040370e404e68365d93ed781dd",
   "buildable_count": 14,
   "buildable_records": [
     {
@@ -214,13 +214,61 @@
       "weight": 30
     }
   ],
+  "catalog_collection": {
+    "atomic": false,
+    "frame_max": 32,
+    "frame_min": 23,
+    "pages": [
+      {
+        "count": 16,
+        "frame": 24,
+        "start_index": 0
+      },
+      {
+        "count": 16,
+        "frame": 25,
+        "start_index": 16
+      },
+      {
+        "count": 16,
+        "frame": 26,
+        "start_index": 32
+      },
+      {
+        "count": 16,
+        "frame": 27,
+        "start_index": 48
+      },
+      {
+        "count": 16,
+        "frame": 28,
+        "start_index": 64
+      },
+      {
+        "count": 16,
+        "frame": 29,
+        "start_index": 80
+      },
+      {
+        "count": 16,
+        "frame": 30,
+        "start_index": 96
+      },
+      {
+        "count": 4,
+        "frame": 31,
+        "start_index": 112
+      }
+    ]
+  },
   "checks": [
     "catalog_reload",
     "typed_rail_catalog"
   ],
   "client_source_hashes": {
-    "tools/admin_transport.py": "dd52c4193b5f6bd2cb166ec53661341ce3ddbb13518546fbff76ec1dd309ac2f",
-    "tools/run_native_rail_catalog_probe.py": "6724823c9e1aa423fa2a24972737cff93f012b8f6872b2a9f38dee84cade3380"
+    "tools/admin_transport.py": "a33dab5fcdccf3608704eb85fb5e790c8342a826f9c96cc912a1b6710e94c601",
+    "tools/native_rail_catalog.py": "a5ba8c2fce3c9f7657bab48675adb126c717c13a2320d9ebc3253c709bc48272",
+    "tools/run_native_rail_catalog_probe.py": "3734cf074ca138954b59605274f39b533699a0c6b915366752616a54945cc237"
   },
   "company": {
     "id": 0,
@@ -230,13 +278,13 @@
     "name": "Copilot Probe Human Transport"
   },
   "company_railtypes": 1,
-  "elapsed_seconds": 2.336,
-  "engine_commit": "9428e3ecdd98d066feb3f984bdeb266fe4a4c711",
+  "elapsed_seconds": 1.989,
+  "engine_commit": "5f8b9d56af8f03e7794ef941e0172cbdff85c0de",
   "engine_count": 116,
-  "engine_revision": "20261023-m2d-industry-snapshot-g9428e3ecdd",
+  "engine_revision": "20261023-m2d-industry-snapshot-g5f8b9d56af",
   "engine_source_hashes": {
-    "src/network/network_admin.cpp": "21fe72654e40020fd99c87d9f213c1c76f3d42e1ad58fa0c824931dc0c97ade3",
-    "src/network/network_admin.h": "e4ecae133cda6cb0c337ddc1938b1524726dfeb97407e5cde2c4092a7bf0157b"
+    "src/network/network_admin.cpp": "709652c889cb611effa8ed698140889174772cacfb2222edd78c744e1df60306",
+    "src/network/network_admin.h": "a6f58be37760aedaff2e9dbf6bba599382c73c33e61024e60a348ed29bcfde5e"
   },
   "gate": "M2d read-only company rail catalog checkpoint",
   "normal_profile_unchanged": true,

@@ -1,0 +1,94 @@
+{
+  "artifact": "artifacts/native-train-parts-probe/20261023T183058Z-927cf8e9/manifest.json",
+  "binary_sha256": "7b8fec48301aeaf1fa21442896f5c16c5d91cd040370e404e68365d93ed781dd",
+  "checks": [
+    "control-empty_train_parts",
+    "service-consist_train_parts"
+  ],
+  "client_source_hashes": {
+    "tools/admin_transport.py": "a33dab5fcdccf3608704eb85fb5e790c8342a826f9c96cc912a1b6710e94c601",
+    "tools/run_native_train_parts_probe.py": "449dadaa39307552c35d545d7bae01bc8369c2ac582fb0e8b821c6ac895f06f9"
+  },
+  "company": {
+    "id": 0,
+    "is_ai": false,
+    "loan": 100000,
+    "money": 99160,
+    "name": "Copilot Probe Human Transport"
+  },
+  "control_parts": [],
+  "control_world_id": "6BAAC8B739403503F1A7714B8CC47013",
+  "elapsed_seconds": 1.703,
+  "engine_commit": "5f8b9d56af8f03e7794ef941e0172cbdff85c0de",
+  "engine_revision": "20261023-m2d-industry-snapshot-g5f8b9d56af",
+  "engine_source_hashes": {
+    "src/network/network_admin.cpp": "709652c889cb611effa8ed698140889174772cacfb2222edd78c744e1df60306",
+    "src/network/network_admin.h": "a6f58be37760aedaff2e9dbf6bba599382c73c33e61024e60a348ed29bcfde5e"
+  },
+  "gate": "M2d read-only company train-part snapshot checkpoint",
+  "normal_profile_unchanged": true,
+  "openttd_version": "15.3",
+  "secret_files_removed": true,
+  "seed": 20261021,
+  "service_chain_summary": {
+    "chains": [
+      {
+        "parts": [
+          2,
+          3
+        ],
+        "root_vehicle_id": 2
+      }
+    ],
+    "part_count": 2,
+    "primary_count": 1
+  },
+  "service_pages": [
+    {
+      "after_vehicle_id": 4294967295,
+      "complete": true,
+      "count": 2,
+      "frame": 10,
+      "next_after_id": 5
+    }
+  ],
+  "service_parts": [
+    {
+      "cargo_amount": 0,
+      "cargo_capacity": 0,
+      "cargo_type": 0,
+      "crashed": false,
+      "engine_id": 0,
+      "first_vehicle_id": 2,
+      "in_depot": false,
+      "is_primary": true,
+      "next_vehicle_id": 3,
+      "owner": 0,
+      "previous_vehicle_id": 4294967295,
+      "stopped": false,
+      "tile": 3111,
+      "unit_number": 1,
+      "vehicle_id": 2
+    },
+    {
+      "cargo_amount": 25,
+      "cargo_capacity": 30,
+      "cargo_type": 1,
+      "crashed": false,
+      "engine_id": 29,
+      "first_vehicle_id": 2,
+      "in_depot": false,
+      "is_primary": false,
+      "next_vehicle_id": 4294967295,
+      "owner": 0,
+      "previous_vehicle_id": 2,
+      "stopped": false,
+      "tile": 3111,
+      "unit_number": 0,
+      "vehicle_id": 3
+    }
+  ],
+  "service_save_sha256": "6ba172a071a87863dce334e26c696d0a1c3285730120bc8a130904283fd425b4",
+  "source_save_unchanged": true,
+  "status": "success"
+}

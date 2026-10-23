@@ -11,10 +11,10 @@ non-atomic. Neither endpoint sends a gameplay command.
 
 ## Real-engine result
 
-The clean fork commit `9428e3ecdd98d066feb3f984bdeb266fe4a4c711` produced
+The clean fork commit `5f8b9d56af8f03e7794ef941e0172cbdff85c0de` produced
 a matching runtime revision. The final isolated run
-`artifacts/native-industry-probe/20261023T181812Z-53cf83e7/manifest.json`
-passed three checks in 2.139 seconds. Its [concise evidence](evidence/2026-10-23-native-industry-probe.json)
+`artifacts/native-industry-probe/20261023T183111Z-92c08e46/manifest.json`
+passed three checks. Its [concise evidence](evidence/2026-10-23-native-industry-probe.json)
 includes source and binary hashes, industry records, and tile-page frames.
 The copied 128×128 temperate control save used seed 20261021, standard graphics,
 company 0, and no gameplay NewGRFs.

@@ -1,0 +1,74 @@
+{
+  "artifact": "artifacts/native-rail-assets-probe/20261023T183111Z-bd545e5d/manifest.json",
+  "binary_sha256": "7b8fec48301aeaf1fa21442896f5c16c5d91cd040370e404e68365d93ed781dd",
+  "checks": [
+    "asset_reload",
+    "service_asset_geometry",
+    "typed_rail_assets"
+  ],
+  "client_source_hashes": {
+    "tools/admin_transport.py": "a33dab5fcdccf3608704eb85fb5e790c8342a826f9c96cc912a1b6710e94c601",
+    "tools/run_native_rail_assets_probe.py": "364543a2dd8a4125113022ff4f7ab9ef253742c86cf66cd64bf82d46e5c9dac4"
+  },
+  "company": {
+    "id": 0,
+    "is_ai": false,
+    "loan": 100000,
+    "money": 99160,
+    "name": "Copilot Probe Human Transport"
+  },
+  "control_depots": [],
+  "control_stations": [
+    {
+      "acceptance_mask": 0,
+      "base_tile": 8257,
+      "platform_height": 1,
+      "platform_tile": 8257,
+      "platform_width": 2,
+      "station_id": 0
+    }
+  ],
+  "elapsed_seconds": 1.944,
+  "engine_commit": "5f8b9d56af8f03e7794ef941e0172cbdff85c0de",
+  "engine_revision": "20261023-m2d-industry-snapshot-g5f8b9d56af",
+  "engine_source_hashes": {
+    "src/network/network_admin.cpp": "709652c889cb611effa8ed698140889174772cacfb2222edd78c744e1df60306",
+    "src/network/network_admin.h": "a6f58be37760aedaff2e9dbf6bba599382c73c33e61024e60a348ed29bcfde5e"
+  },
+  "gate": "M2d read-only company rail station/depot assets checkpoint",
+  "nonhuman_branch_runtime_tested": false,
+  "normal_profile_unchanged": true,
+  "openttd_version": "15.3",
+  "secret_files_removed": true,
+  "seed": 20261021,
+  "service_depots": [
+    {
+      "depot_id": 0,
+      "direction": 2,
+      "rail_type": 0,
+      "tile": 3092
+    }
+  ],
+  "service_save_sha256": "86d4be75d2951b6412a9bbaf2e34609cb695bac471c2d307d40431d60c39e274",
+  "service_stations": [
+    {
+      "acceptance_mask": 0,
+      "base_tile": 3093,
+      "platform_height": 1,
+      "platform_tile": 3093,
+      "platform_width": 2,
+      "station_id": 0
+    },
+    {
+      "acceptance_mask": 2,
+      "base_tile": 3110,
+      "platform_height": 1,
+      "platform_tile": 3110,
+      "platform_width": 2,
+      "station_id": 1
+    }
+  ],
+  "source_save_unchanged": true,
+  "status": "success",
+  "world_id": "6BAAC8B739403503F1A7714B8CC47013"
+}

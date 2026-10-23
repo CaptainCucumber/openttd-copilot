@@ -13,10 +13,11 @@ boundary and sends no gameplay command.
 ## Real-engine result
 
 The clean OpenTTD 15.3 fork at
-`9428e3ecdd98d066feb3f984bdeb266fe4a4c711` produced a binary with the
+`5f8b9d56af8f03e7794ef941e0172cbdff85c0de` produced a binary with the
 matching revision. The final copied-save run
-`artifacts/native-rail-catalog-probe/20261023T181812Z-3feed216/manifest.json`
-passed catalog and reload checks in 2.336 seconds. The
+`artifacts/native-rail-catalog-probe/20261023T183111Z-70babcc2/manifest.json`
+passed catalog and reload checks with an additional guarded multi-page
+collector. The
 [concise evidence](evidence/2026-10-23-native-rail-catalog-probe.json) records
 source/binary hashes and all currently buildable entries.
 

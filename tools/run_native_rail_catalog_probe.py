@@ -12,6 +12,7 @@ from admin_transport import CopilotBridgeError
 import run_control_probe as base
 import run_environment_probe as environment
 import run_native_mutation_probe as mutation
+from native_rail_catalog import read_rail_catalog
 
 
 ROOT = base.REPO_ROOT
@@ -89,6 +90,7 @@ def run(args: argparse.Namespace) -> int:
     experiment.manifest["source_hashes"] = {
         name: base.sha256_file(ROOT / name) for name in (
             "tools/admin_transport.py", "tools/run_native_rail_catalog_probe.py",
+            "tools/native_rail_catalog.py",
         )
     }
     experiment.write()
@@ -104,6 +106,10 @@ def run(args: argparse.Namespace) -> int:
         environment.require(all(set(item) == RECORD_FIELDS for item in first_page["engines"]),
                             "rail catalog record fields are incomplete")
         all_engines = read_all_catalog(experiment.admin, world_id, 0, experiment.remaining)
+        collected = read_rail_catalog(experiment.admin, company_id=0)
+        environment.require(collected["engines"] == all_engines and
+                            collected["company_railtypes"] == first_page["company_railtypes"],
+                            "guarded catalog reader disagreed with raw pages")
         ids = [item["engine_id"] for item in all_engines]
         environment.require(ids == sorted(ids) and len(set(ids)) == len(ids),
                             "engine IDs are not unique and ordered")
@@ -134,6 +140,7 @@ def run(args: argparse.Namespace) -> int:
                             "read-only catalog queries changed operation or company state")
         experiment.check("typed_rail_catalog", {
             "first_page": first_page, "engines": all_engines,
+            "collected": collected,
             "before": before, "after": after,
             "wrong_world_status": 5, "invalid_company_status": 3,
         })

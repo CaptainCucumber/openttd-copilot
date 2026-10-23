@@ -1,6 +1,6 @@
 # Acceptance and reliability plan
 
-Status: M2a native identity, M2b one-piece typed mutation, and M2c vehicle-tagged events complete, 2026-10-23. M2d now has read-only tile, industry, and rail-catalog checkpoints. The custom build identifies a copied world and human company, builds one capped rail piece through the normal command pipeline with saved outcome identity, and observes a GameScript-built train's full departures and accepted industry deliveries. [M2c report](M2C_REPORT.md), [industry report](M2D_INDUSTRY_REPORT.md), [catalog report](M2D_RAIL_CATALOG_REPORT.md). **Native end-to-end transport construction, fault-injected crash recovery, and the release scenario suite below are not implemented or passed.**
+Status: M2a native identity, M2b one-piece typed mutation, and M2c vehicle-tagged events complete, 2026-10-23. M2d now has read-only tile, industry, rail-catalog, station/depot, and train-part checkpoints. The custom build identifies a copied world and human company, builds one capped rail piece through the normal command pipeline with saved outcome identity, and observes a GameScript-built train's full departures and accepted industry deliveries. [M2c report](M2C_REPORT.md), [assets report](M2D_RAIL_ASSETS_REPORT.md), [train-parts report](M2D_TRAIN_PARTS_REPORT.md). **Native end-to-end transport construction, fault-injected crash recovery, and the release scenario suite below are not implemented or passed.**
 
 ## What “reliable” means
 

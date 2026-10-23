@@ -1,16 +1,14 @@
 # Custom OpenTTD engine
 
-M2 uses a narrow fork of OpenTTD 15.3. The current published engine branch is
+M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
 [`copilot/m2d-industry-snapshot`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-industry-snapshot), commit
-`9428e3ecdd98d066feb3f984bdeb266fe4a4c711`. It extends the industry/owner
-commits `55c0047690ccb2ba2bc4fa6688cb3b981fad89ab` and
-`4af552687f1bf06e9eb00df4a1312b8c740654cb`, plus the M2d tile
-commit `bf789a968cdf47ac54237a917402821d24e6dff6`, which extends the M2c
-commit `37f88cc03d88a99273297b2691f88c16f6926fc4`, itself based on M2b, M2a and upstream
-`14ec60f248547d4d062a1160f0fc26d742319888`.
+`5f8b9d56af8f03e7794ef941e0172cbdff85c0de`. It descends from the M2d
+tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
+`37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
+and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All seven commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0007 in order to the upstream revision if not using the fork branch.
+All nine commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0009 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
@@ -44,6 +42,11 @@ Another additive query returns up to 16 company-specific train engine records
 per page with buildability, rail/cargo compatibility, default capacity, and
 prices; see the [catalog report](../docs/M2D_RAIL_CATALOG_REPORT.md) and
 [probe](../docs/NATIVE_RAIL_CATALOG_PROBE.md).
+Read-only asset pages report existing company rail station platforms, current
+acceptance masks, and depots. A separate bounded vehicle-pool scan reports
+owned train consist parts and their links, cargo, and capacity. See the
+[assets report](../docs/M2D_RAIL_ASSETS_REPORT.md) and
+[train-parts report](../docs/M2D_TRAIN_PARTS_REPORT.md).
 The wrapper posts through OpenTTD's normal command pipeline and rejects costs
 above the supplied cap before execution. A versioned COPL save chunk stores
 world/operation identity and the terminal outcome; an external fsynced journal

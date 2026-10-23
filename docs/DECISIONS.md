@@ -161,3 +161,19 @@ Use a new entry when changing a substantial decision. Preserve superseded entrie
 - Design: protocol-v3 request kind 6 returns company rail types and up to 16 train engine definitions per page. For each definition, derive current buildability through `IsEngineBuildable`, and report rail vehicle class/types, default cargo/capacity, refit mask, purchase/running cost, speed, power, weight, and nominal shortening. Require explicit world/company and retain page frames; reject non-human or missing companies.
 - Boundary: catalog values only nominate candidates. NewGRF/refit callbacks, articulated capacity and length, actual purchase cost, orders, and final consist state require normal engine command validation and readback. Multiple pages can span frames and must be rechecked before mutation. No COPL save or mutation boundary changed.
 - Runtime result: the clean committed build returned 116 train definitions, 14 buildable for human company 0, with typed wrong-world/missing-company rejection and identical copied-save reload. See [catalog report](M2D_RAIL_CATALOG_REPORT.md). Native purchase and full railway construction remain open.
+
+## D020 — Read existing company rail stations and depots
+
+- Date: 2026-10-23. Status: **implemented and real-engine verified for the tested human-company assets**.
+- User requirement: preserve existing infrastructure and verify what the company already owns before proposing station/depot placement or interpreting a completed build.
+- Design: protocol-v3 request kind 7 returns bounded separate pages of company-owned rail stations and depots. Station records report ID, sign/base tile, train-platform area, and current acceptance mask; depot records report ID, tile, entrance direction, and rail type. All pages bind world/company/class/frame. The query does not mutate the world or COPL save state.
+- Scope: current acceptance at an existing station does not predict candidate catchment. Industry footprints, full station tile track geometry, and vehicle/order details require additional reads. The saved fixture lacks an AI company, so the nonhuman rejection branch is not runtime-proven.
+- Runtime result: the clean custom build read station 0's 2×1 platform in the control save and an owned depot plus two stations in a copied service save; the destination station's mask included coal. Wrong-world/missing-company rejection and fresh-process control-save reload passed. See [assets report](M2D_RAIL_ASSETS_REPORT.md).
+
+## D021 — Observe bounded train consist parts without inferring orders
+
+- Date: 2026-10-23. Status: **implemented and real-engine verified for an empty control save and one-train service save**.
+- User requirement: verify the actual purchased consist and coal capacity rather than relying only on train catalog estimates or assuming a wagon is a separate train.
+- Design: protocol-v3 request kind 8 scans at most 256 vehicle pool IDs and returns at most 16 owned train parts per page. An exclusive ID cursor handles sparse pools. Records include primary/root/previous/next IDs, engine, unit, tile, state, cargo ID, amount, and capacity. The query requires an explicit human company and world, remains read-only, and does not extend COPL save state.
+- Boundary: parts and cargo are momentary observations; multiple pages are not atomic. Orders, who purchased the train, route traversal, loaded departure, accepted delivery, save-lineage reconciliation, and native purchase remain separate. A displayed cargo amount is not service success.
+- Runtime result: the clean build returned no train in the control save and a reciprocal two-part consist (primary train 2, coal wagon 3) in a copied service save. Typed wrong-world/missing-company rejection and unchanged source saves passed. See [train-parts report](M2D_TRAIN_PARTS_REPORT.md).
