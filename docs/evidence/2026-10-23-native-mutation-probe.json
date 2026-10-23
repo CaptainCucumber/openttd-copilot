@@ -1,0 +1,31 @@
+{
+  "status": "success",
+  "scope": "M2b one capped native rail mutation on copied save",
+  "raw_manifest": "artifacts/native-mutation-probe/20261023T163704Z-fb8cb770/manifest.json",
+  "elapsed_seconds": 3.252,
+  "engine": {
+    "version": "15.3 custom build",
+    "commit": "8b8f3d7bad64fb01fc2a216b35e8070be95f51d8",
+    "revision": "20261023-m2b-typed-rail-mutation-g8b8f3d7bad",
+    "binary_sha256": "40f532394377480ffef040cebff76df128cce339fce34bb00d4ef859d522cea7"
+  },
+  "fixture": {"map": "128x128 temperate", "seed": 20261021, "company_id": 0, "tile": 8255, "rail_type": 0, "track": 1, "max_cost": 1000},
+  "checks": {
+    "zero_cap_rejected": {"actual_cost": 0, "sequence": 0, "has_rail": false, "cash_before_after": 99160, "loan_before_after": 100000},
+    "build_completed": {"actual_cost": 90, "cash_before": 99160, "cash_after": 99070, "loan_before_after": 100000, "sequence_before": 0, "sequence_after": 1, "owner": 0, "track_bits": 2},
+    "duplicate_no_second_charge": true,
+    "completed_outcome_and_track_survive_reload": true,
+    "older_save_detected": true,
+    "source_save_unchanged": true,
+    "normal_profile_unchanged": true,
+    "temporary_secret_files_removed": true
+  },
+  "source_sha256": {
+    "tools/admin_transport.py": "119cfc429b75c2ec5cb2ded5fd35ec73f77d24b489744ae2cd2cf52cbaa86bf4",
+    "tools/native_mutation_journal.py": "9d9c239fea283085cbaf5d07917acf8b1c55d6a0a607a5047e7d9ff458fc5daa",
+    "tools/run_native_mutation_probe.py": "c76b6a03a4634c3652d8412d57e0f9a6a465f8bf6ff662a260534814c9bc6141",
+    "engine/src/copilot_cmd.cpp": "2fb45b82a1a184a478970efd2087c9e70040da022754add5d03e934c6fdd04f0",
+    "engine/src/saveload/copilot_sl.cpp": "245d1efdb1cdeb2d6e5d8bba9d7128777a3185dbf145974ec32c2e52d9b7544a"
+  },
+  "not_proven": ["full railway or transport service", "pending-save fault injection", "atomic save/command execution", "multiplayer client synchronization", "stock-build save compatibility"]
+}

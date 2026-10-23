@@ -9,6 +9,7 @@ from unittest import mock
 
 from tools.admin_transport import (
     ADMIN_PROTOCOL_VERSION,
+    COPILOT_PROTOCOL_VERSION,
     AdminClient,
     AdminProtocolError,
     AdminServerError,
@@ -58,6 +59,27 @@ def _read_exact(sock: socket.socket, size: int) -> bytes:
     while len(result) < size:
         result.extend(sock.recv(size - len(result)))
     return bytes(result)
+
+
+def operation_response(
+    request_kind: int,
+    request_id: int,
+    *,
+    world_id: str = "world-123",
+    operation_hi: int = 5,
+    operation_lo: int = 6,
+    valid_tile: int = 1,
+    has_rail: int = 1,
+    company_valid: int = 1,
+) -> bytes:
+    header = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, request_kind, request_id, 0)
+    body = world_id.encode() + b"\0" + struct.pack(
+        "<QQQBQQQQBIBBqqIIBBBBBBqq",
+        9, 10, 11, 2, operation_hi, operation_lo, 7, 8,
+        0, 321, 1, 2, 500, 90, 0, 456,
+        valid_tile, has_rail, 0, 4, 1, company_valid, 10000, 100000,
+    )
+    return header + body
 
 
 class AdminTransportTests(unittest.TestCase):
@@ -286,12 +308,17 @@ class AdminTransportTests(unittest.TestCase):
     def test_copilot_identity_round_trip_is_typed_and_correlated(self) -> None:
         client, server_sock = connected_client(timeout=1)
         company = struct.pack("<BBqq", 0, 0, 987654, 100000) + b"Copper Transport\x00"
-        response = struct.pack("<HBIBIIIHHBB", 1, 0, 42, 0, 123, 456, 789, 256, 512, 0, 1) + company
+        response = (
+            struct.pack("<HBIB", 2, 0, 42, 0)
+            + b"world-123\0"
+            + struct.pack("<QQQIIIHHBB", 9, 10, 11, 123, 456, 789, 256, 512, 0, 1)
+            + company
+        )
         try:
             def reply() -> None:
                 packet_type, payload = read_frame(server_sock)
                 self.assertEqual(packet_type, 11)
-                self.assertEqual(payload, struct.pack("<HBIB", 1, 0, 42, 255))
+                self.assertEqual(payload, struct.pack("<HBIB", 2, 0, 42, 255))
                 server_sock.sendall(frame(130, response))
 
             thread = threading.Thread(target=reply)
@@ -299,6 +326,9 @@ class AdminTransportTests(unittest.TestCase):
             result = client.copilot_identity(request_id=42)
             thread.join(timeout=1)
             self.assertFalse(thread.is_alive())
+            self.assertEqual(result["world_id"], "world-123")
+            self.assertEqual(result["sequence"], 9)
+            self.assertEqual(result["head"], {"hi": 10, "lo": 11})
             self.assertEqual(result["frame"], 123)
             self.assertEqual(result["seed"], 456)
             self.assertEqual(result["map_width"], 256)
@@ -315,13 +345,130 @@ class AdminTransportTests(unittest.TestCase):
     def test_copilot_identity_rejects_bridge_error_and_malformed_payload(self) -> None:
         client, server_sock = connected_client(timeout=1)
         try:
-            server_sock.sendall(frame(130, struct.pack("<HBIB", 1, 0, 7, 3)))
+            server_sock.sendall(frame(130, struct.pack("<HBIB", 2, 0, 7, 3)))
             with self.assertRaisesRegex(CopilotBridgeError, "company was not found"):
                 client.copilot_identity(company_id=14, request_id=7)
 
-            server_sock.sendall(frame(130, struct.pack("<HBIB", 1, 0, 8, 0)))
-            with self.assertRaisesRegex(AdminProtocolError, "truncated"):
+            server_sock.sendall(frame(130, struct.pack("<HBIB", 2, 0, 8, 0)))
+            with self.assertRaisesRegex(AdminProtocolError, "world ID"):
                 client.copilot_identity(request_id=8)
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_build_single_rail_round_trip_and_async_gamescript(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                fixed_size = struct.calcsize("<HBIBIBBqQQQQQQQ")
+                values = struct.unpack_from("<HBIBIBBqQQQQQQQ", payload)
+                self.assertEqual(
+                    values,
+                    (2, 1, 42, 0, 321, 1, 2, 500, 3, 10, 11, 5, 6, 7, 8),
+                )
+                self.assertEqual(payload[fixed_size:], b"world-123\0")
+                unrelated = b'{"v":1,"rid":"later","ok":true}\0'
+                server_sock.sendall(frame(124, unrelated) + frame(126, struct.pack("<I", 99)))
+                server_sock.sendall(frame(130, operation_response(1, 42)))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_build_single_rail(
+                world_id="world-123", company_id=0, tile=321, rail_type=1, track=2,
+                max_cost=500, expected_sequence=3, expected_head_hi=10,
+                expected_head_lo=11, operation_hi=5, operation_lo=6,
+                payload_hash_hi=7, payload_hash_lo=8, request_id=42,
+            )
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(result["state_name"], "completed")
+            self.assertEqual(result["operation"], {"hi": 5, "lo": 6})
+            self.assertEqual(result["payload_hash"], {"hi": 7, "lo": 8})
+            self.assertEqual(result["actual_cost"], 90)
+            self.assertEqual(
+                result["readback"],
+                {"valid_tile": True, "has_rail": True, "owner": 0, "track_bits": 4,
+                 "rail_type": 1, "company_valid": True, "money": 10000, "loan": 100000},
+            )
+            self.assertTrue(client.receive_response("later")["ok"])
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_operation_status_layout_and_status_messages(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    payload,
+                    struct.pack("<HBIQQ", 2, 2, 77, 5, 6) + b"world-123\0",
+                )
+                server_sock.sendall(frame(130, operation_response(2, 77)))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_operation_status(
+                world_id="world-123", operation_hi=5, operation_lo=6, request_id=77
+            )
+            thread.join(timeout=1)
+            self.assertEqual(result["sequence"], 9)
+            self.assertEqual(result["head_hi"], 10)
+        finally:
+            client.close()
+            server_sock.close()
+
+        messages = {
+            5: "world identity mismatch",
+            6: "not human-owned",
+            7: "invalid Copilot argument",
+            8: "identity conflict",
+            9: "journal is busy",
+            10: "was not found",
+            11: "stale Copilot world journal position",
+        }
+        for status, message in messages.items():
+            client, server_sock = connected_client(timeout=1)
+            try:
+                server_sock.sendall(frame(130, struct.pack("<HBIB", 2, 2, status, status)))
+                with self.assertRaisesRegex(CopilotBridgeError, message):
+                    client.copilot_operation_status(
+                        world_id="world-123", operation_hi=5, operation_lo=6,
+                        request_id=status,
+                    )
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_copilot_operation_validation_and_malformed_boolean(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            valid = dict(
+                world_id="world-123", company_id=0, tile=1, rail_type=0, track=0,
+                max_cost=0, expected_sequence=0, expected_head_hi=0, expected_head_lo=0,
+                operation_hi=5, operation_lo=6, payload_hash_hi=7, payload_hash_lo=8,
+            )
+            for field, bad in (("company_id", 256), ("tile", -1), ("max_cost", 1 << 63),
+                               ("operation_hi", True), ("world_id", "bad\0world")):
+                with self.subTest(field=field):
+                    args = dict(valid)
+                    args[field] = bad
+                    with self.assertRaises((TypeError, ValueError)):
+                        client.copilot_build_single_rail(**args)
+
+            with self.assertRaisesRegex(ValueError, "too long"):
+                client.copilot_operation_status(
+                    world_id="w" * 65, operation_hi=5, operation_lo=6
+                )
+
+            server_sock.sendall(frame(130, operation_response(2, 88, valid_tile=2)))
+            with self.assertRaisesRegex(AdminProtocolError, "boolean"):
+                client.copilot_operation_status(
+                    world_id="world-123", operation_hi=5, operation_lo=6, request_id=88
+                )
         finally:
             client.close()
             server_sock.close()

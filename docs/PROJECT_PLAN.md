@@ -78,7 +78,7 @@ A custom bridge must use the engine's normal command pipeline on the game thread
 
 ### M2 — Complete one railway without an LLM
 
-Status: **In progress. M2a read-only native bridge completed 2026-10-23; M2b mutation work is next.**
+Status: **In progress. M2a read-only native bridge and M2b one-piece typed mutation completed 2026-10-23; M2c vehicle-tagged observation is next.**
 
 **Depends on:** M1 adapter and observation contract.
 

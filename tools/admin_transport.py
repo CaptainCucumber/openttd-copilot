@@ -37,9 +37,19 @@ _SERVER_COPILOT = 130
 _UPDATE_GAMESCRIPT = 9
 _UPDATE_AUTOMATIC = 1 << 6
 MAX_PENDING_RESPONSES = 64
-COPILOT_PROTOCOL_VERSION = 1
+COPILOT_PROTOCOL_VERSION = 2
 COPILOT_COMPANY_ALL = 0xFF
 _COPILOT_IDENTITY = 0
+_COPILOT_BUILD_SINGLE_RAIL = 1
+_COPILOT_OPERATION_STATUS = 2
+_MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
+_COPILOT_OPERATION_STATE_NAMES = {
+    0: "empty",
+    1: "pending",
+    2: "completed",
+    3: "rejected",
+    4: "uncertain",
+}
 
 
 class AdminTransportError(RuntimeError):
@@ -67,6 +77,13 @@ class CopilotBridgeError(AdminTransportError):
         2: "unsupported Copilot request",
         3: "Copilot company was not found",
         4: "Copilot bridge requires a loopback peer",
+        5: "Copilot world identity mismatch",
+        6: "Copilot company is not human-owned",
+        7: "invalid Copilot argument",
+        8: "Copilot operation identity conflict",
+        9: "Copilot operation journal is busy",
+        10: "Copilot operation was not found",
+        11: "stale Copilot world journal position",
     }
 
     def __init__(self, status: int) -> None:
@@ -276,6 +293,197 @@ class AdminClient:
                 )
                 self._preserve_response(message)
 
+    def copilot_build_single_rail(
+        self,
+        *,
+        world_id: str,
+        company_id: int,
+        tile: int,
+        rail_type: int,
+        track: int,
+        max_cost: int,
+        expected_sequence: int,
+        expected_head_hi: int,
+        expected_head_lo: int,
+        operation_hi: int,
+        operation_lo: int,
+        payload_hash_hi: int,
+        payload_hash_lo: int,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Execute one bounded rail build through the native command pipeline."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        tile = self._check_uint("tile", tile, 32)
+        rail_type = self._check_uint("rail_type", rail_type, 8)
+        track = self._check_uint("track", track, 8)
+        max_cost = self._check_int64("max_cost", max_cost)
+        expected_sequence = self._check_uint("expected_sequence", expected_sequence, 64)
+        expected_head_hi = self._check_uint("expected_head_hi", expected_head_hi, 64)
+        expected_head_lo = self._check_uint("expected_head_lo", expected_head_lo, 64)
+        operation_hi = self._check_uint("operation_hi", operation_hi, 64)
+        operation_lo = self._check_uint("operation_lo", operation_lo, 64)
+        payload_hash_hi = self._check_uint("payload_hash_hi", payload_hash_hi, 64)
+        payload_hash_lo = self._check_uint("payload_hash_lo", payload_hash_lo, 64)
+        world = self._copilot_world_id(world_id)
+
+        payload = struct.pack(
+            "<HBIBIBBqQQQQQQQ",
+            protocol_version,
+            _COPILOT_BUILD_SINGLE_RAIL,
+            request_id,
+            company_id,
+            tile,
+            rail_type,
+            track,
+            max_cost,
+            expected_sequence,
+            expected_head_hi,
+            expected_head_lo,
+            operation_hi,
+            operation_lo,
+            payload_hash_hi,
+            payload_hash_lo,
+        ) + world
+        response = self._copilot_operation_request(
+            _COPILOT_BUILD_SINGLE_RAIL,
+            "copilot_build_single_rail",
+            request_id,
+            payload,
+            timeout,
+            {"company_id": company_id, "tile": tile},
+        )
+        self._validate_copilot_operation_correlation(
+            response, world_id, operation_hi, operation_lo
+        )
+        return response
+
+    def copilot_operation_status(
+        self,
+        *,
+        world_id: str,
+        operation_hi: int,
+        operation_lo: int,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Read one durable operation outcome without retrying its mutation."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        operation_hi = self._check_uint("operation_hi", operation_hi, 64)
+        operation_lo = self._check_uint("operation_lo", operation_lo, 64)
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIQQ",
+            protocol_version,
+            _COPILOT_OPERATION_STATUS,
+            request_id,
+            operation_hi,
+            operation_lo,
+        ) + world
+        response = self._copilot_operation_request(
+            _COPILOT_OPERATION_STATUS,
+            "copilot_operation_status",
+            request_id,
+            payload,
+            timeout,
+        )
+        self._validate_copilot_operation_correlation(
+            response, world_id, operation_hi, operation_lo
+        )
+        return response
+
+    def _copilot_operation_request(
+        self,
+        request_kind: int,
+        event_kind: str,
+        request_id: int,
+        payload: bytes,
+        timeout: float | None,
+        event_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        sent_event = {
+            "time": time.time(),
+            "direction": "sent",
+            "packet_type": event_kind,
+            "packet_length": len(payload) + _HEADER_SIZE,
+            "request_id": request_id,
+            "protocol_version": struct.unpack_from("<H", payload)[0],
+        }
+        if event_fields is not None:
+            sent_event.update(event_fields)
+        self.events.append(sent_event)
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                response = self._decode_copilot_operation(response_payload, request_kind)
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append(
+                    {
+                        "time": time.time(),
+                        "direction": "received",
+                        "packet_type": event_kind,
+                        "packet_length": len(response_payload) + _HEADER_SIZE,
+                        "request_id": request_id,
+                        "status": response["status"],
+                    }
+                )
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
+            # Pong and other bounded asynchronous Admin frames are harmless.
+
+    @staticmethod
+    def _check_uint(name: str, value: int, bits: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value < (1 << bits):
+            raise ValueError(f"{name} must be an unsigned {bits}-bit integer")
+        return value
+
+    @staticmethod
+    def _check_int64(name: str, value: int) -> int:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not -(1 << 63) <= value < (1 << 63)
+        ):
+            raise ValueError(f"{name} must be a signed 64-bit integer")
+        return value
+
+    @classmethod
+    def _check_copilot_request_header(cls, protocol_version: int, request_id: int | None) -> int:
+        cls._check_uint("protocol_version", protocol_version, 16)
+        if request_id is None:
+            request_id = uuid.uuid4().int & 0xFFFFFFFF
+        return cls._check_uint("request_id", request_id, 32)
+
+    @classmethod
+    def _copilot_world_id(cls, world_id: str) -> bytes:
+        if not isinstance(world_id, str) or not world_id or "\x00" in world_id:
+            raise ValueError("world_id must be non-empty text without NUL")
+        return cls._cstring(world_id, _MAX_COPILOT_WORLD_ID_BYTES - 1)
+
+    @staticmethod
+    def _validate_copilot_operation_correlation(
+        response: dict[str, Any], world_id: str, operation_hi: int, operation_lo: int
+    ) -> None:
+        if response["world_id"] != world_id:
+            raise AdminProtocolError("Copilot operation response world ID mismatch")
+        if (response["operation_hi"], response["operation_lo"]) != (operation_hi, operation_lo):
+            raise AdminProtocolError("Copilot operation response operation ID mismatch")
+
     @staticmethod
     def _decode_copilot_identity(payload: bytes) -> dict[str, Any]:
         if len(payload) < 8:
@@ -295,12 +503,16 @@ class AdminClient:
             if len(payload) != 8:
                 raise AdminProtocolError("Copilot error response has trailing data")
             return response
-        if len(payload) < 26:
-            raise AdminProtocolError("truncated Copilot identity response")
-        frame, seed, calendar_date, width, height, landscape, company_count = struct.unpack_from(
-            "<IIIHHBB", payload, 8
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(
+            payload, position, "world ID"
         )
-        position = 26
+        if position + 42 > len(payload):
+            raise AdminProtocolError("truncated Copilot identity response")
+        sequence, head_hi, head_lo, frame, seed, calendar_date, width, height, landscape, company_count = (
+            struct.unpack_from("<QQQIIIHHBB", payload, position)
+        )
+        position += 42
         companies: list[dict[str, Any]] = []
         for _ in range(company_count):
             if position + 18 > len(payload):
@@ -324,6 +536,11 @@ class AdminClient:
             raise AdminProtocolError("Copilot identity response has trailing data")
         response.update(
             {
+                "world_id": world_id,
+                "sequence": sequence,
+                "head_hi": head_hi,
+                "head_lo": head_lo,
+                "head": None if (head_hi, head_lo) == (0, 0) else {"hi": head_hi, "lo": head_lo},
                 "frame": frame,
                 "seed": seed,
                 "calendar_date": calendar_date,
@@ -334,6 +551,126 @@ class AdminClient:
             }
         )
         return response
+
+    @staticmethod
+    def _decode_copilot_operation(payload: bytes, expected_kind: int) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version,
+            "request_kind": request_kind,
+            "request_id": request_id,
+            "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != expected_kind:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(
+            payload, position, "world ID"
+        )
+        operation_format = "<QQQBQQQQBIBBqqIIBBBBBBqq"
+        operation_size = struct.calcsize(operation_format)
+        if position + operation_size > len(payload):
+            raise AdminProtocolError("truncated Copilot operation response")
+        values = struct.unpack_from(operation_format, payload, position)
+        position += operation_size
+        if position != len(payload):
+            raise AdminProtocolError("Copilot operation response has trailing data")
+        (
+            sequence,
+            head_hi,
+            head_lo,
+            state,
+            operation_hi,
+            operation_lo,
+            payload_hash_hi,
+            payload_hash_lo,
+            company_id,
+            tile,
+            rail_type,
+            track,
+            max_cost,
+            actual_cost,
+            error,
+            frame,
+            valid_tile,
+            has_rail,
+            owner,
+            track_bits,
+            readback_rail_type,
+            company_valid,
+            money,
+            loan,
+        ) = values
+        if valid_tile not in (0, 1) or has_rail not in (0, 1) or company_valid not in (0, 1):
+            raise AdminProtocolError("invalid Copilot operation boolean marker")
+        response.update(
+            {
+                "world_id": world_id,
+                "sequence": sequence,
+                "head_hi": head_hi,
+                "head_lo": head_lo,
+                "head": None if (head_hi, head_lo) == (0, 0) else {"hi": head_hi, "lo": head_lo},
+                "state": state,
+                "state_name": _COPILOT_OPERATION_STATE_NAMES.get(state, "unknown"),
+                "operation_hi": operation_hi,
+                "operation_lo": operation_lo,
+                "operation": {"hi": operation_hi, "lo": operation_lo},
+                "payload_hash_hi": payload_hash_hi,
+                "payload_hash_lo": payload_hash_lo,
+                "payload_hash": {"hi": payload_hash_hi, "lo": payload_hash_lo},
+                "company_id": company_id,
+                "tile": tile,
+                "rail_type": rail_type,
+                "track": track,
+                "max_cost": max_cost,
+                "actual_cost": actual_cost,
+                "error": error,
+                "frame": frame,
+                "valid_tile": bool(valid_tile),
+                "has_rail": bool(has_rail),
+                "owner": owner,
+                "track_bits": track_bits,
+                "readback_rail_type": readback_rail_type,
+                "company_valid": bool(company_valid),
+                "money": money,
+                "loan": loan,
+                "readback": {
+                    "valid_tile": bool(valid_tile),
+                    "has_rail": bool(has_rail),
+                    "owner": owner,
+                    "track_bits": track_bits,
+                    "rail_type": readback_rail_type,
+                    "company_valid": bool(company_valid),
+                    "money": money,
+                    "loan": loan,
+                },
+            }
+        )
+        return response
+
+    @staticmethod
+    def _decode_copilot_cstring(payload: bytes, position: int, label: str) -> tuple[str, int]:
+        end = payload.find(b"\x00", position)
+        if end < 0:
+            raise AdminProtocolError(f"Copilot {label} lacks NUL terminator")
+        if end == position:
+            raise AdminProtocolError(f"Copilot {label} is empty")
+        if end - position >= _MAX_COPILOT_WORLD_ID_BYTES:
+            raise AdminProtocolError(f"Copilot {label} is too long")
+        try:
+            value = payload[position:end].decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise AdminProtocolError(f"Copilot {label} is not UTF-8") from exc
+        return value, end + 1
 
     def close(self) -> None:
         sock, self._sock = self._sock, None

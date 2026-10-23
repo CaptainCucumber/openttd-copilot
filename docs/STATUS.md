@@ -5,12 +5,14 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through M2a are kept on `main`; local branch tracks `origin/main`. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified during each handoff.
+- Planning and implementation checkpoints through M2b are kept on `main`; local branch tracks `origin/main`. Code, source-hashed evidence, decisions, and project records are committed together; commit metadata and remote publication are verified during each handoff.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
 
 **M2a is complete: the selected native bridge now has a measured read-only seam.** A custom OpenTTD 15.3 branch based directly on revision `14ec60f…` adds one authenticated, versioned, loopback-only identity request/response independent of the GameScript slot. The custom build identified the world and sole human company from an isolated copy of the representative autosave, rejected an unsupported bridge version, and remained responsive while a saved foreign GameScript advanced from tick 10 to 13 with zero mutations. See the [M2a report](M2A_REPORT.md), [probe instructions](NATIVE_BRIDGE_PROBE.md), and [evidence](evidence/2026-10-23-native-bridge-probe.json).
+
+**M2b is complete as a bounded one-piece checkpoint, not a railway builder.** Protocol v2 posts one capped single-rail command through normal OpenTTD command validation, returns actual cost and tile/company readback, and saves world/operation sequence and outcome. The committed custom binary passed cap rejection, one 90-unit build, duplicate replay, save/reload replay, and older-save classification in an isolated copied world. See the [M2b report](M2B_REPORT.md), [probe instructions](NATIVE_MUTATION_PROBE.md), and [evidence](evidence/2026-10-23-native-mutation-probe.json). Fault-injected pending-save recovery and the mutation/save crash gap remain open.
 
 The first model-free local chat seam remains a disposable fixture demonstration. It opens a generated map, reads a bounded industry summary, waits for the supported coal request, runs the one-train vehicle probe after `build`, and shows the live/completed world. It is not the M2 route planner or a production adapter.
 
@@ -20,18 +22,18 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
-| M2: railway builder from structured intent | **In progress — M2a complete** | Native read-only bridge proven; typed mutation, telemetry, planner, and complete service remain open. |
+| M2: railway builder from structured intent | **In progress — M2a/M2b complete** | Identity and one typed mutation proven; vehicle telemetry, planner, and complete service remain open. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
 | M5: usable local alpha | Planned | No implementation |
 
 ## Next work, in order
 
-1. **M2b — Typed mutation and recovery contract:** execute one bounded rail command through the normal game-thread command pipeline, return authoritative cost/readback, persist world/operation identity, and stop uncertain around the still-open mutation/save crash gap.
-2. **M2c — Vehicle-tagged observation:** expose loaded-departure and delivered-cargo observations with vehicle identity, then reproduce the existing isolated service gate through the native bridge.
-3. **M2d — Deterministic complete rail job:** replace fixture placement with typed intent, world snapshot, station/depot search, directed route planning, consist selection, whole-job pricing, execution, and two verified full-load deliveries.
+1. **M2c — Vehicle-tagged observation:** expose loaded-departure and delivered-cargo observations with vehicle identity, then reproduce the existing isolated service gate through the native bridge.
+2. **M2d — Deterministic complete rail job:** replace fixture placement with typed intent, world snapshot, station/depot search, directed route planning, consist selection, whole-job pricing, execution, and two verified full-load deliveries.
+3. **M3 recovery tests:** fault-inject the pending-save and mutation/save/journal windows; do not retry an uncertain operation without reconciliation.
 
-M1 and M2a are complete. The bridge is read-only and does not yet satisfy M2's mutation, telemetry, planning, or end-to-end railway gate.
+M1, M2a, and M2b are complete. The bridge only mutates one clear flat rail tile per world and does not yet satisfy M2's telemetry, planning, or end-to-end railway gate.
 
 ## Implemented and tested checkpoint
 
@@ -43,6 +45,7 @@ M1 and M2a are complete. The bridge is read-only and does not yet satisfy M2's m
 - `tools/run_environment_probe.py`: non-mutating copied-save and saved-GameScript-slot probe. The representative autosave stayed byte-for-byte and timestamp identical; Admin remained responsive; Copilot did not attach; the saved foreign script resumed with persisted state and zero gameplay mutations.
 - `engine/`: reproducible patch and build instructions for fork commit `2850af59a`; the tested branch is `CaptainCucumber/OpenTTD:copilot/m2a-native-identity`.
 - `tools/run_native_bridge_probe.py`: M2a copied-save and coexistence gate. Final run `artifacts/native-bridge-probe/20261023T160625Z-65d8877d/` passed both checks in 2.369 seconds with zero gameplay mutation requests. Its runtime revision string names engine commit `2850af59a`; the manifest also requires that exact clean checkout and hashes all four modified engine files.
+- `tools/run_native_mutation_probe.py`: M2b copied-save gate. Final run `artifacts/native-mutation-probe/20261023T163704Z-fb8cb770/` passed four checks in 3.252 seconds. The runtime revision string names clean engine commit `8b8f3d7bad`; the manifest hashes the binary and relevant source files. The 90-unit command reduced cash from 99,160 to 99,070, left loan at 100,000, and survived duplicate request and reload.
 - Normal profile configuration and three original saves retain identical content hashes and modification times. Failed setup attempts are retained and described in the work log.
 
 ## Confirmed decisions and provisional defaults
@@ -66,4 +69,4 @@ The user answered both initial questions during this session. Remaining environm
 
 ## Known uncertainties
 
-Native mutation correctness and compatibility; durable world/operation identity; complete job cost accounting; mutation/journal/save crash windows; rejected/uncertain-operation resolution; vehicle-tagged telemetry; route-planner coverage; backwards/forwards handling of saves written by the custom build. M2a proves only the read-only seam.
+General native mutation compatibility beyond one clear flat tile; complete-job cost accounting; pending-operation save/load fault injection; mutation/journal/save crash windows; rejected/uncertain-operation resolution beyond the tested cases; vehicle-tagged telemetry; route-planner coverage; backwards/forwards handling of saves written by the custom build. M2b proves only a bounded one-piece operation and completed-outcome reload.

@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: M2a read-only native bridge complete, 2026-10-23. The custom OpenTTD 15.3 build exposes bounded world/company identity through an authenticated loopback-only Admin packet family independent of GameScript. Mutations, durable identity, and vehicle events remain unimplemented. See the [M2a report](M2A_REPORT.md) and [D014](DECISIONS.md#d014--freeze-the-m2a-native-identity-boundary).
+Status: M2a identity and M2b bounded mutation complete, 2026-10-23. The custom OpenTTD 15.3 build exposes bounded world/company identity and one typed rail mutation through authenticated loopback-only Admin packets independent of GameScript. Vehicle events and general route construction remain unimplemented. See the [M2b report](M2B_REPORT.md) and [D015](DECISIONS.md#d015--bound-the-first-native-mutation-and-persist-its-identity).
 
 ## Responsibilities
 
@@ -20,13 +20,13 @@ The implementation uses a Python service for protocol handling and the future pl
 | Option | Strength | Cost / limitation | Position |
 |---|---|---|---|
 | Standard GameScript + Admin interface | Supported company-context commands and normal game validation | Cannot attach Copilot to an ordinary save; saved scripts retain the sole slot; no general vehicle ID on delivery telemetry | Retain as reference and regression fixture, not production adapter |
-| Small custom OpenTTD bridge | Independent of GameScript slot; existing-save attachment proven; can add direct vehicle-tagged events | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected in M1; read-only skeleton proven in M2a** |
+| Small custom OpenTTD bridge | Independent of GameScript slot; existing-save attachment and one native rail mutation proven; can add direct vehicle-tagged events | Engine builds, update maintenance, distribution, strict game-thread integration | **Selected in M1; bounded mutation proven in M2b** |
 | NoAI controller | Established autonomous company API | An autonomous AI company differs from assisting the player's company | Reference/test tool, not initial product adapter |
 | Screenshot/mouse automation | Can use ordinary UI | Fragile execution and limited authoritative state | Visual QA only |
 
 The stock experiment hosts a local game and connects the normal client to the human company. Do not assume the Admin interface alone is a general construction API: the GameScript performs gameplay operations. The adapter contract should permit replacement without rewriting the planner.
 
-The selected bridge is deliberately narrow. M2a adds protocol v1 identity packets 11 and 130 to the authenticated Admin connection and rejects non-loopback peers. It returns bounded observed world fields and explicit company records without touching `Game::instance`; it is not a general remote console. M2b will add allowlisted typed mutations on the game thread through OpenTTD's normal test/execute command pipeline and must return authoritative costs plus readback. Durable world/operation identity and vehicle-tagged cargo events are still planned, not implemented. The external Python service retains intent parsing, planning, budgets, journaling, and verification. Any new saved state uses an explicit versioned save chunk and copied saves until compatibility is proven.
+The selected bridge is deliberately narrow. M2a added protocol v1 identity packets 11 and 130 to the authenticated Admin connection and rejected non-loopback peers. M2b protocol v2 adds a typed single-rail request and operation-status query. A wrapper posts through OpenTTD's normal command pipeline, quotes and checks the cap before execution, and returns authoritative cost plus tile/company readback after the callback. A versioned COPL save chunk persists world/operation sequence and terminal outcome; an external fsynced journal records intent before send. The current command admits only a flat clear tile, one operation per world. Vehicle-tagged cargo events remain planned. The Python service retains intent parsing, future planning, budgets, journaling, and verification. Only copied saves have been tested; stock-build compatibility is not established.
 
 ## Intent and identity
 
@@ -48,7 +48,7 @@ Read the map incrementally by relevant region. Gather terrain height/slope, wate
 
 Responses carry protocol version, world/session identity, observation tick, and query scope. A multi-page scan must either use a consistent captured snapshot or disclose its tick range and recheck dependencies; a single timestamp on changing data is not a snapshot.
 
-M2a returns bounded observed identity inputs but not a durable snapshot or save lineage. M2b must persist versioned world/operation identity. Reject mismatched worlds and incompatible protocol versions. Keep world/save identity distinct from a transient network connection; reconnecting is not equivalent to loading a new game.
+M2b persists a world ID, monotonic successful-operation sequence, head operation ID, and one operation record in the COPL chunk. The client rejects mismatched worlds/protocols and compares the external journal position to distinguish the current world, an older save, changed world, an ahead save, or diverged history. A loaded pending operation is marked uncertain and must not be replayed automatically. This is not a complete save lineage or atomic transaction; a command executed after the most recent save can still be absent from a reloaded older save.
 
 ## Planning the railway
 

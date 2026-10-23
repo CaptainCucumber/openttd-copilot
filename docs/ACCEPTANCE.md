@@ -1,6 +1,6 @@
 # Acceptance and reliability plan
 
-Status: M2a native read-only bridge complete, 2026-10-23. The custom build identifies a copied existing world and human company while remaining independent of a saved foreign GameScript. [M2a report](M2A_REPORT.md), [native evidence](evidence/2026-10-23-native-bridge-probe.json). **Typed native mutations, vehicle-tagged events, the end-to-end transport test, and the release scenario suite below are not implemented or passed.**
+Status: M2a native read-only bridge and M2b one-piece typed mutation complete, 2026-10-23. The custom build identifies a copied existing world and human company, then builds one capped rail piece through the normal command pipeline with saved outcome identity. [M2a report](M2A_REPORT.md), [M2b report](M2B_REPORT.md), [M2b evidence](evidence/2026-10-23-native-mutation-probe.json). **Vehicle-tagged events, the end-to-end transport test, fault-injected crash recovery, and the release scenario suite below are not implemented or passed.**
 
 ## What “reliable” means
 
