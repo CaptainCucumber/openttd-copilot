@@ -5,7 +5,7 @@ Updated: 2026-10-23, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Planning and implementation checkpoints through the M2d train-order seam are on `origin/main`, including implementation commit `98319d0bf4e1fbafe2e9bbafe19dc8f25eb4711d`. The clean engine branch is published at `5f8e025d70c9eb6faeca1bc797b1377039ed0ca8`. Both repositories use the required no-reply Git identity.
+- Planning and implementation checkpoints through the M2d industry-details slice are tracked on `origin/main`. The clean engine branch is published at `211e780180c021b208a87d2612f4c24be9f743a6`. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
