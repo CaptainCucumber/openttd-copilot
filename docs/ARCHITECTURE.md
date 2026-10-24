@@ -4,6 +4,13 @@ Status: M2a identity, M2b bounded mutation, and M2c vehicle-tagged observation c
 
 ## Responsibilities
 
+The native mutation boundary now includes capped station/depot construction
+and default-cargo rail vehicle purchase with retained actual created IDs.
+COPL schema 4 migrates earlier outcomes. Independent asset/parts observations,
+immutable replay, and fresh-process reload are measured in the
+[purchase report](M2D_TRAIN_PURCHASE_REPORT.md); consist/order/start control and
+complete railway construction are not yet implemented.
+
 | Component | Owns | Must not do |
 |---|---|---|
 | Conversation layer | Intent, clarification, explanations, progress | Invent tile coordinates, prices, or successful outcomes |
@@ -53,6 +60,17 @@ M2b established a world ID, monotonic successful-operation sequence, head operat
 The client rejects mismatched worlds/protocols and compares each external journal position to distinguish the current world, an older save, changed world, an ahead save, or diverged history. External intent is retained in separate fsynced single-operation journal files rather than overwriting the previous operation. A loaded pending operation is marked uncertain and must not be replayed automatically. Historical status returns the original cost/error/completion frame alongside the current global sequence/head and live tile/company readback, not a historical world snapshot. This is not a complete save lineage or atomic transaction; a command executed after the most recent save can still be absent from a reloaded older save.
 
 ## Planning the railway
+
+The purchase boundary adds protocol-v3 request 13 and extended status 14.
+It buys one default-cargo rail engine or wagon in an owned depot, rechecking
+the cap through normal `CMD_BUILD_VEHICLE` validation. Its typed tuple callback
+retains the actual returned VehicleID; a missing/mismatched result becomes
+uncertain rather than triggering another purchase. COPL schema 4 persists
+engine identity and migrates older histories. Independent train-part pages
+establish current engine/owner/depot/chain/cargo state. Engine purchases do
+not adopt free wagons; wagon purchases refuse the stock implicit-joining case.
+Assembly, refit, order mutation, and starting remain separate typed operations
+to implement. See [D027](DECISIONS.md#d027--purchase-rail-vehicles-with-the-commands-returned-identity).
 
 M2d infrastructure requests 11/12 extend the same journal with capped new default
 single-platform stations (length 1–7, either axis) and single-tile depots.

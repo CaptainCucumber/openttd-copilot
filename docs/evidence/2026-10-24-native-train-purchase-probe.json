@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "scope": "M2d native rail vehicle purchase; not an assembled or operating railway",
+  "run": "artifacts/native-train-purchase-probe/20261024T221240Z-89c4c574",
+  "manifest_sha256": "9053aa4b09ee5903ae45d4d4bb2bdb9de0e9691ab1353dfd2cc441f38e895039",
+  "status": "success",
+  "elapsed_seconds": 4.589,
+  "engine_commit": "7252756e936740771bac43fa74b66b050b8c68ce",
+  "engine_revision": "20261024-m2d-native-train-purchase-g7252756e93",
+  "engine_clean": true,
+  "binary_sha256": "c623e88cf9ae0c8e45a212fc5871f9d707108eba60d9d3608b6fb9d4551082c2",
+  "engine_source_hashes": {
+    "src/command_type.h": "8f5c87e10f22e049a5dcd51510332d3930e7d4f53275fd6259902d11406fa35f",
+    "src/copilot_cmd.cpp": "468be424b17869b1b4edd3359fbe761ee1a87ad44db752e9fb8cfbf5d8e2e90b",
+    "src/copilot_cmd.h": "1f1893b02ee9dcf518a8ff980645c6ba90d524debf66700fa8ce471e175487b7",
+    "src/network/network_admin.cpp": "4435bcfd00d7e08b2ecea3fb2023fd587dde0a6815a502d7f4d1e01bbce688fe",
+    "src/network/network_admin.h": "c4799573b4013d8848c552cd4bd327e1c57a671e8ab17b15a79e43122c3d6a8f",
+    "src/network/network_command.cpp": "ba13df0261919b4cbafded30292a426c4096e64a50e3237f3074bf1749e308b9",
+    "src/saveload/copilot_sl.cpp": "45eb5da9ccd3952996309b01029829e0ff55ecb4a596e93b9bf83f890f229db3"
+  },
+  "source_hashes": {
+    "tools/admin_transport.py": "7451a60b9c05985f045443191baad62197425357989f4b6cdd05fb161f8cbb7f",
+    "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+    "tools/run_native_train_purchase_probe.py": "f7cf56a5f198bc31eb368607a44188701cedf7bb67da85c7ae152562fce22873"
+  },
+  "environment": {
+    "upstream_version": "15.3",
+    "map_size": [128, 128],
+    "seed": 20261021,
+    "landscape": 0,
+    "company_id": 0,
+    "depot_tile": 8251,
+    "content": "OpenGFX2 Classic 0.8.1; standard vehicles/industries; no gameplay NewGRFs",
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "purchase_config_sha256": "1d142be8df425d8beae48bee2762b0ec487a451d7828338c4efd9da871565057",
+    "reload_config_sha256": "d6578f32058ba355b1bb98fe1dce87102fdba1b4dbedf6d3dbb3507ca761181c",
+    "source_save": "artifacts/native-infrastructure-probe/20261023T215235Z-f535454c/infrastructure-final.sav",
+    "source_save_sha256": "1a9a93ff73d32d47b410ece0b691cc3f99890cf52a247f420d0073198c16da47"
+  },
+  "purchases": [
+    {"engine_id": 0, "vehicle_id": 4, "cost": 8203, "cap": 100000, "frame": 44},
+    {"engine_id": 29, "vehicle_id": 5, "cost": 1031, "cap": 100000, "frame": 50},
+    {"engine_id": 0, "vehicle_id": 6, "cost": 8203, "cap": 8203, "frame": 57}
+  ],
+  "results": {
+    "money_before": 97870,
+    "money_after": 80433,
+    "loan_before_and_after": 100000,
+    "sequence_before": 2,
+    "sequence_after": 5,
+    "prior_schema3_outcomes_preserved": 4,
+    "new_purchase_records_retained": 8,
+    "outcomes_compared_after_reload": 12,
+    "coal_wagon_capacity": 30,
+    "new_vehicle_chains": 3,
+    "no_automatic_wagon_adoption": true,
+    "zero_cap_rejected": true,
+    "cap_8202_rejected_for_8203_purchase": true,
+    "invalid_depot_rejected": true,
+    "unavailable_engine_rejected": true,
+    "same_type_free_wagon_join_rejected": true,
+    "exact_replay_before_and_after_reload_without_mutation": true,
+    "world_conflict_stale_and_old_endpoint_guards_passed": true,
+    "source_save_and_normal_profile_unchanged": true,
+    "secrets_removed": true
+  },
+  "final_save_sha256": "fd1011df586966be828330ae902dfa64246b5612faff313cc970845240a75ed0",
+  "sequence_regression": "artifacts/native-sequence-probe/20261024T221147Z-8abe1be1/manifest.json",
+  "infrastructure_regression": "artifacts/native-infrastructure-probe/20261024T221159Z-c6ec40aa/manifest.json",
+  "unit_tests_passed": 151,
+  "limitations": [
+    "Runtime purchase coverage is one standard single-head engine and default coal wagon; multihead/articulated/NewGRF vehicles remain unproven.",
+    "No consist assembly, refit, order mutation, start/stop or complete native route operation.",
+    "Per-command cap only; no whole-job reserve, history growth or crash-gap recovery claim."
+  ]
+}

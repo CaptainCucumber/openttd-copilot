@@ -1,0 +1,346 @@
+From 7252756e936740771bac43fa74b66b050b8c68ce Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 15:07:54 -0700
+Subject: [PATCH] Add capped retained native rail vehicle purchase
+
+Capture the normal build command's returned vehicle ID, disable implicit adoption, and persist typed engine identity with schema-4 migration.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/command_type.h              |  1 +
+ src/copilot_cmd.cpp             | 61 +++++++++++++++++++++++++++++++++
+ src/copilot_cmd.h               | 17 +++++++--
+ src/network/network_admin.cpp   | 35 +++++++++++++------
+ src/network/network_command.cpp |  3 +-
+ src/saveload/copilot_sl.cpp     | 19 +++++++---
+ 6 files changed, 118 insertions(+), 18 deletions(-)
+
+diff --git a/src/command_type.h b/src/command_type.h
+index 86af4c012..df24b7966 100644
+--- a/src/command_type.h
++++ b/src/command_type.h
+@@ -377,6 +377,7 @@ enum Commands : uint8_t {
+ 
+ 	CMD_COPILOT_BUILD_SINGLE_RAIL,        ///< bounded OpenTTD Copilot rail mutation
+ 	CMD_COPILOT_BUILD_INFRASTRUCTURE,    ///< bounded OpenTTD Copilot station/depot mutation
++	CMD_COPILOT_BUILD_TRAIN,             ///< capped OpenTTD Copilot train purchase
+ 
+ 	CMD_END,                          ///< Must ALWAYS be on the end of this list!! (period)
+ };
+diff --git a/src/copilot_cmd.cpp b/src/copilot_cmd.cpp
+index f0b2a04cd..25e572434 100644
+--- a/src/copilot_cmd.cpp
++++ b/src/copilot_cmd.cpp
+@@ -17,6 +17,10 @@
+ #include "station_map.h"
+ #include "newgrf_station.h"
+ #include "depot_map.h"
++#include "vehicle_cmd.h"
++#include "train.h"
++#include "engine_base.h"
++#include "engine_func.h"
+ #include "network/network_internal.h"
+ 
+ #include "safeguards.h"
+@@ -165,3 +169,60 @@ void CcCopilotBuildInfrastructure(Commands cmd, const CommandCost &result, TileI
+ 		_copilot_operation.state = to_underlying(CopilotOperationState::Rejected);
+ 	}
+ }
++
++std::tuple<CommandCost, VehicleID> CmdCopilotBuildTrain(DoCommandFlags flags, TileIndex tile,
++		EngineID engine_id, Money max_cost, uint64_t operation_hi, uint64_t operation_lo,
++		uint64_t payload_hash_hi, uint64_t payload_hash_lo)
++{
++	(void)operation_hi;
++	(void)operation_lo;
++	(void)payload_hash_hi;
++	(void)payload_hash_lo;
++	if (max_cost < 0 || !IsRailDepotTile(tile) || !IsTileOwner(tile, _current_company) ||
++			!IsEngineBuildable(engine_id, VEH_TRAIN, _current_company)) return {CMD_ERROR, VehicleID::Invalid()};
++
++	/* Stock wagon construction can join a same-type free wagon chain. Refuse
++	 * that implicit reuse; engine purchase also disables free-wagon adoption. */
++	if (Engine::Get(engine_id)->VehInfo<RailVehicleInfo>().railveh_type == RAILVEH_WAGON) {
++		for (const Train *train : Train::Iterate()) {
++			if (train->tile == tile && train->owner == _current_company && train->IsInDepot() &&
++					train->IsFreeWagon() && train->engine_type == engine_id) return {CMD_ERROR, VehicleID::Invalid()};
++		}
++	}
++	auto quote = Command<CMD_BUILD_VEHICLE>::Do(
++			DoCommandFlags{flags}.Reset(DoCommandFlag::Execute), tile, engine_id, false, INVALID_CARGO, INVALID_CLIENT_ID);
++	const CommandCost &cost = std::get<0>(quote);
++	if (cost.Failed()) return {cost, VehicleID::Invalid()};
++	if (cost.GetCost() > max_cost) return {CMD_ERROR, VehicleID::Invalid()};
++	if (!flags.Test(DoCommandFlag::Execute)) return {cost, VehicleID::Invalid()};
++	auto result = Command<CMD_BUILD_VEHICLE>::Do(flags, tile, engine_id, false, INVALID_CARGO, INVALID_CLIENT_ID);
++	return {std::get<0>(result), std::get<1>(result)};
++}
++
++void CcCopilotBuildTrain(Commands cmd, const CommandCost &result, VehicleID vehicle_id, TileIndex tile,
++		EngineID engine_id, Money max_cost, uint64_t operation_hi, uint64_t operation_lo,
++		uint64_t payload_hash_hi, uint64_t payload_hash_lo)
++{
++	if (cmd != CMD_COPILOT_BUILD_TRAIN || _copilot_operation.kind != 3 ||
++			_copilot_operation.state != to_underlying(CopilotOperationState::Pending)) return;
++	if (_copilot_operation.operation_hi != operation_hi || _copilot_operation.operation_lo != operation_lo ||
++			_copilot_operation.payload_hash_hi != payload_hash_hi || _copilot_operation.payload_hash_lo != payload_hash_lo ||
++			_copilot_operation.tile != tile.base() || _copilot_operation.engine_id != engine_id.base() ||
++			_copilot_operation.max_cost != max_cost.base()) return;
++	_copilot_operation.actual_cost = result.GetCost();
++	_copilot_operation.error_message = result.Failed() ? result.GetErrorMessage() : 0;
++	_copilot_operation.completed_frame = _frame_counter;
++	if (result.Failed()) {
++		_copilot_operation.state = to_underlying(CopilotOperationState::Rejected);
++		return;
++	}
++	const Train *train = Train::GetIfValid(vehicle_id);
++	if (train == nullptr || train->owner.base() != _copilot_operation.company ||
++			train->engine_type != engine_id || train->tile != tile || !train->IsInDepot()) {
++		_copilot_operation.state = to_underlying(CopilotOperationState::Uncertain);
++		return;
++	}
++	_copilot_operation.created_asset_id = vehicle_id.base();
++	_copilot_operation.state = to_underlying(CopilotOperationState::Completed);
++	_copilot_operation.sequence++;
++}
+diff --git a/src/copilot_cmd.h b/src/copilot_cmd.h
+index dba9dd8eb..a2f88106e 100644
+--- a/src/copilot_cmd.h
++++ b/src/copilot_cmd.h
+@@ -14,6 +14,8 @@
+ #include "rail_type.h"
+ #include "track_type.h"
+ #include "direction_type.h"
++#include "engine_type.h"
++#include "vehicle_type.h"
+ 
+ constexpr size_t COPILOT_MAX_OPERATIONS = 64;
+ 
+@@ -27,7 +29,7 @@ enum class CopilotOperationState : uint8_t {
+ 
+ /** Retained operation outcome; sequence is the successful-operation count at its completion. */
+ struct CopilotOperation {
+-	uint16_t schema = 3;
++	uint16_t schema = 4;
+ 	uint8_t state = to_underlying(CopilotOperationState::Empty);
+ 	uint8_t company = 0xFF;
+ 	uint32_t tile = 0;
+@@ -42,9 +44,10 @@ struct CopilotOperation {
+ 	uint32_t error_message = 0;
+ 	uint64_t sequence = 0;
+ 	uint32_t completed_frame = 0;
+-	uint8_t kind = 0; ///< 0: rail piece, 1: new station, 2: depot.
++	uint8_t kind = 0; ///< 0: rail piece, 1: new station, 2: depot, 3: train purchase.
+ 	uint8_t length = 0;
+ 	uint32_t created_asset_id = UINT32_MAX;
++	uint16_t engine_id = UINT16_MAX;
+ };
+ 
+ extern CopilotOperation _copilot_operation;
+@@ -76,4 +79,14 @@ void CcCopilotBuildInfrastructure(Commands cmd, const CommandCost &result, TileI
+ 		RailType rail_type, uint8_t orientation, uint8_t kind, uint8_t length, Money max_cost,
+ 		uint64_t operation_hi, uint64_t operation_lo, uint64_t payload_hash_hi, uint64_t payload_hash_lo);
+ 
++std::tuple<CommandCost, VehicleID> CmdCopilotBuildTrain(DoCommandFlags flags, TileIndex tile,
++		EngineID engine_id, Money max_cost, uint64_t operation_hi, uint64_t operation_lo,
++		uint64_t payload_hash_hi, uint64_t payload_hash_lo);
++
++DEF_CMD_TRAIT(CMD_COPILOT_BUILD_TRAIN, CmdCopilotBuildTrain, {}, CommandType::VehicleConstruction)
++
++void CcCopilotBuildTrain(Commands cmd, const CommandCost &result, VehicleID vehicle_id, TileIndex tile,
++		EngineID engine_id, Money max_cost, uint64_t operation_hi, uint64_t operation_lo,
++		uint64_t payload_hash_hi, uint64_t payload_hash_lo);
++
+ #endif /* COPILOT_CMD_H */
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 77f1a0cec..117b24f35 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -81,6 +81,8 @@ enum CopilotAdminRequest : uint8_t {
+ 	COPILOT_ADMIN_INDUSTRY_DETAILS = 10,
+ 	COPILOT_ADMIN_BUILD_INFRASTRUCTURE = 11,
+ 	COPILOT_ADMIN_INFRASTRUCTURE_STATUS = 12,
++	COPILOT_ADMIN_BUILD_TRAIN = 13,
++	COPILOT_ADMIN_TRAIN_PURCHASE_STATUS = 14,
+ };
+ 
+ enum CopilotAdminResult : uint8_t {
+@@ -686,11 +688,15 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::SendCopilotOperation(uint8_t
+ 	response->Send_uint64(company == nullptr ? 0 : static_cast<uint64_t>(company->money));
+ 	response->Send_uint64(company == nullptr ? 0 : static_cast<uint64_t>(company->current_loan));
+ 
+-	if (request_kind == COPILOT_ADMIN_BUILD_INFRASTRUCTURE || request_kind == COPILOT_ADMIN_INFRASTRUCTURE_STATUS) {
++	if (request_kind == COPILOT_ADMIN_BUILD_INFRASTRUCTURE || request_kind == COPILOT_ADMIN_INFRASTRUCTURE_STATUS ||
++			request_kind == COPILOT_ADMIN_BUILD_TRAIN || request_kind == COPILOT_ADMIN_TRAIN_PURCHASE_STATUS) {
+ 		response->Send_uint8(operation->kind);
+ 		response->Send_uint8(operation->length);
+ 		response->Send_uint32(operation->created_asset_id);
+ 	}
++	if (request_kind == COPILOT_ADMIN_BUILD_TRAIN || request_kind == COPILOT_ADMIN_TRAIN_PURCHASE_STATUS) {
++		response->Send_uint16(operation->engine_id);
++	}
+ 
+ 	this->SendPacket(std::move(response));
+ 	return NETWORK_RECV_STATUS_OKAY;
+@@ -1093,7 +1099,8 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 		return this->SendCopilotIdentity(version, request_kind, request_id, CompanyID{p.Recv_uint8()});
+ 	}
+ 
+-	if (request_kind == COPILOT_ADMIN_OPERATION_STATUS || request_kind == COPILOT_ADMIN_INFRASTRUCTURE_STATUS) {
++	if (request_kind == COPILOT_ADMIN_OPERATION_STATUS || request_kind == COPILOT_ADMIN_INFRASTRUCTURE_STATUS ||
++			request_kind == COPILOT_ADMIN_TRAIN_PURCHASE_STATUS) {
+ 		if (p.RemainingBytesToTransfer() < sizeof(uint64_t) * 2 + 1) return this->SendError(NETWORK_ERROR_ILLEGAL_PACKET);
+ 		uint64_t operation_hi = p.Recv_uint64();
+ 		uint64_t operation_lo = p.Recv_uint64();
+@@ -1109,6 +1116,9 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 		if (request_kind == COPILOT_ADMIN_OPERATION_STATUS && operation->kind != 0) {
+ 			return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_UNSUPPORTED_REQUEST);
+ 		}
++		if (request_kind == COPILOT_ADMIN_INFRASTRUCTURE_STATUS && operation->kind == 3) {
++			return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_UNSUPPORTED_REQUEST);
++		}
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_OK, operation);
+ 	}
+ 
+@@ -1286,16 +1296,18 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 	}
+ 
+ 	bool infrastructure = request_kind == COPILOT_ADMIN_BUILD_INFRASTRUCTURE;
+-	if (request_kind != COPILOT_ADMIN_BUILD_SINGLE_RAIL && !infrastructure) {
++	bool purchase = request_kind == COPILOT_ADMIN_BUILD_TRAIN;
++	if (request_kind != COPILOT_ADMIN_BUILD_SINGLE_RAIL && !infrastructure && !purchase) {
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_UNSUPPORTED_REQUEST);
+ 	}
+ 	constexpr size_t fixed_bytes = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint8_t) * 2 + sizeof(uint64_t) * 8;
+ 	if (p.RemainingBytesToTransfer() < fixed_bytes + (infrastructure ? 2 : 0) + 1) return this->SendError(NETWORK_ERROR_ILLEGAL_PACKET);
+ 	CompanyID company_id{p.Recv_uint8()};
+ 	uint32_t raw_tile = p.Recv_uint32();
+-	uint8_t raw_rail_type = p.Recv_uint8();
+-	uint8_t raw_track = p.Recv_uint8();
+-	uint8_t kind = infrastructure ? p.Recv_uint8() : 0;
++	uint8_t raw_rail_type = purchase ? INVALID_RAILTYPE : p.Recv_uint8();
++	uint8_t raw_track = purchase ? 0 : p.Recv_uint8();
++	uint16_t engine_id = purchase ? p.Recv_uint16() : UINT16_MAX;
++	uint8_t kind = purchase ? 3 : infrastructure ? p.Recv_uint8() : 0;
+ 	uint8_t length = infrastructure ? p.Recv_uint8() : 0;
+ 	int64_t max_cost_value = static_cast<int64_t>(p.Recv_uint64());
+ 	uint64_t expected_sequence = p.Recv_uint64();
+@@ -1317,7 +1329,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 				existing->payload_hash_lo == payload_hash_lo && existing->company == company_id.base() &&
+ 				existing->tile == raw_tile && existing->rail_type == raw_rail_type &&
+ 				existing->track == raw_track && existing->max_cost == max_cost_value &&
+-				existing->kind == kind && existing->length == length;
++				existing->kind == kind && existing->length == length && existing->engine_id == engine_id;
+ 		return this->SendCopilotOperation(request_kind, request_id,
+ 				same ? COPILOT_ADMIN_OK : COPILOT_ADMIN_OPERATION_CONFLICT, existing);
+ 	}
+@@ -1334,10 +1346,10 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_COMPANY_NOT_HUMAN);
+ 	}
+ 	TileIndex tile{raw_tile};
+-	bool geometry_valid = !infrastructure ? raw_track < TRACK_END :
++	bool geometry_valid = purchase ? engine_id != UINT16_MAX : !infrastructure ? raw_track < TRACK_END :
+ 			(kind == 1 && raw_track <= 1 && length >= 1 && length <= 7) ||
+ 			(kind == 2 && raw_track <= 3 && length == 1);
+-	if (tile == 0 || tile >= Map::Size() || !IsValidTile(tile) || raw_rail_type >= RAILTYPE_END ||
++	if (tile == 0 || tile >= Map::Size() || !IsValidTile(tile) || (!purchase && raw_rail_type >= RAILTYPE_END) ||
+ 			!geometry_valid || max_cost_value < 0 || (operation_hi == 0 && operation_lo == 0)) {
+ 		return this->SendCopilotOperation(request_kind, request_id, COPILOT_ADMIN_INVALID_ARGUMENT);
+ 	}
+@@ -1370,10 +1382,13 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 	_copilot_operation.kind = kind;
+ 	_copilot_operation.length = length;
+ 	_copilot_operation.created_asset_id = UINT32_MAX;
++	_copilot_operation.engine_id = engine_id;
+ 
+ 	Backup<CompanyID> company_scope(_current_company, company_id);
+ 	Money max_cost = max_cost_value;
+-	bool accepted = infrastructure ?
++	bool accepted = purchase ?
++			Command<CMD_COPILOT_BUILD_TRAIN>::Post(&CcCopilotBuildTrain, tile, EngineID{engine_id}, max_cost,
++					operation_hi, operation_lo, payload_hash_hi, payload_hash_lo) : infrastructure ?
+ 			Command<CMD_COPILOT_BUILD_INFRASTRUCTURE>::Post(&CcCopilotBuildInfrastructure, tile,
+ 					static_cast<RailType>(raw_rail_type), raw_track, kind, length, max_cost,
+ 					operation_hi, operation_lo, payload_hash_hi, payload_hash_lo) :
+diff --git a/src/network/network_command.cpp b/src/network/network_command.cpp
+index f2fa937ee..0703a85ea 100644
+--- a/src/network/network_command.cpp
++++ b/src/network/network_command.cpp
+@@ -86,7 +86,8 @@ static constexpr auto _callback_tuple = std::make_tuple(
+ 	&CcMoveStationName,
+ 	&CcMoveWaypointName,
+ 	&CcCopilotBuildSingleRail,
+-	&CcCopilotBuildInfrastructure
++	&CcCopilotBuildInfrastructure,
++	&CcCopilotBuildTrain
+ );
+ 
+ #ifdef SILENCE_GCC_FUNCTION_POINTER_CAST
+diff --git a/src/saveload/copilot_sl.cpp b/src/saveload/copilot_sl.cpp
+index fda86e99e..65ca67a43 100644
+--- a/src/saveload/copilot_sl.cpp
++++ b/src/saveload/copilot_sl.cpp
+@@ -32,6 +32,7 @@ static const SaveLoad _copilot_operation_desc[] = {
+ 	SLE_VAR(CopilotOperation, kind, SLE_UINT8),
+ 	SLE_VAR(CopilotOperation, length, SLE_UINT8),
+ 	SLE_VAR(CopilotOperation, created_asset_id, SLE_UINT32),
++	SLE_VAR(CopilotOperation, engine_id, SLE_UINT16),
+ };
+ 
+ struct COPLChunkHandler : ChunkHandler {
+@@ -56,7 +57,7 @@ struct COPLChunkHandler : ChunkHandler {
+ 		if (index != 0) SlErrorCorrupt("Missing COPL active entry");
+ 		SlObject(&_copilot_operation, slt);
+ 		bool legacy = _copilot_operation.schema == 1;
+-		if (!legacy && _copilot_operation.schema != 2 && _copilot_operation.schema != 3) SlErrorCorrupt("Unsupported COPL schema");
++		if (_copilot_operation.schema < 1 || _copilot_operation.schema > 4) SlErrorCorrupt("Unsupported COPL schema");
+ 		_copilot_operation_history.clear();
+ 		while ((index = SlIterateArray()) != -1) {
+ 			if (legacy || _copilot_operation_history.size() + 1 >= COPILOT_MAX_OPERATIONS ||
+@@ -65,7 +66,7 @@ struct COPLChunkHandler : ChunkHandler {
+ 			}
+ 			CopilotOperation operation;
+ 			SlObject(&operation, slt);
+-			if (operation.schema != 2 && operation.schema != 3) SlErrorCorrupt("Unsupported COPL history schema");
++			if (operation.schema < 2 || operation.schema > 4) SlErrorCorrupt("Unsupported COPL history schema");
+ 			_copilot_operation_history.push_back(operation);
+ 		}
+ 
+@@ -77,6 +78,10 @@ struct COPLChunkHandler : ChunkHandler {
+ 				operation.created_asset_id = UINT32_MAX;
+ 				operation.schema = 3;
+ 			}
++			if (operation.schema < 4) {
++				operation.engine_id = UINT16_MAX;
++				operation.schema = 4;
++			}
+ 			auto state = static_cast<CopilotOperationState>(operation.state);
+ 			if (state == CopilotOperationState::Empty) {
+ 				if (!active || !_copilot_operation_history.empty() || operation.sequence != 0) {
+@@ -91,8 +96,12 @@ struct COPLChunkHandler : ChunkHandler {
+ 			if (operation.operation_hi == 0 && operation.operation_lo == 0) SlErrorCorrupt("Invalid COPL operation ID");
+ 			bool geometry_valid = (operation.kind == 0 && operation.track < TRACK_END && operation.length == 0) ||
+ 					(operation.kind == 1 && operation.track <= 1 && operation.length >= 1 && operation.length <= 7) ||
+-					(operation.kind == 2 && operation.track <= 3 && operation.length == 1);
+-			if (!geometry_valid || operation.rail_type >= RAILTYPE_END || operation.max_cost < 0) {
++					(operation.kind == 2 && operation.track <= 3 && operation.length == 1) ||
++					(operation.kind == 3 && operation.track == 0 && operation.length == 0);
++			bool engine_valid = operation.kind == 3 ?
++					(operation.engine_id != UINT16_MAX && operation.rail_type == INVALID_RAILTYPE) :
++					(operation.engine_id == UINT16_MAX && operation.rail_type < RAILTYPE_END);
++			if (!geometry_valid || !engine_valid || operation.max_cost < 0) {
+ 				SlErrorCorrupt("Invalid COPL command geometry");
+ 			}
+ 			bool has_created_id = operation.created_asset_id != UINT32_MAX;
+@@ -107,7 +116,7 @@ struct COPLChunkHandler : ChunkHandler {
+ 		};
+ 		for (CopilotOperation &operation : _copilot_operation_history) validate(operation, false);
+ 		validate(_copilot_operation, true);
+-		_copilot_operation.schema = 3;
++		_copilot_operation.schema = 4;
+ 		/* The network command queue is not reconstructed as an operation retry.
+ 		 * A saved pending intent has an unknown outcome after load. */
+ 		if (_copilot_operation.state == to_underlying(CopilotOperationState::Pending)) {
+-- 
+2.49.0
+

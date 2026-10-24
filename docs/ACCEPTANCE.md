@@ -4,6 +4,13 @@ Status: M2a native identity, M2b one-piece typed mutation, and M2c vehicle-tagge
 
 ## What “reliable” means
 
+The 2026-10-24 [purchase checkpoint](M2D_TRAIN_PURCHASE_REPORT.md) additionally
+proves capped native station/depot construction and rail vehicle purchase in
+copied fixtures, retained created IDs, independent readback, and replay/reload.
+These are primitive-level results, not the complete-route/service or release
+gates below. Consist assembly, order/start mutation, whole-job budget, and
+native end-to-end transport remain open.
+
 Within a declared supported game profile, Copilot completes feasible requests repeatedly, respects the spending/ownership constraints, and detects failures without falsely reporting success. It does not promise to find a railway on every possible map or guarantee future profitability.
 
 Track separately: intent accuracy, planning success on known feasible tasks, construction completion, verified deliveries, cost error, constraint violations, recovery correctness, and elapsed time. A successfully rejected request is a policy result, not a successful build.

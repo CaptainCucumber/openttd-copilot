@@ -72,13 +72,14 @@ def operation_response(
     valid_tile: int = 1,
     has_rail: int = 1,
     track: int = 2,
+    rail_type: int = 1,
     company_valid: int = 1,
 ) -> bytes:
     header = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, request_kind, request_id, 0)
     body = world_id.encode() + b"\0" + struct.pack(
         "<QQQBQQQQBIBBqqIIBBBBBBqq",
         9, 10, 11, state, operation_hi, operation_lo, 7, 8,
-        0, 321, 1, track, 500, 90, 0, 456,
+        0, 321, rail_type, track, 500, 90, 0, 456,
         valid_tile, has_rail, 0, 4, 1, company_valid, 10000, 100000,
     )
     return header + body
@@ -128,8 +129,8 @@ class AdminTransportTests(unittest.TestCase):
             self.assertEqual(client.events[0]["packet_length"], len(payload) + 3)
             self.assertNotIn("secret", repr(client.events))
         finally:
-            client.close()
-            server_sock.close()
+                client.close()
+                server_sock.close()
 
 
     def test_request_rejects_nonfinite_and_nul_values(self) -> None:
@@ -452,6 +453,129 @@ class AdminTransportTests(unittest.TestCase):
         malformed = operation_response(11, 1)
         with self.assertRaises(AdminProtocolError):
             AdminClient._decode_copilot_operation(malformed, 11)
+
+    def test_copilot_build_train_serializes_frozen_purchase_request(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            response = operation_response(13, 77, track=0, rail_type=255)
+            response += struct.pack("<BBIH", 3, 0, 0x12345678, 42)
+
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    payload,
+                    struct.pack(
+                        "<HBIBIHqQQQQQQQ", COPILOT_PROTOCOL_VERSION, 13, 77,
+                        0, 8254, 42, 100000, 2, 3, 4, 5, 6, 7, 8,
+                    ) + b"world-123\0",
+                )
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_build_train(
+                world_id="world-123", company_id=0, depot_tile=8254, engine_id=42,
+                max_cost=100000, expected_sequence=2, expected_head_hi=3,
+                expected_head_lo=4, operation_hi=5, operation_lo=6,
+                payload_hash_hi=7, payload_hash_lo=8, request_id=77,
+            )
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(result["infrastructure_kind"], 3)
+            self.assertEqual(result["engine_id"], 42)
+            self.assertEqual(result["created_asset_id"], 0x12345678)
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_train_purchase_status_accepts_old_infrastructure_records(self) -> None:
+        base = operation_response(14, 1, track=0)
+        station = AdminClient._decode_copilot_operation(
+            base + struct.pack("<BBIH", 1, 2, 19, 0xFFFF), 14
+        )
+        self.assertEqual(
+            (station["infrastructure_kind"], station["length"],
+             station["created_asset_id"], station["engine_id"]),
+            (1, 2, 19, 0xFFFF),
+        )
+        purchase = operation_response(14, 1, track=0, rail_type=255) + struct.pack("<BBIH", 3, 0, 19, 42)
+        result = AdminClient._decode_copilot_operation(purchase, 14)
+        self.assertEqual(
+            (result["infrastructure_kind"], result["created_asset_id"], result["engine_id"]),
+            (3, 19, 42),
+        )
+
+    def test_train_purchase_decoder_rejects_invalid_sentinels_and_geometry(self) -> None:
+        base = operation_response(13, 1, track=0, rail_type=255)
+        valid = base + struct.pack("<BBIH", 3, 0, 19, 42)
+        invalid = [
+            valid[:-1], valid + b"\0",
+            base + struct.pack("<BBIH", 3, 1, 19, 42),
+            base + struct.pack("<BBIH", 3, 0, 0xFFFFFFFF, 42),
+            base + struct.pack("<BBIH", 3, 0, 19, 0xFFFF),
+            base + struct.pack("<BBIH", 4, 0, 19, 42),
+            operation_response(13, 1, state=3, track=0, rail_type=255)
+            + struct.pack("<BBIH", 3, 0, 19, 42),
+            operation_response(13, 1, track=1, rail_type=255) + struct.pack("<BBIH", 3, 0, 19, 42),
+            operation_response(13, 1, track=0, rail_type=1) + struct.pack("<BBIH", 3, 0, 19, 42),
+        ]
+        for payload in invalid:
+            with self.subTest(payload=payload):
+                with self.assertRaises(AdminProtocolError):
+                    AdminClient._decode_copilot_operation(payload, 13)
+
+    def test_train_status_preserves_legacy_validation_and_historical_fields(self) -> None:
+        for kind, length, track, asset_id in ((0, 0, 2, 0xFFFFFFFF), (1, 2, 1, 7), (2, 1, 3, 8)):
+            payload = operation_response(14, 1, track=track) + struct.pack("<BBIH", kind, length, asset_id, 0xFFFF)
+            result = AdminClient._decode_copilot_operation(payload, 14)
+            self.assertEqual(result["engine_id"], 0xFFFF)
+            self.assertNotIn("engine_id", result["readback"])
+            self.assertNotIn("created_asset_id", result["readback"])
+        for kind, length, track in ((1, 2, 2), (2, 1, 4)):
+            payload = operation_response(14, 1, track=track) + struct.pack("<BBIH", kind, length, 7, 0xFFFF)
+            with self.assertRaises(AdminProtocolError):
+                AdminClient._decode_copilot_operation(payload, 14)
+        rejected = operation_response(14, 1, state=3, track=0, rail_type=255)
+        result = AdminClient._decode_copilot_operation(
+            rejected + struct.pack("<BBIH", 3, 0, 0xFFFFFFFF, 42), 14)
+        self.assertEqual(result["state_name"], "rejected")
+
+    def test_train_status_serializes_and_rejects_wrong_world(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(payload, struct.pack("<HBIQQ", COPILOT_PROTOCOL_VERSION, 14, 77, 5, 6)
+                                 + b"world-123\0")
+                response = operation_response(14, 77, world_id="other-world", track=0, rail_type=255)
+                server_sock.sendall(frame(130, response + struct.pack("<BBIH", 3, 0, 19, 42)))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            with self.assertRaisesRegex(AdminProtocolError, "world ID mismatch"):
+                client.copilot_train_purchase_status(
+                    world_id="world-123", operation_hi=5, operation_lo=6, request_id=77)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_train_purchase_input_rejects_invalid_engine_sentinel(self) -> None:
+        client, server_sock = connected_client()
+        try:
+            with self.assertRaisesRegex(ValueError, "engine_id"):
+                client.copilot_build_train(
+                    world_id="world", company_id=0, depot_tile=1, engine_id=0xFFFF,
+                    max_cost=1, expected_sequence=0, expected_head_hi=0,
+                    expected_head_lo=0, operation_hi=1, operation_lo=2,
+                    payload_hash_hi=3, payload_hash_lo=4,
+                )
+        finally:
+            client.close()
+            server_sock.close()
 
     def test_status12_accepts_rail_extension_without_readback_identity(self) -> None:
         payload = operation_response(12, 1, track=2) + struct.pack("<BBI", 0, 0, 0xFFFFFFFF)

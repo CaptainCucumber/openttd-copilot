@@ -1,21 +1,22 @@
 # Custom OpenTTD engine
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
-[`copilot/m2d-native-infrastructure`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-infrastructure), commit
-`2c4dfef1bdee73f9994323c8139afd25768db150`. It descends from sequential-rail
+[`copilot/m2d-native-train-purchase`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-train-purchase), commit
+`7252756e936740771bac43fa74b66b050b8c68ce`. It descends from infrastructure
+commit `2c4dfef1bdee73f9994323c8139afd25768db150`, sequential-rail
 commit `bded382135c91932c86f354f071b4f101af3b85e`, industry-details
 commit `211e780180c021b208a87d2612f4c24be9f743a6`, the M2d
 tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All fourteen commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0014 in order to the upstream revision if not using the fork branch.
+All fifteen commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0015 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
 ```sh
-git clone --branch copilot/m2d-native-infrastructure \
+git clone --branch copilot/m2d-native-train-purchase \
   https://github.com/CaptainCucumber/OpenTTD.git vendor/openttd-copilot-engine
 cmake -S vendor/openttd-copilot-engine -B build/openttd-m2a \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -80,6 +81,14 @@ rail-only status refuses infrastructure records; the extended status also
 reads historical rail operations. IDs describe the original outcome; use asset
 pages to verify current ownership and geometry. See
 [the infrastructure probe](../docs/NATIVE_INFRASTRUCTURE_PROBE.md).
+Purchase requests 13/14 buy a rail locomotive or wagon in an owned depot,
+using default cargo, a per-command cap, and the normal build command's
+returned VehicleID. Automatic free-wagon adoption is disabled; wagon purchase
+refuses an existing same-type free chain rather than implicitly joining it.
+COPL schema 4 persists engine identity and migrates earlier retained outcomes.
+Extended status 14 reads all existing kinds; old status endpoints explicitly
+refuse purchase records. This does not assemble a train, change orders, or
+start a service. See [the purchase probe](../docs/NATIVE_TRAIN_PURCHASE_PROBE.md).
 See [M2b probe instructions](../docs/NATIVE_MUTATION_PROBE.md) and
 [report](../docs/M2B_REPORT.md) for tested and untested recovery boundaries.
 The runtime-only event ring reports train station departures and accepted

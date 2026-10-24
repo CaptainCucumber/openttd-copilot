@@ -1,14 +1,16 @@
 # Current status
 
-Updated: 2026-10-23, America/Vancouver.
+Updated: 2026-10-24, America/Vancouver.
 
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Implementation and records through the M2d native station/depot checkpoint are published on `origin/main` (implementation `b684625b067f73938329830d17be233f55b245bb`). The clean engine branch `copilot/m2d-native-infrastructure` is published at `2c4dfef1bdee73f9994323c8139afd25768db150`; both remote SHAs were verified. Both repositories use the required no-reply Git identity.
+- Implementation and records now include the bounded M2d native train-purchase checkpoint. Engine branch `copilot/m2d-native-train-purchase` is published at `7252756e936740771bac43fa74b66b050b8c68ce` with verified remote SHA; Copilot publication is recorded in the work log. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
+
+**M2d now purchases native rail vehicles with actual returned IDs.** The clean engine bought two locomotives at 8,203 each and a 30-capacity coal wagon at 1,031 in an observed owned depot. Cash 97,870 -> 80,433, loan unchanged 100,000. Independent parts confirmed three separate chains, no automatic adoption, exact-cap success, rejection below cap/at invalid depot/for unavailable engine, and no duplicate on replay. All 12 old/new retained outcomes and assets matched after fresh-process reload, including schema-3 migration. Assembly, orders/start, and operating native route remain open. See [report](M2D_TRAIN_PURCHASE_REPORT.md), [probe](NATIVE_TRAIN_PURCHASE_PROBE.md), and [evidence](evidence/2026-10-24-native-train-purchase-probe.json).
 
 **M2d now builds bounded native rail stations and depots.** Four clean-engine copied-world runs covered both station axes and all four depot directions. Each new two-tile station cost 750 and depot 540; cash 99,160 -> 97,870, loan unchanged at 100,000. Created IDs, independent geometry/ownership, retained rejection/success outcomes, replay without duplicates, and reload passed. All 64 populated schema-2 rail outcomes survived migration/reload; the sequential regression also passed schema-1 migration. This is not train purchase or a complete railway. See [report](M2D_INFRASTRUCTURE_REPORT.md), [probe](NATIVE_INFRASTRUCTURE_PROBE.md), and [evidence](evidence/2026-10-23-native-infrastructure-probe.json).
 
@@ -36,19 +38,21 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
-| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d observations, rail sequencing, and station/depot primitives proven** | Retained capped rail/station/depot commands and readback proven; train purchase/configuration, planner, and native complete-route construction remain open. |
+| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d observations, rail/station/depot construction, and train purchase proven** | Retained capped construction/purchase and readback proven; consist/orders/start configuration, planner, and native complete-route construction remain open. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | Planned | No implementation |
 | M5: usable local alpha | Planned | No implementation |
 
 ## Next work, in order
 
-1. **M2d — Native train purchase/configuration:** add capped purchase with authoritative vehicle identity, consist/order configuration, and independent readback under the retained-operation boundary. Follow with the deterministic existing-business railway planner: candidate catchment/placement, directed routing, whole-job pricing/reserve, sequential execution, and two verified full-load deliveries. Address the shared 64-record limit before accepting jobs that cannot fit; do not evict retained identities. Exact industry occupied tiles, candidate catchment, and station-specific track geometry/rail type remain observation gaps. Revalidate non-atomic observations before construction.
+1. **M2d — Native consist/order/start configuration:** add typed assembly of purchased locomotive/wagons, loading/delivery orders, and explicit start control with retained operation identity and independent readback. Follow with the deterministic existing-business railway planner: candidate catchment/placement, directed routing, whole-job pricing/reserve, sequential execution, and two verified full-load deliveries. Address the shared 64-record limit before accepting jobs that cannot fit; do not evict retained identities. Exact industry occupied tiles, candidate catchment, and station-specific track geometry/rail type remain observation gaps. Revalidate non-atomic observations before construction.
 2. **M3 recovery tests:** fault-inject the pending-save and mutation/save/journal windows; do not retry an uncertain operation without reconciliation.
 
-M1 and M2a–M2c are complete. A controlled fixture can build and verify a playable train service through the GameScript test harness. The native bridge supports sequential flat-clear rail pieces and new level-clear stations/depots within a non-evicting 64-record history. Arbitrary business selection, train purchase/configuration, route planning, whole-job budget, native end-to-end railway construction, and M3 recovery gates remain open.
+M1 and M2a–M2c are complete. A controlled fixture can build and verify a playable train service through the GameScript test harness. The native bridge supports sequential flat-clear rail pieces and new level-clear stations/depots within a non-evicting 64-record history. Arbitrary business selection, consist/order/start configuration, route planning, whole-job budget, native end-to-end railway construction, and M3 recovery gates remain open. Native default-cargo rail purchase is now proven in the copied fixture.
 
 ## Implemented and tested checkpoint
+
+- `tools/run_native_train_purchase_probe.py`: clean run `20261024T221240Z-89c4c574` passed purchase, populated schema-3 migration, and fresh-process reload in 4.589 seconds. Eight new records (three purchases/five rejections) and four earlier infrastructure records survived individual comparison; exact replay and old/wrong-world/stale/conflict guards caused no mutations. All 151 Python tests pass. Rail/schema-1 and infrastructure/schema-2 regressions also passed against the final client and same clean binary. Runtime purchase coverage is a standard single-head engine and coal wagon, not multihead/articulated/NewGRF vehicles.
 
 - `tools/run_native_infrastructure_probe.py`: four clean-revision runs recorded in the [report](M2D_INFRASTRUCTURE_REPORT.md) passed populated schema-2 migration, capped construction, independent created-asset readback, immutable replay, and fresh-process reload. Both station axes and all depot directions were tested at station length 2; other permitted lengths remain untested in real engine. All 135 Python tests pass. Patch 0014 and engine build instructions pin the exact revision.
 
