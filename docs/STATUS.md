@@ -5,7 +5,7 @@ Updated: 2026-10-24, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Engine branch `copilot/m2d-native-railway` is published at `96f960a3239e87837919414604a19e3eca9830b7`, remote SHA verified. Project implementation/tests/patch/evidence/records commit `e15201b9398c5f492ffa88aa068e658d3494fb5d` is published on `origin/main`, remote SHA verified; this publication handoff follows separately. Both repositories use the required no-reply Git identity.
+- Engine branch `copilot/m2d-native-railway` remains published at `96f960a3239e87837919414604a19e3eca9830b7`, unchanged. Project live-conversation/planning-recovery implementation/tests/evidence/records `033e1b8f0a239e6e76fb65c3a174e6a62ed50aa6` is published on `origin/main`, remote SHA verified; this records-only publication handoff follows. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
