@@ -5,7 +5,7 @@ Updated: 2026-10-24, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Implementation and records now include the bounded M2d native train-configuration checkpoint. Engine branch `copilot/m2d-native-train-configuration` is published at `ff8bd20ef55b26505693e315d71d291967cce0a9` with verified remote SHA. Project implementation/evidence/records are being published together on `origin/main`; the preceding purchase implementation was `6b12148b4b7a6dd18c79dda1a192a9016deca6e5`. Both repositories use the required no-reply Git identity.
+- Implementation and records now include the bounded M2d native train-configuration checkpoint. Engine branch `copilot/m2d-native-train-configuration` is published at `ff8bd20ef55b26505693e315d71d291967cce0a9` with verified remote SHA. Project implementation/evidence/records commit `9157b6aca1d3e287445472ed5a0b4af9cf67da02` is published on `origin/main` with verified remote SHA; this publication handoff follows separately. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
