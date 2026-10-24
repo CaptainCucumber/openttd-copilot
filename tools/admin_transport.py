@@ -56,6 +56,7 @@ _COPILOT_RAIL_CATALOG = 6
 _COPILOT_RAIL_ASSETS = 7
 _COPILOT_TRAIN_PARTS = 8
 _COPILOT_TRAIN_ORDERS = 9
+_COPILOT_CONSTRUCTION_QUOTE = 17
 _MAX_COPILOT_WORLD_ID_BYTES = 65  # 64 UTF-8 bytes plus the wire NUL terminator.
 _MAX_COPILOT_EVENTS = 16
 _MAX_COPILOT_TILE_SNAPSHOT_COUNT = 32
@@ -1517,6 +1518,129 @@ class AdminClient:
                          "start_index": start_index, "count": count, "orders": orders})
         return response
 
+    def copilot_construction_quote(
+        self,
+        *,
+        world_id: str,
+        company_id: int,
+        tile: int,
+        rail_type: int,
+        orientation: int,
+        kind: int,
+        length: int,
+        industry_id: int = 0xFFFF,
+        cargo_id: int = 1,
+        request_id: int | None = None,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Read the engine's quote for one supported rail construction action."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        tile = self._check_uint("tile", tile, 32)
+        rail_type = self._check_uint("rail_type", rail_type, 8)
+        orientation = self._check_uint("orientation", orientation, 8)
+        kind = self._check_uint("kind", kind, 8)
+        length = self._check_uint("length", length, 8)
+        industry_id = self._check_uint("industry_id", industry_id, 16)
+        cargo_id = self._check_uint("cargo_id", cargo_id, 8)
+        self._check_quote_geometry(kind, orientation, length, ValueError)
+        world = self._copilot_world_id(world_id)
+        payload = struct.pack(
+            "<HBIBIBBBBHB",
+            protocol_version, _COPILOT_CONSTRUCTION_QUOTE, request_id,
+            company_id, tile, rail_type, orientation, kind, length,
+            industry_id, cargo_id,
+        ) + world
+        response = self._copilot_read_request(
+            _COPILOT_CONSTRUCTION_QUOTE,
+            "copilot_construction_quote",
+            request_id,
+            payload,
+            timeout,
+        )
+        if response["world_id"] != world_id:
+            raise AdminProtocolError("Copilot construction quote response world ID mismatch")
+        selectors = {
+            "company_id": company_id, "tile": tile, "rail_type": rail_type,
+            "orientation": orientation, "kind": kind, "length": length,
+            "industry_id": industry_id, "cargo_id": cargo_id,
+        }
+        if any(response[key] != value for key, value in selectors.items()):
+            raise AdminProtocolError("Copilot construction quote response selector mismatch")
+        return response
+
+    @staticmethod
+    def _decode_copilot_construction_quote(payload: bytes) -> dict[str, Any]:
+        if len(payload) < 8:
+            raise AdminProtocolError("truncated Copilot response header")
+        version, request_kind, request_id, status = struct.unpack_from("<HBIB", payload)
+        response: dict[str, Any] = {
+            "version": version, "request_kind": request_kind,
+            "request_id": request_id, "status": status,
+        }
+        if version != COPILOT_PROTOCOL_VERSION:
+            raise AdminProtocolError(f"unsupported Copilot response version {version}")
+        if request_kind != _COPILOT_CONSTRUCTION_QUOTE:
+            raise AdminProtocolError(f"unexpected Copilot response kind {request_kind}")
+        if status != 0:
+            if len(payload) != 8:
+                raise AdminProtocolError("Copilot error response has trailing data")
+            return response
+
+        position = 8
+        world_id, position = AdminClient._decode_copilot_cstring(payload, position, "world ID")
+        fixed_format = "<QQQIBIBBBBHBBqIBIHHBB"
+        fixed_size = struct.calcsize(fixed_format)
+        if position + fixed_size != len(payload):
+            raise AdminProtocolError("truncated or trailing Copilot construction quote response")
+        (
+            sequence, head_hi, head_lo, frame, company_id, tile, rail_type,
+            orientation, kind, length, industry_id, cargo_id, quote_success,
+            cost, error, covers_producer, industry_acceptance, retained_count,
+            capacity, operation_state, supported_profile,
+        ) = struct.unpack_from(fixed_format, payload, position)
+        for marker, label in (
+            (quote_success, "quote success"),
+            (covers_producer, "producer coverage"),
+            (supported_profile, "supported profile"),
+        ):
+            if marker not in (0, 1):
+                raise AdminProtocolError(f"invalid Copilot construction quote {label} boolean")
+        if operation_state not in _COPILOT_OPERATION_STATE_NAMES:
+            raise AdminProtocolError("invalid Copilot construction quote operation state")
+        if retained_count > capacity:
+            raise AdminProtocolError("Copilot construction quote retained count exceeds capacity")
+        AdminClient._check_quote_geometry(kind, orientation, length, AdminProtocolError)
+        if quote_success and cost < 0:
+            raise AdminProtocolError("successful Copilot construction quote has negative cost")
+        response.update({
+            "world_id": world_id,
+            "sequence": sequence,
+            "head_hi": head_hi,
+            "head_lo": head_lo,
+            "head": None if (head_hi, head_lo) == (0, 0) else {"hi": head_hi, "lo": head_lo},
+            "frame": frame,
+            "company_id": company_id,
+            "tile": tile,
+            "rail_type": rail_type,
+            "orientation": orientation,
+            "kind": kind,
+            "length": length,
+            "industry_id": industry_id,
+            "cargo_id": cargo_id,
+            "quote_success": bool(quote_success),
+            "cost": cost,
+            "error": error,
+            "covers_producer": bool(covers_producer),
+            "industry_acceptance": industry_acceptance,
+            "retained_count": retained_count,
+            "capacity": capacity,
+            "operation_state": operation_state,
+            "supported_profile": bool(supported_profile),
+        })
+        return response
+
     @staticmethod
     def _decode_copilot_train_parts(payload: bytes) -> dict[str, Any]:
         if len(payload) < 8:
@@ -1575,6 +1699,62 @@ class AdminClient:
                          "after_vehicle_id": after_vehicle_id, "count": count,
                          "next_after_id": next_after_id, "complete": bool(complete), "parts": parts})
         return response
+
+    @staticmethod
+    def _check_quote_geometry(
+        kind: int, orientation: int, length: int, error_type: type[Exception]
+    ) -> None:
+        if kind == 0:
+            valid = orientation <= 5 and length == 0
+        elif kind == 1:
+            valid = orientation <= 1 and 1 <= length <= 7
+        elif kind == 2:
+            valid = orientation <= 3 and length == 1
+        else:
+            valid = False
+        if not valid:
+            raise error_type("invalid Copilot construction quote action geometry")
+
+    def _copilot_read_request(
+        self,
+        request_kind: int,
+        event_kind: str,
+        request_id: int,
+        payload: bytes,
+        timeout: float | None,
+    ) -> dict[str, Any]:
+        self._require_connected()
+        deadline = self._deadline(timeout)
+        self._send_packet(_ADMIN_COPILOT, payload, deadline)
+        self.events.append({
+            "time": time.time(), "direction": "sent", "packet_type": event_kind,
+            "packet_length": len(payload) + _HEADER_SIZE, "request_id": request_id,
+            "protocol_version": struct.unpack_from("<H", payload)[0],
+        })
+        while True:
+            packet_type, response_payload = self._read_frame(deadline)
+            if packet_type == _SERVER_ERROR:
+                self._raise_server_error(response_payload)
+            if packet_type == _SERVER_COPILOT:
+                if request_kind == _COPILOT_CONSTRUCTION_QUOTE:
+                    response = self._decode_copilot_construction_quote(response_payload)
+                else:
+                    raise AdminProtocolError("unsupported Copilot read request")
+                if response["request_id"] != request_id:
+                    raise AdminProtocolError("Copilot response request ID mismatch")
+                self.events.append({
+                    "time": time.time(), "direction": "received", "packet_type": event_kind,
+                    "packet_length": len(response_payload) + _HEADER_SIZE,
+                    "request_id": request_id, "status": response["status"],
+                })
+                if response["status"] != 0:
+                    raise CopilotBridgeError(response["status"])
+                return response
+            if packet_type == _SERVER_GAMESCRIPT:
+                message = self._decode_gamescript(
+                    response_payload, "received", len(response_payload) + _HEADER_SIZE
+                )
+                self._preserve_response(message)
 
     def _copilot_vehicle_events_request(
         self,

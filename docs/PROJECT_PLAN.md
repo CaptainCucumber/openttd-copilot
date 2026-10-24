@@ -78,7 +78,13 @@ A custom bridge must use the engine's normal command pipeline on the game thread
 
 ### M2 — Complete one railway without an LLM
 
-Status: **In progress. M2a identity, M2b one-piece mutation, and M2c vehicle-tagged observation completed 2026-10-23. M2d has read-only world/asset/configuration checkpoints, bounded sequential rail, capped new station/depot commands, native rail purchase with retained created identities, wagon attachment, two append-only station orders, and explicit start/stop; the complete rail job remains open. Industry bounds are not exact occupied-tile footprints.**
+Status: **Simple-profile exit demonstrated, 2026-10-24.** Native planning,
+whole-job pricing/reserve, construction, purchase/configuration and actual
+transport now operate between existing seed-6 coal businesses. Three full
+departures and two accepted delivery cycles establish both returns; low-budget
+rejection, duplicate calls and reload/replay passed. See
+[the native railway report](M2D_NATIVE_RAILWAY_REPORT.md). This does not close
+M3 recovery or the release scenario matrix.
 
 **Depends on:** M1 adapter and observation contract.
 
@@ -94,8 +100,10 @@ actual returned vehicle IDs, per-command costs, and migrated schema-4 outcomes.
 The [native configuration checkpoint](M2D_TRAIN_CONFIGURATION_REPORT.md) adds
 explicit wagon attachment, two append-only station policies, and desired-state
 start/stop with schema-5 retained outcomes and independent readback.
-Next add the planner under that retained-operation boundary. These are bounded M2d
-substep, not the complete railway exit gate.
+The planner now composes those primitives under the same retained-operation
+boundary; read-only selected-industry catchment avoids treating industry
+bounds as occupied tiles. The simple M2 exit has evidence, while broader
+route/terrain/recovery behavior belongs to M3.
 
 Exit: on a known feasible flat-map fixture, construct the complete coal route and observe **two loaded departures and two deliveries by the assigned train**, then return toward the mine again. Charges remain within the authorized construction cap; original assets and loan are unchanged. Repeating a request does not create a second route accidentally. A route that lacks money for its train must fail before infrastructure construction.
 

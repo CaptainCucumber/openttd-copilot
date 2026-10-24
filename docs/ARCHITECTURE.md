@@ -1,6 +1,11 @@
 # Proposed architecture
 
-Status: M2a identity, M2b bounded mutation, and M2c vehicle-tagged observation complete, 2026-10-23. M2d has sequential rail and native station/depot primitives plus read-only tile, industry, human-company rail catalog, station/depot, train-part, and train-order checkpoints, but complete route construction remains open. The custom OpenTTD 15.3 build exposes bounded world/company identity, one typed rail mutation, paged train departure/industry delivery events, and read-only world/asset/configuration pages through authenticated loopback-only Admin packets independent of GameScript. See the [rail assets report](M2D_RAIL_ASSETS_REPORT.md), [train-parts report](M2D_TRAIN_PARTS_REPORT.md), [train-orders report](M2D_TRAIN_ORDERS_REPORT.md), and [D022](DECISIONS.md#d022--read-bounded-train-orders-without-expanding-mutation-scope).
+Status: 2026-10-24. The native simple-profile railway now connects existing
+businesses with a whole-job budget and verified service. Read-only construction
+quotes/catchment, bounded directed planning, fsynced execution and visible MCP
+use the native bridge independently of GameScript. Broader terrain and crash
+recovery remain open. See [D029](DECISIONS.md#d029---connect-a-bounded-existing-business-native-railway-before-expanding-scope)
+and [the native railway report](M2D_NATIVE_RAILWAY_REPORT.md).
 
 ## Responsibilities
 
@@ -10,8 +15,9 @@ COPL schema 5 migrates earlier outcomes. Independent asset/parts observations,
 immutable replay, and fresh-process reload are measured in the
 [purchase report](M2D_TRAIN_PURCHASE_REPORT.md). Bounded native wagon attachment,
 two append-only station orders, and explicit start/stop are now verified in the
-[configuration report](M2D_TRAIN_CONFIGURATION_REPORT.md). Complete railway
-construction and service remain open.
+[configuration report](M2D_TRAIN_CONFIGURATION_REPORT.md). The
+[native railway layer](NATIVE_PLAYABLE_ALPHA.md) now composes these primitives
+into the bounded standard-coal job.
 
 | Component | Owns | Must not do |
 |---|---|---|
@@ -22,7 +28,12 @@ construction and service remain open.
 | Game adapter | Validated observations and normal game commands | Bypass game rules or execute arbitrary model code |
 | Verifier | Actual assets, reachability, orders, loading, delivery, health | Equate successful construction with a working service |
 
-The implementation uses a Python service for protocol handling and the future planner, SQLite job storage, and terminal/CLI interface, backed by the narrow C++ bridge selected in M1. Squirrel remains only in reference/regression fixtures. MCP can expose the same high-level jobs later, but it is not the planning algorithm or the reliability layer.
+The implementation uses a Python service for protocol handling, deterministic
+planning, fsynced JSON jobs/per-operation journals and terminal/MCP interfaces,
+backed by the narrow C++ bridge selected in M1. SQLite job storage was a proposed
+design, not the current execution store. Squirrel remains only in
+reference/regression fixtures. MCP exposes high-level jobs; it is not the
+planning algorithm or reliability layer.
 
 ## Integration options
 
@@ -62,6 +73,17 @@ M2b established a world ID, monotonic successful-operation sequence, head operat
 The client rejects mismatched worlds/protocols and compares each external journal position to distinguish the current world, an older save, changed world, an ahead save, or diverged history. External intent is retained in separate fsynced single-operation journal files rather than overwriting the previous operation. A loaded pending operation is marked uncertain and must not be replayed automatically. Historical status returns the original cost/error/completion frame alongside the current global sequence/head and live tile/company readback, not a historical world snapshot. This is not a complete save lineage or atomic transaction; a command executed after the most recent save can still be absent from a reloaded older save.
 
 ## Planning the railway
+
+`native_route_plan.py` consumes observed tiles and proposes two-tile station
+sites and directed track with a source-inline depot. Search state includes the
+previous track to respect default no-90-degree train transitions. Request 17
+tests costs and prospective catchment against the selected industry's occupied
+tiles. `native_railway.py` checks the entire infrastructure/consist cost, reserve
+and available 64-record history, then revalidates dependencies per operation.
+Each intent is fsynced before send; rejected/uncertain outcomes stop the job
+with existing work retained. Three loaded source departures and two accepted
+delivery cycles prove the service returned twice; empty departures are not
+emitted by the current event seam. See [alpha limits](NATIVE_PLAYABLE_ALPHA.md).
 
 The purchase boundary adds protocol-v3 request 13 and extended status 14.
 It buys one default-cargo rail engine or wagon in an owned depot, rechecking

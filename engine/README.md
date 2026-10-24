@@ -1,8 +1,9 @@
 # Custom OpenTTD engine
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
-[`copilot/m2d-native-train-configuration`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-train-configuration), commit
-`ff8bd20ef55b26505693e315d71d291967cce0a9`. It descends from purchase
+[`copilot/m2d-native-railway`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-railway), commit
+`96f960a3239e87837919414604a19e3eca9830b7`. It descends from configuration
+commit `ff8bd20ef55b26505693e315d71d291967cce0a9`, purchase
 commit `7252756e936740771bac43fa74b66b050b8c68ce`, infrastructure
 commit `2c4dfef1bdee73f9994323c8139afd25768db150`, sequential-rail
 commit `bded382135c91932c86f354f071b4f101af3b85e`, industry-details
@@ -11,26 +12,45 @@ tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All sixteen commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0016 in order to the upstream revision if not using the fork branch.
+All seventeen commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0017 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
 ```sh
-git clone --branch copilot/m2d-native-train-configuration \
+git clone --branch copilot/m2d-native-railway \
   https://github.com/CaptainCucumber/OpenTTD.git vendor/openttd-copilot-engine
 cmake -S vendor/openttd-copilot-engine -B build/openttd-m2a \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DOPTION_DEDICATED=ON \
   -DOPTION_USE_ASSERTS=ON
 cmake --build build/openttd-m2a --target openttd -j 8
+cmake -S vendor/openttd-copilot-engine -B build/openttd-native-client \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DOPTION_DEDICATED=OFF \
+  -DOPTION_USE_ASSERTS=ON \
+  -DCMAKE_DISABLE_FIND_PACKAGE_OpenGL=ON
+cmake --build build/openttd-native-client --target openttd -j 8
 ```
 
-The M2 binary is a dedicated build. The probes stage language, compatibility,
+The first binary is the server; the second is the matching graphical client.
+On this macOS environment optional OpenGL discovery must be disabled for the
+software Cocoa client: default linking otherwise misses CGL symbols. There is
+no supported `OPTION_USE_OPENGL` switch. Both binaries must match the source
+revision. The probes stage language, compatibility,
 and base-set resources from the installed OpenTTD 15.3 application into a
 disposable profile. It never uses the normal profile for execution.
 
 ## Boundary
+
+Read-only protocol-v3 request 17 tests the normal rail/station/depot wrapper
+without admitting an operation, returns authoritative cost/error and shared
+history capacity, and evaluates prospective catchment against an explicitly
+selected industry's actual occupied tiles. It also marks the supported
+standard-temperate/no-NewGRF profile. The Python native railway layer now uses
+this seam for bounded routing and whole-job affordability; the engine itself
+does not invent routes or offer a transaction. See
+[native alpha](../docs/NATIVE_PLAYABLE_ALPHA.md).
 
 Protocol version 3 keeps the authenticated, loopback-only Admin boundary and
 includes identity, one typed single-rail mutation, operation-status, and paged

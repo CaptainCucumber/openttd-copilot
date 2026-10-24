@@ -8,7 +8,21 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: M1 and M2a–M2c complete; M2d is in progress.** An MCP entry point lets a compatible AI client open a disposable OpenTTD map, request the supported coal-railway demo, and inspect verified job status. The current playable job is still a controlled GameScript fixture: it creates test coal industries and a straight railway, rather than planning between arbitrary businesses. The native bridge supports bounded sequential rail pieces, capped new stations/depots and rail vehicle purchase with actual created IDs, explicit wagon attachment, two append-only station orders, and desired-state start/stop. Route planning and native complete-route operation remain open.
+**A narrow native playable alpha is ready to try.** Open a new isolated map,
+select its existing coal businesses, and build a costed railway with real
+stations, depot, train, full-load orders and verified deliveries. The AI-facing
+MCP backend owns deterministic planning and execution; the standalone text
+launcher is model-free. This is a flat standard-coal alpha, not general terrain
+support or a reliability-qualified release.
+
+```sh
+python3 -B tools/play_native.py
+```
+
+Enter `build coal railway from 10 to 1; full load; budget 50000; reserve 10000`
+on the default seed-6 map. The game remains open for play after verification.
+See [launch and AI configuration](docs/NATIVE_PLAYABLE_ALPHA.md) for prerequisites,
+business-name input, saves and supported limits.
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -32,6 +46,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [M2d infrastructure report](docs/M2D_INFRASTRUCTURE_REPORT.md) | Capped native station/depot construction, created IDs, and save migration |
 | [M2d train purchase report](docs/M2D_TRAIN_PURCHASE_REPORT.md) | Capped rail vehicle purchase, actual IDs, and replay/reload |
 | [M2d train configuration report](docs/M2D_TRAIN_CONFIGURATION_REPORT.md) | Native wagon attachment, full-load/delivery orders, explicit start/stop, and replay/reload |
+| [Native railway report](docs/M2D_NATIVE_RAILWAY_REPORT.md) | Existing-business route, whole-job budget, native service, visible MCP and replay evidence |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 
@@ -57,7 +72,7 @@ The next checkpoint also verifies bounded Admin requests and recovery across dis
 
 The five-world stock-adapter throughput checkpoint is documented in [the M1 throughput probe](docs/THROUGHPUT_PROBE.md).
 
-The AI-facing playable demo uses a local stdio MCP server. Configure a
+The older controlled demo uses a separate local stdio MCP server. Configure a
 compatible MCP host to launch `tools/mcp_server.py` from this checkout, then
 ask it to open the demo map, build a coal railway between a coal mine and power
 station with full-load departures, and poll `get_build_status`. The server
@@ -66,7 +81,7 @@ existing real-engine demo and opens the completed save. See
 [the playable demo guide](docs/MCP_PLAYABLE_DEMO.md) for configuration and
 scope.
 
-The standalone rule-based CLI remains available:
+The older fixture-only rule-based CLI remains available:
 
 ```sh
 python3 -B tools/copilot_chat.py

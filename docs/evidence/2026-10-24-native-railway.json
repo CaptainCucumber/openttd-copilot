@@ -1,0 +1,204 @@
+{
+  "additional_source_hashes": {
+    "tools/check_native_railway_reload.py": "02298a8a18def6018aa33ccc0fe0b071dd6d3339cf0b28076126c4e5202404d2"
+  },
+  "binary_sha256": "ed5e9833d0dd3a96e83a21da846ee95f86472de4c95c07152d5b67f9587bb214",
+  "client_binary_sha256": "cddeef25ac6a72626ff34031df1b33c930bdf37a6011d501d4168426966f817b",
+  "date": "2026-10-24",
+  "engine": {
+    "clean": true,
+    "head": "96f960a3239e87837919414604a19e3eca9830b7",
+    "revision": "20261024-m2d-native-railway-g96f960a323",
+    "source_hashes": {
+      "src/command_type.h": "faa0fb1747c6d625abf818b4e25570418125f23c20965aae6b86fdbd65b43ea1",
+      "src/copilot_cmd.cpp": "cc0e96540783453edc04faeb9bc700218da8c8c3d1577363dddd06d55e9dc31c",
+      "src/copilot_cmd.h": "199c9f7875903056d8f3d9d58c934c6301d3d189a7b9ff2636195810aa4be962",
+      "src/network/network_admin.cpp": "1c5275b02f1e4f7417d98c1b4c276a7eb29ce55892ec9b3f97f4a2e1e1776fe0",
+      "src/network/network_admin.h": "c4799573b4013d8848c552cd4bd327e1c57a671e8ab17b15a79e43122c3d6a8f",
+      "src/network/network_command.cpp": "3e5e3080057650f2413688e3ed8c1973c213d33a05fab7bcd7373dc6211cfb20",
+      "src/saveload/copilot_sl.cpp": "b1d527788c726902da82a75ace059edfebf55d95b14671e1b0e6a1e36dfe2197"
+    }
+  },
+  "environment": {
+    "machine": "arm64",
+    "release": "25.6.0",
+    "system": "Darwin"
+  },
+  "final_gate": {
+    "checks": [
+      "duplicate_job_no_mutation",
+      "low_budget_rejected",
+      "native_commissioned",
+      "planning_is_nonmutating",
+      "reload_and_exact_replay",
+      "two_native_deliveries",
+      "whole_job_plan"
+    ],
+    "elapsed_seconds": 228.091,
+    "path": "artifacts/native-railway/20261024T230856Z-d0747072/manifest.json",
+    "sha256": "dcd81e2ac52a187b8b92b434d7d1b2c88eadc916bf7b8b1611bc76e1e9d3536a"
+  },
+  "game_script": null,
+  "preservation": {
+    "normal_profile_unchanged": true,
+    "secret_files_removed": true,
+    "source_saves_unchanged": true
+  },
+  "python_tests": 206,
+  "regressions": [
+    {
+      "checks": [
+        "configuration_completed",
+        "reload_retains_configuration",
+        "schema4_migration"
+      ],
+      "path": "artifacts/native-train-configuration-probe/20261024T225800Z-0e4410ff/manifest.json",
+      "sha256": "798392d3b630d4c5c9b56dc562f966b76f30cad2e08ef010f3aa2b40ff01b458"
+    },
+    {
+      "checks": [
+        "purchase_completed",
+        "reload_retains_purchase",
+        "schema3_migration"
+      ],
+      "path": "artifacts/native-train-purchase-probe/20261024T225812Z-d72fb39e/manifest.json",
+      "sha256": "006f1be1bbb460fbde4b1e1dec2dfbc106757924537d1001340a7b9313916055"
+    },
+    {
+      "checks": [
+        "conflict_and_stale_guards",
+        "first_success",
+        "historical_replay_after_second",
+        "journal_capacity",
+        "legacy_schema1_migration",
+        "older_save_detected",
+        "rejection_does_not_poison_head",
+        "reload_retains_records",
+        "second_success"
+      ],
+      "path": "artifacts/native-sequence-probe/20261024T225817Z-46efdad0/manifest.json",
+      "sha256": "1e071821861b5e11f51277cc5502cfd6bca00d5eee74d9731ed92784b0f20820"
+    }
+  ],
+  "remaining_gates": [
+    "M3 route/terrain and fault-injection cohort",
+    "uncertain send and mutation/save crash-window reconciliation",
+    "cancellation/resumption",
+    "M4 conversational acceptance",
+    "M5 packaging and representative existing-save build"
+  ],
+  "saves": {
+    "native-commissioned": {
+      "path": "artifacts/native-railway/20261024T230856Z-d0747072/native-commissioned.sav",
+      "sha256": "70e56b90a90b704d8b5e93ca9bc3302e0be128b77f47bac946784f266f8e6ff9"
+    },
+    "native-initial": {
+      "path": "artifacts/native-railway/20261024T230856Z-d0747072/native-initial.sav",
+      "sha256": "f9b1ae46afcea00b81069af92d12438c31dbbf2bd54d9c98e716abaf9afc6609"
+    },
+    "native-service-final": {
+      "path": "artifacts/native-railway/20261024T230856Z-d0747072/native-service-final.sav",
+      "sha256": "c3e34cca73c731bcedbeb672d5c3b25141d255a7f3780fe10586875f9d64ceec"
+    }
+  },
+  "schema": 1,
+  "scope": "one selected naturally generated standard-coal flat-clear native railway; M2 simple-profile exit, not M3 release cohort",
+  "seed": 6,
+  "selected_industry_and_older_save_regression": {
+    "checks": [
+      "all_outcomes_reloaded_and_replayed",
+      "older_save_not_false_completion",
+      "selected_industry_quotes_nonmutating"
+    ],
+    "elapsed_seconds": 4.465,
+    "path": "artifacts/native-railway/20261024T231101Z-6ddf298f/manifest.json",
+    "sha256": "5ddb50c35e640660c03cebe049a9e02852f2dda39904e9c9e9b2be674c1b7e7f"
+  },
+  "service": {
+    "actual_cost": 14979,
+    "after_construction_money": 85021,
+    "after_service_money": 85505,
+    "construction_cap": 50000,
+    "destination": {
+      "accepted_cargo": [
+        1
+      ],
+      "industry_id": 1,
+      "industry_type": 1,
+      "location_height": 3,
+      "location_width": 3,
+      "name": "Canley Power Station",
+      "name_truncated": false,
+      "produced_cargo": [],
+      "tile": 5020
+    },
+    "full_departure_loads": [
+      {
+        "amount": 30,
+        "capacity": 30
+      },
+      {
+        "amount": 30,
+        "capacity": 30
+      },
+      {
+        "amount": 30,
+        "capacity": 30
+      }
+    ],
+    "initial_money": 100000,
+    "loan_after": 100000,
+    "loan_before": 100000,
+    "operating_reserve": 10000,
+    "operations": 44,
+    "quoted_total": 14979,
+    "rail_tiles": 35,
+    "source": {
+      "accepted_cargo": [],
+      "industry_id": 10,
+      "industry_type": 0,
+      "location_height": 3,
+      "location_width": 2,
+      "name": "Canley Coal Mine",
+      "name_truncated": false,
+      "produced_cargo": [
+        1
+      ],
+      "tile": 5311
+    },
+    "summary": {
+      "deliveries": 2,
+      "departures": 3,
+      "scope": "vehicle_tagged_native",
+      "vehicle": 2
+    }
+  },
+  "source_hashes": {
+    "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+    "tools/native_mcp_server.py": "7f32aae0fcba973ec795272fb9e31c117b6d851f4b0130697a45897055199759",
+    "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+    "tools/native_play_session.py": "2b6c77e4c7e50950693a8069b13af4a73703d80c99f8ba3591f97abb9af35415",
+    "tools/native_railway.py": "2e372cdbfcafce6a924aaa2a22ea9362817946b5a7d81433d14a8a9aaeb7514e",
+    "tools/native_route_plan.py": "9698986e786be98f213916049e32fced54e41713194d3ebe39f044345bd583af",
+    "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+    "tools/play_native.py": "da060ed15675721b6198a105b3246f7891c2a6393d43bfa1e1da59152e53420d",
+    "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+    "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+    "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+    "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+    "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+    "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+    "tools/run_native_train_purchase_probe.py": "f7cf56a5f198bc31eb368607a44188701cedf7bb67da85c7ae152562fce22873",
+    "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+  },
+  "visible_stdio_mcp": {
+    "checks": [],
+    "elapsed_seconds": 204.944,
+    "path": "artifacts/native-railway/20261024T230513Z-b1a76996/manifest.json",
+    "sha256": "aaa559339a6c0b252ce9d9f5f43094e3854e123e061d89988e8ce7009c412faf",
+    "transcript": {
+      "path": "artifacts/native-railway/20261024T230513Z-b1a76996/mcp-transcript.json",
+      "sha256": "fe24186834c5f4453ae75e1a913f9e40d66e2ee4670d2251749361220f7d529b"
+    }
+  }
+}

@@ -5,10 +5,32 @@ Updated: 2026-10-24, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Implementation and records now include the bounded M2d native train-configuration checkpoint. Engine branch `copilot/m2d-native-train-configuration` is published at `ff8bd20ef55b26505693e315d71d291967cce0a9` with verified remote SHA. Project implementation/evidence/records commit `9157b6aca1d3e287445472ed5a0b4af9cf67da02` is published on `origin/main` with verified remote SHA; this publication handoff follows separately. Both repositories use the required no-reply Git identity.
+- Engine branch `copilot/m2d-native-railway` is published at `96f960a3239e87837919414604a19e3eca9830b7`, remote SHA verified. The current project changes add the native playable alpha, deterministic planner/budget/executor, real-engine evidence and operator instructions. Prior project handoff: `cb3b36e69c32a97222e836d85c78019557cc7d81`. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
+
+**The native playable alpha is ready for user testing.** Run
+`python3 -B tools/play_native.py`, then enter
+`build coal railway from 10 to 1; full load; budget 50000; reserve 10000`.
+The default new seed-6 map contains those observed Canley businesses. The
+standalone parser is model-free; use the
+[native MCP configuration](NATIVE_PLAYABLE_ALPHA.md) to tell an AI to build it.
+The game stays open after verification. No normal configuration or original
+save is overwritten.
+
+**M2's simple-profile exit now has native evidence.** Final gate
+`20261024T230856Z-d0747072` passed in 228.091 seconds: 35 rail tiles, two
+stations, depot, locomotive/wagon, 44 retained actions costing 14,979, three
+30/30 departures and two accepted delivery cycles, proving both returns.
+Whole-job low-budget refusal, no borrowing, independent orders/consist,
+duplicate lookup and all-outcome fresh-process reload/replay passed.
+Visible stdio MCP build/duplicate/saved-close and a selected-industry
+quote/older-save regression also passed. See
+[report](M2D_NATIVE_RAILWAY_REPORT.md) and
+[evidence](evidence/2026-10-24-native-railway.json). This is one selected flat
+standard-coal scenario, **not** the M3 reliability suite, general terrain,
+conversational acceptance or a packaged release.
 
 **M2d now assembles and configures native trains.** The clean engine attached the purchased coal wagon to its locomotive, appended exact full-load/no-unload and no-load/unload-if-possible orders, and explicitly started/stopped the primary. Independent parts/orders, no-op states, original start replay after stopping, all 24 outcomes after reload, and spare-vehicle preservation passed. Seven successful commands cost zero; normal running expense reduced cash 80,433 -> 80,431, loan unchanged 100,000. The primary began leaving the depot before stopping on its tile. This proves configuration, not a connected service. See [report](M2D_TRAIN_CONFIGURATION_REPORT.md), [probe](NATIVE_TRAIN_CONFIGURATION_PROBE.md), and [evidence](evidence/2026-10-24-native-train-configuration-probe.json).
 
@@ -40,17 +62,22 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 |---|---|---|
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
-| M2: railway builder from structured intent | **In progress — M2a/M2b/M2c complete; M2d native primitives through train configuration proven** | Retained construction/purchase/configuration and independent readback proven; planner, whole-job affordability, and native complete-route service remain open. |
+| M2: railway builder from structured intent | **Simple-profile exit complete** | Existing seed-6 businesses, whole-job affordability, native build/service, two returns, duplicate/reload/replay; see native railway report. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
-| M4: conversational Copilot | Planned | No implementation |
-| M5: usable local alpha | Planned | No implementation |
+| M4: conversational Copilot | Planned; bounded MCP prototype available | Real native tool flow passed; broader intent/provider/paraphrase acceptance remains open. |
+| M5: usable local alpha | Planned release gate; development launcher available | Visible isolated native game can be tried now; packaging and representative-save acceptance remain open. |
 
 ## Next work, in order
 
-1. **M2d — Deterministic existing-business railway planner:** candidate catchment/placement, directed routing, whole-job pricing/reserve, sequential execution using the proven native primitives, and two verified full-load deliveries. Address the shared 64-record limit before accepting jobs that cannot fit; do not evict retained identities. Exact industry occupied tiles, candidate catchment, and station-specific track geometry/rail type remain observation gaps. Revalidate non-atomic observations before construction. Start with the narrow known-feasible flat standard-profile case, not unrestricted terrain or autonomous company management.
-2. **M3 recovery tests:** fault-inject the pending-save and mutation/save/journal windows; do not retry an uncertain operation without reconciliation.
+1. **User testing point:** inspect the native launcher/MCP on default seed 6 using the guide above. Keep failed/partial artifacts; do not retry an uncertain mutation. The first run can take several minutes of real loading/travel.
+2. **M3 reliability:** add versioned feasible route cases, station axes/approach orientations and obstructed alternatives; fault-inject pending-save and mutation/save/journal windows. Keep the shared 64-record limit explicit and reject jobs that cannot fit without eviction.
+3. **Later gates:** cancellation/resumption, more terrain, held-out seeds, conversational acceptance and packaging; no silent autonomous-company expansion.
 
-M1 and M2a–M2c are complete. A controlled fixture can build and verify a playable train service through the GameScript test harness. The native bridge supports sequential flat-clear rail pieces, new level-clear stations/depots, default-cargo purchase, wagon attachment, two append-only station orders, and explicit start/stop within a non-evicting 64-record history. Arbitrary business selection, route planning, whole-job budget, native end-to-end railway service, and M3 recovery gates remain open.
+M1 and the simple M2 path are complete within their recorded scopes. The native
+backend selects explicit observed coal businesses, plans and prices a bounded
+route, constructs it and verifies service. General maps, shared networks,
+non-coal transport and M3 recovery gates remain open. Historical primitive
+checkpoints below retain their original narrower conclusions.
 
 ## Implemented and tested checkpoint
 

@@ -1,5 +1,8 @@
 # Playable MCP demo
 
+This is the older controlled fixture. For native construction between
+**existing** businesses, use [the native playable alpha](NATIVE_PLAYABLE_ALPHA.md).
+
 The local stdio server exposes a small AI-facing flow for trying the project
 inside a disposable OpenTTD 15.3 world. It does not connect to a normal save or
 use a model/API key itself: the MCP host supplies conversation and model
@@ -82,7 +85,6 @@ multi-command railway job. The successful train service and cost/operation
 evidence come from the disposable GameScript fixture, not from native
 end-to-end construction.
 
-The next engineering gate is to resolve existing industries from the opened
-world, find and validate station/route candidates, and replace fixture-only
-construction with a bounded execution path whose partial outcomes and
-spending are reported honestly. M2 complete-route acceptance remains open.
+The native alpha now implements that bounded existing-business path and has
+simple-profile M2 service evidence. This older demo remains available for
+regression/reference; its fixture limitations above have not changed.

@@ -1275,6 +1275,7 @@ class AdminTransportTests(unittest.TestCase):
             client.close()
             server_sock.close()
 
+    def test_copilot_train_orders_rejects_bad_payload_records(self) -> None:
         fixed = struct.pack("<IBIHHB", 800, 0, 2, 1, 0, 1)
         invalid = [
             (fixed, b"", "truncated Copilot train order record"),
@@ -1283,20 +1284,138 @@ class AdminTransportTests(unittest.TestCase):
             (fixed + struct.pack("<BIBBB", 1, 0xFFFFFFFF, 2, 0, 0), b"", "destination"),
             (fixed + struct.pack("<BIBBB", 1, 0, 1, 0, 0), b"", "load/unload"),
             (fixed + struct.pack("<BIBBB", 1, 0, 2, 0, 4), b"", "stop flags"),
-            (fixed + struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0, 0xFF, 0xFF), b"",
-             "non-station"),
-            (fixed + struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0xFF, 0xFF, 0), b"",
-             "non-goto"),
+            (fixed + struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0, 0xFF, 0xFF), b"", "non-station"),
+            (fixed + struct.pack("<BIBBB", 7, 0xFFFFFFFF, 0xFF, 0xFF, 0), b"", "non-goto"),
             (fixed + struct.pack("<BIBBB", 1, 0, 2, 0, 0), b"x", "trailing data"),
         ]
         for page, suffix, message in invalid:
             client, server_sock = connected_client(timeout=1)
             try:
                 response = struct.pack("<HBIB", COPILOT_PROTOCOL_VERSION, 9, 52, 0)
-                response += b"world-123\0" + page + suffix
-                server_sock.sendall(frame(130, response))
+                server_sock.sendall(frame(130, response + b"world-123\0" + page + suffix))
                 with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
                     client.copilot_train_orders("world-123", 0, 2, request_id=52)
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_copilot_construction_quote_wire_success_and_error(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                request_format = "<HBIBIBBBBHB"
+                self.assertEqual(struct.unpack_from(request_format, payload),
+                                 (3, 17, 71, 0, 8254, 2, 1, 1, 3, 0x1234, 1))
+                self.assertEqual(payload[struct.calcsize(request_format):], b"world-123\0")
+                response = struct.pack("<HBIB", 3, 17, 71, 0) + b"world-123\0"
+                response += struct.pack("<QQQIBIBBBBHBBqIBIHHBB",
+                    12, 13, 14, 900, 0, 8254, 2, 1, 1, 3, 0x1234, 1,
+                    1, 456, 0, 1, 24, 24, 32, 2, 1)
+                server_sock.sendall(frame(130, response))
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_construction_quote(
+                world_id="world-123", company_id=0, tile=8254, rail_type=2,
+                orientation=1, kind=1, length=3, industry_id=0x1234, request_id=71)
+            thread.join(timeout=1)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(result["head"], {"hi": 13, "lo": 14})
+            self.assertEqual(result["cost"], 456)
+            self.assertTrue(result["quote_success"])
+            self.assertEqual(result["industry_acceptance"], 24)
+            self.assertTrue(result["supported_profile"])
+        finally:
+            client.close()
+            server_sock.close()
+
+        client, server_sock = connected_client(timeout=1)
+        try:
+            server_sock.sendall(frame(130, struct.pack("<HBIB", 3, 17, 72, 7)))
+            with self.assertRaisesRegex(CopilotBridgeError, "invalid Copilot argument"):
+                client.copilot_construction_quote(
+                    world_id="world-123", company_id=0, tile=1, rail_type=0,
+                    orientation=0, kind=0, length=0, request_id=72)
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_construction_quote_rejects_geometry_and_malformed_payloads(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            common = dict(world_id="world-123", company_id=0, tile=1, rail_type=0,
+                          orientation=0, kind=0, length=0, request_id=73)
+            for change in ({"kind": 3}, {"kind": 0, "orientation": 6},
+                           {"kind": 0, "length": 1}, {"kind": 1, "orientation": 2},
+                           {"kind": 1, "length": 0}, {"kind": 2, "orientation": 4},
+                           {"kind": 2, "length": 0}):
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    client.copilot_construction_quote(**{**common, **change})
+        finally:
+            client.close()
+            server_sock.close()
+
+        def response_payload(**changes: int) -> bytes:
+            values = dict(sequence=1, head_hi=2, head_lo=3, frame=4, company_id=0,
+                          tile=1, rail_type=0, orientation=0, kind=0, length=0,
+                          industry_id=0xFFFF, cargo_id=1, quote_success=1, cost=5,
+                          error=0, produces=1, acceptance=8, retained_count=0,
+                          capacity=1, operation_state=0, supported=1)
+            values.update(changes)
+            fields = [values[key] for key in (
+                "sequence", "head_hi", "head_lo", "frame", "company_id", "tile",
+                "rail_type", "orientation", "kind", "length", "industry_id", "cargo_id",
+                "quote_success", "cost", "error", "produces", "acceptance",
+                "retained_count", "capacity", "operation_state", "supported")]
+            return (struct.pack("<HBIB", 3, 17, 74, 0) + b"world-123\0" +
+                    struct.pack("<QQQIBIBBBBHBBqIBIHHBB", *fields))
+
+        malformed = [(response_payload(quote_success=2), "boolean"),
+                     (response_payload(produces=2), "boolean"),
+                     (response_payload(supported=2), "boolean"),
+                     (response_payload(operation_state=5), "state"),
+                     (response_payload(retained_count=2, capacity=1), "capacity"),
+                     (response_payload(kind=1, length=0), "geometry"),
+                     (response_payload(cost=-1), "negative cost"),
+                     (response_payload()[:-1], "truncated"),
+                     (response_payload() + b"x", "trailing")]
+        for response, message in malformed:
+            client, server_sock = connected_client(timeout=1)
+            try:
+                server_sock.sendall(frame(130, response))
+                with self.subTest(message=message), self.assertRaisesRegex(AdminProtocolError, message):
+                    client.copilot_construction_quote(
+                        world_id="world-123", company_id=0, tile=1, rail_type=0,
+                        orientation=0, kind=0, length=0, request_id=74)
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_copilot_construction_quote_rejects_echo_mismatches(self) -> None:
+        base = dict(sequence=1, head_hi=0, head_lo=0, frame=4, company_id=0, tile=1,
+                    rail_type=0, orientation=0, kind=0, length=0, industry_id=0xFFFF,
+                    cargo_id=1, quote_success=1, cost=5, error=0, produces=0,
+                    acceptance=0, retained_count=0, capacity=0, operation_state=0, supported=1)
+        for change in ({"world": b"other-world"}, {"company_id": 1}, {"tile": 2},
+                       {"rail_type": 1}, {"orientation": 1}, {"kind": 1},
+                       {"length": 1}, {"industry_id": 2}, {"cargo_id": 2}):
+            client, server_sock = connected_client(timeout=1)
+            try:
+                values = {**base, **{k: v for k, v in change.items() if k != "world"}}
+                world = change.get("world", b"world-123")
+                fields = [values[key] for key in (
+                    "sequence", "head_hi", "head_lo", "frame", "company_id", "tile",
+                    "rail_type", "orientation", "kind", "length", "industry_id", "cargo_id",
+                    "quote_success", "cost", "error", "produces", "acceptance",
+                    "retained_count", "capacity", "operation_state", "supported")]
+                response = struct.pack("<HBIB", 3, 17, 75, 0) + world + b"\0"
+                response += struct.pack("<QQQIBIBBBBHBBqIBIHHBB", *fields)
+                server_sock.sendall(frame(130, response))
+                with self.subTest(change=change), self.assertRaises(AdminProtocolError):
+                    client.copilot_construction_quote(
+                        world_id="world-123", company_id=0, tile=1, rail_type=0,
+                        orientation=0, kind=0, length=0, request_id=75)
             finally:
                 client.close()
                 server_sock.close()
