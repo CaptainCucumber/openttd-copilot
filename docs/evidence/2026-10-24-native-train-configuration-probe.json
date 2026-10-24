@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "scope": "M2d native wagon attachment, append station orders, explicit start/stop; not a connected service",
+  "run": "artifacts/native-train-configuration-probe/20261024T223606Z-54d739b4",
+  "manifest_sha256": "b6f53c828788d68155d8373a274abf2c9c5c7ee04baa02d190ae973f3c758491",
+  "status": "success",
+  "elapsed_seconds": 11.305,
+  "engine_commit": "ff8bd20ef55b26505693e315d71d291967cce0a9",
+  "engine_revision": "20261024-m2d-native-train-configuration-gff8bd20ef5",
+  "engine_clean": true,
+  "binary_sha256": "8a6911e563654697b582cf1cdd93d076bfda78124fc925165c56c3caf85f709e",
+  "engine_source_hashes": {
+    "src/command_type.h": "faa0fb1747c6d625abf818b4e25570418125f23c20965aae6b86fdbd65b43ea1",
+    "src/copilot_cmd.cpp": "cc0e96540783453edc04faeb9bc700218da8c8c3d1577363dddd06d55e9dc31c",
+    "src/copilot_cmd.h": "199c9f7875903056d8f3d9d58c934c6301d3d189a7b9ff2636195810aa4be962",
+    "src/network/network_admin.cpp": "b5f8f8790a7585bd94f385ba3b1e5a1e45cc7fe717018ca0999a0809a13a39d2",
+    "src/network/network_admin.h": "c4799573b4013d8848c552cd4bd327e1c57a671e8ab17b15a79e43122c3d6a8f",
+    "src/network/network_command.cpp": "3e5e3080057650f2413688e3ed8c1973c213d33a05fab7bcd7373dc6211cfb20",
+    "src/saveload/copilot_sl.cpp": "b1d527788c726902da82a75ace059edfebf55d95b14671e1b0e6a1e36dfe2197"
+  },
+  "source_hashes": {
+    "tools/admin_transport.py": "c03a6a6f86811fc4b0beed0d039e4d48099310770b939d6bf65ffc26e88ee323",
+    "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+    "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+    "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+    "tools/run_native_train_purchase_probe.py": "f7cf56a5f198bc31eb368607a44188701cedf7bb67da85c7ae152562fce22873"
+  },
+  "environment": {
+    "upstream_version": "15.3",
+    "map_size": [128, 128],
+    "seed": 20261021,
+    "landscape": 0,
+    "company_id": 0,
+    "depot_tile": 8251,
+    "content": "OpenGFX2 Classic 0.8.1; standard vehicles/industries; no gameplay NewGRFs",
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "configuration_config_sha256": "fc98fcc0f80f5a10bbba4858ceb878505933e6403b93cb60051ecc9a04052b87",
+    "reload_config_sha256": "acb9fa980aa213ce962c4d549d296be4b44a4bf0af112abb1bfbc6b13be3545b",
+    "source_save": "artifacts/native-train-purchase-probe/20261024T221240Z-89c4c574/train-purchase-final.sav",
+    "source_save_sha256": "fd1011df586966be828330ae902dfa64246b5612faff313cc970845240a75ed0"
+  },
+  "results": {
+    "primary_vehicle_id": 4,
+    "attached_wagon_id": 5,
+    "unchanged_spare_vehicle_id": 6,
+    "coal_capacity": 30,
+    "orders": [
+      {"station_id": 0, "load_type": 2, "unload_type": 4, "nonstop_flags": 0},
+      {"station_id": 1, "load_type": 4, "unload_type": 0, "nonstop_flags": 0}
+    ],
+    "primary_final_stopped": true,
+    "primary_final_in_depot": false,
+    "money_before": 80433,
+    "money_after": 80431,
+    "running_balance_delta": -2,
+    "configuration_command_cost_total": 0,
+    "loan_before_and_after": 100000,
+    "sequence_before": 5,
+    "sequence_after": 12,
+    "prior_schema4_outcomes_preserved": 12,
+    "new_configuration_records_retained": 12,
+    "completed_actions": 7,
+    "rejected_actions": 5,
+    "outcomes_compared_after_reload": 24,
+    "explicit_desired_state_noops_verified": true,
+    "historical_start_replay_does_not_restart_stopped_train": true,
+    "all_new_ids_replayed_after_reload_without_mutation": true,
+    "world_conflict_stale_and_old_status_guards_passed": true,
+    "source_save_and_normal_profile_unchanged": true,
+    "secrets_removed": true
+  },
+  "final_save_sha256": "39632584425a1ccda20b4d97fd038e1e27cd0c75c95d1f0805ce308c98d945b1",
+  "regressions": [
+    {
+      "manifest": "artifacts/native-train-purchase-probe/20261024T223219Z-697f62e2/manifest.json",
+      "sha256": "08d250ece3b96da69192a253beb29f7b4d49896c88810f79ed9431a4e112c60f"
+    },
+    {
+      "manifest": "artifacts/native-sequence-probe/20261024T223231Z-abec4fef/manifest.json",
+      "sha256": "4ff34fff9d36cd03275584f0a43fe39ebaf94474e7753e3ddd764b762379cef8"
+    },
+    {
+      "manifest": "artifacts/native-infrastructure-probe/20261024T223243Z-86e9ef09/manifest.json",
+      "sha256": "11b3563a364ae15af21f0075368b1d93842a8014888f3d22c586931b9d4b8eec"
+    }
+  ],
+  "unit_tests_passed": 166,
+  "limitations": [
+    "Standard single-head/default coal wagon only; no articulated/multihead/NewGRF or foreign-owner runtime fixture.",
+    "Stations lack coal catchment and no complete traversable service was built or verified.",
+    "Running refusal also hits the two-order guard; it does not isolate the running-state restriction.",
+    "Running expenses are separate from command caps; the 74-tick settlement is specific to this standard fixture.",
+    "No refit, whole-job reserve, history growth, rollback, save atomicity or crash-gap recovery claim."
+  ]
+}

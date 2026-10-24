@@ -1,8 +1,9 @@
 # Custom OpenTTD engine
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
-[`copilot/m2d-native-train-purchase`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-train-purchase), commit
-`7252756e936740771bac43fa74b66b050b8c68ce`. It descends from infrastructure
+[`copilot/m2d-native-train-configuration`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-train-configuration), commit
+`ff8bd20ef55b26505693e315d71d291967cce0a9`. It descends from purchase
+commit `7252756e936740771bac43fa74b66b050b8c68ce`, infrastructure
 commit `2c4dfef1bdee73f9994323c8139afd25768db150`, sequential-rail
 commit `bded382135c91932c86f354f071b4f101af3b85e`, industry-details
 commit `211e780180c021b208a87d2612f4c24be9f743a6`, the M2d
@@ -10,13 +11,13 @@ tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All fifteen commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0015 in order to the upstream revision if not using the fork branch.
+All sixteen commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0016 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
 ```sh
-git clone --branch copilot/m2d-native-train-purchase \
+git clone --branch copilot/m2d-native-train-configuration \
   https://github.com/CaptainCucumber/OpenTTD.git vendor/openttd-copilot-engine
 cmake -S vendor/openttd-copilot-engine -B build/openttd-m2a \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -86,9 +87,21 @@ using default cargo, a per-command cap, and the normal build command's
 returned VehicleID. Automatic free-wagon adoption is disabled; wagon purchase
 refuses an existing same-type free chain rather than implicitly joining it.
 COPL schema 4 persists engine identity and migrates earlier retained outcomes.
-Extended status 14 reads all existing kinds; old status endpoints explicitly
+Extended status 14 reads kinds 0–3; old status endpoints explicitly
 refuse purchase records. This does not assemble a train, change orders, or
 start a service. See [the purchase probe](../docs/NATIVE_TRAIN_PURCHASE_PROBE.md).
+Configuration requests 15/16 attach an explicit free wagon chain to an owned
+stopped primary's tail in the same depot, append at most two station orders
+with an expected-index guard, and set an explicit desired running/stopped
+state. Policies are full-load-all/no-unload and no-load/unload-if-possible.
+Normal move/order/start commands remain authoritative. Starting requires a
+stopped depot train with two orders; stopping uses the live observed tile.
+Historical replay does not toggle the current state. Schema 5 retains
+source/target/index/policy and migrates earlier schemas; status 16 reads all
+kinds and old endpoints refuse configuration. Zero command costs do not
+exclude normal movement/running expenses after start. This is not a connected
+or cargo-carrying service proof. See
+[the configuration probe](../docs/NATIVE_TRAIN_CONFIGURATION_PROBE.md).
 See [M2b probe instructions](../docs/NATIVE_MUTATION_PROBE.md) and
 [report](../docs/M2B_REPORT.md) for tested and untested recovery boundaries.
 The runtime-only event ring reports train station departures and accepted

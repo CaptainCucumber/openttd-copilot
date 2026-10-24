@@ -1301,6 +1301,221 @@ class AdminTransportTests(unittest.TestCase):
                 client.close()
                 server_sock.close()
 
+    def test_copilot_configure_train_wire_round_trip(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            response = operation_response(15, 61, track=0, rail_type=255)
+            response += struct.pack("<BBIHIIHB", 4, 0, 0xFFFFFFFF, 0xFFFF,
+                                    77, 88, 0, 0)
+
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    struct.unpack_from("<HBIBIBIIHBqQQQQQQQ", payload),
+                    (3, 15, 61, 0, 1234, 4, 77, 88, 0, 0, 0,
+                     2, 9, 10, 5, 6, 7, 8),
+                )
+                self.assertEqual(
+                    payload[struct.calcsize("<HBIBIBIIHBqQQQQQQQ"):],
+                    b"world-123\0",
+                )
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_configure_train(
+                world_id="world-123", company_id=0, tile=1234, action=4,
+                vehicle_id=77, target_id=88, order_index=0, policy=0, max_cost=0,
+                expected_sequence=2, expected_head_hi=9, expected_head_lo=10,
+                operation_hi=5, operation_lo=6, payload_hash_hi=7, payload_hash_lo=8,
+                request_id=61,
+            )
+            thread.join(timeout=1)
+            self.assertEqual((result["kind"], result["vehicle_id"], result["target_id"]),
+                             (4, 77, 88))
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_copilot_configure_train_strict_validation(self) -> None:
+        client, server_sock = connected_client()
+        try:
+            common = dict(world_id="world-123", company_id=0, tile=1, vehicle_id=7,
+                          target_id=8, order_index=0, policy=0, max_cost=0,
+                          expected_sequence=0, expected_head_hi=0, expected_head_lo=0,
+                          operation_hi=1, operation_lo=2, payload_hash_hi=3, payload_hash_lo=4)
+            cases = [
+                {"action": 3},
+                {"action": 4, "target_id": 0xFFFFFFFF},
+                {"action": 4, "policy": 1},
+                {"action": 5, "order_index": 2},
+                {"action": 5, "target_id": 0xFFFF},
+                {"action": 5, "target_id": 0xFFFFFFFF},
+                {"action": 5, "policy": 2},
+                {"action": 6, "target_id": 8},
+                {"action": 6, "policy": 2},
+            ]
+            for change in cases:
+                values = {**common, **change}
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    client.copilot_configure_train(**values)
+        finally:
+            client.close()
+            server_sock.close()
+
+    def test_status16_wire_and_all_legacy_kinds_decode(self) -> None:
+        client, server_sock = connected_client(timeout=1)
+        try:
+            def reply() -> None:
+                packet_type, payload = read_frame(server_sock)
+                self.assertEqual(packet_type, 11)
+                self.assertEqual(
+                    struct.unpack_from("<HBIQQ", payload),
+                    (COPILOT_PROTOCOL_VERSION, 16, 62, 5, 6),
+                )
+                self.assertEqual(payload[struct.calcsize("<HBIQQ"):], b"world-123\0")
+                response = operation_response(16, 62, track=0, rail_type=255)
+                response += struct.pack("<BBIHIIHB", 6, 0, 0xFFFFFFFF, 0xFFFF,
+                                        77, 0xFFFFFFFF, 0, 1)
+                server_sock.sendall(frame(130, response))
+
+            thread = threading.Thread(target=reply)
+            thread.start()
+            result = client.copilot_train_configuration_status(
+                world_id="world-123", operation_hi=5, operation_lo=6, request_id=62,
+            )
+            thread.join(timeout=1)
+            self.assertEqual(
+                {key: result[key] for key in ("kind", "vehicle_id", "target_id", "policy")},
+                {"kind": 6, "vehicle_id": 77, "target_id": 0xFFFFFFFF, "policy": 1},
+            )
+        finally:
+            client.close()
+            server_sock.close()
+
+        for kind in range(7):
+            track, rail_type = (0, 255) if kind in (3, 4, 5, 6) else (0, 1)
+            created, engine = ((0xFFFFFFFF, 0xFFFF) if kind in (0, 4, 5, 6) else
+                               (321, 12) if kind == 3 else
+                               (321, 0xFFFF))
+            vehicle = 77 if kind >= 4 else 0xFFFFFFFF
+            target = (88 if kind in (4, 5) else 0xFFFFFFFF)
+            policy = 1 if kind in (5, 6) else 0
+            decoded = AdminClient._decode_copilot_operation(
+                operation_response(16, 63, track=track, rail_type=rail_type) +
+                struct.pack("<BBIHIIHB", kind, 0 if kind not in (1, 2) else 1,
+                            created, engine, vehicle, target, 0, policy),
+                16,
+            )
+            self.assertEqual(decoded["kind"], kind)
+
+    def test_status16_rejects_malformed_legacy_and_configuration_fields(self) -> None:
+        def decode(kind, *, track=0, rail_type=255, created=None, engine=None,
+                   vehicle=0xFFFFFFFF, target=0xFFFFFFFF, index=0, policy=0,
+                   length=0, expected=16):
+            if kind == 0:
+                default_created, default_engine = 0xFFFFFFFF, 0xFFFF
+            elif kind == 3:
+                default_created, default_engine = 321, 12
+            elif kind in (4, 5, 6, 7):
+                default_created, default_engine = 0xFFFFFFFF, 0xFFFF
+            else:
+                default_created, default_engine = 321, 0xFFFF
+            return AdminClient._decode_copilot_operation(
+                operation_response(expected, 64, track=track, rail_type=rail_type) +
+                struct.pack("<BBIHIIHB", kind, length,
+                            default_created if created is None else created,
+                            default_engine if engine is None else engine,
+                            vehicle, target, index, policy),
+                expected,
+            )
+
+        malformed_legacy = [
+            {"kind": 0, "created": 1},
+            {"kind": 0, "vehicle": 77},
+            {"kind": 1, "target": 88},
+            {"kind": 2, "index": 1},
+            {"kind": 3, "engine": 0xFFFF},
+            {"kind": 3, "policy": 1},
+        ]
+        for case in malformed_legacy:
+            with self.subTest(case=case), self.assertRaises(AdminProtocolError):
+                decode(**case)
+
+        malformed_config = [
+            {"kind": 4, "target": 0xFFFFFFFF},
+            {"kind": 4, "policy": 1},
+            {"kind": 5, "index": 2},
+            {"kind": 5, "target": 0xFFFFFFFF},
+            {"kind": 5, "target": 0xFFFF},
+            {"kind": 6, "target": 88},
+            {"kind": 6, "policy": 2},
+            {"kind": 4, "track": 1},
+            {"kind": 4, "rail_type": 1},
+            {"kind": 4, "created": 1},
+            {"kind": 4, "engine": 12},
+            {"kind": 4, "length": 1},
+            {"kind": 4, "vehicle": 0xFFFFFFFF},
+            {"kind": 7},
+        ]
+        for case in malformed_config:
+            with self.subTest(case=case), self.assertRaises(AdminProtocolError):
+                decode(**{"vehicle": 77, "target": 88, **case})
+
+        with self.assertRaises(AdminProtocolError):
+            decode(0, expected=15, track=0, rail_type=255)
+        with self.assertRaises(AdminProtocolError):
+            AdminClient._decode_copilot_operation(
+                operation_response(14, 65, track=0, rail_type=255) +
+                struct.pack("<BBIH", 4, 0, 0xFFFFFFFF, 0xFFFF), 14,
+            )
+
+    def test_status16_rejects_truncation_and_trailing_extension_data(self) -> None:
+        valid = operation_response(16, 66, track=0, rail_type=255) + struct.pack(
+            "<BBIHIIHB", 4, 0, 0xFFFFFFFF, 0xFFFF, 77, 88, 0, 0,
+        )
+        for payload in (valid[:-1], valid + b"x"):
+            with self.assertRaisesRegex(AdminProtocolError, "extension"):
+                AdminClient._decode_copilot_operation(payload, 16)
+
+    def test_configuration_status_binds_world_and_operation(self) -> None:
+        for changes in ({"world_id": "other-world"}, {"operation_hi": 99},
+                        {"operation_lo": 99}):
+            client, server_sock = connected_client(timeout=1)
+            try:
+                reply = operation_response(16, 67, track=0, rail_type=255, **changes)
+                reply += struct.pack("<BBIHIIHB", 6, 0, 0xFFFFFFFF, 0xFFFF,
+                                     77, 0xFFFFFFFF, 0, 0)
+                server_sock.sendall(frame(130, reply))
+                with self.subTest(changes=changes), self.assertRaises(AdminProtocolError):
+                    client.copilot_train_configuration_status(
+                        world_id="world-123", operation_hi=5, operation_lo=6, request_id=67)
+            finally:
+                client.close()
+                server_sock.close()
+
+    def test_configuration_rejects_invalid_state_and_all_old_sentinel_fields(self) -> None:
+        for state in (0, 1, 2, 3, 4, 5):
+            payload = operation_response(16, 68, track=0, rail_type=255, state=state)
+            payload += struct.pack("<BBIHIIHB", 6, 0, 0xFFFFFFFF, 0xFFFF,
+                                   77, 0xFFFFFFFF, 0, 0)
+            if state == 5:
+                with self.assertRaises(AdminProtocolError):
+                    AdminClient._decode_copilot_operation(payload, 16)
+            else:
+                self.assertEqual(AdminClient._decode_copilot_operation(payload, 16)["state"], state)
+        for kind in range(4):
+            for field in range(4):
+                config = [0xFFFFFFFF, 0xFFFFFFFF, 0, 0]
+                config[field] = 77 if field < 2 else 1
+                payload = operation_response(16, 68, track=0, rail_type=255 if kind == 3 else 1)
+                payload += struct.pack("<BBIHIIHB", kind, 1 if kind in (1, 2) else 0,
+                                       0xFFFFFFFF if kind == 0 else 321,
+                                       12 if kind == 3 else 0xFFFF, *config)
+                with self.subTest(kind=kind, field=field), self.assertRaises(AdminProtocolError):
+                    AdminClient._decode_copilot_operation(payload, 16)
+
 
 if __name__ == "__main__":
     unittest.main()

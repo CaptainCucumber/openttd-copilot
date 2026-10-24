@@ -8,8 +8,12 @@ The 2026-10-24 [purchase checkpoint](M2D_TRAIN_PURCHASE_REPORT.md) additionally
 proves capped native station/depot construction and rail vehicle purchase in
 copied fixtures, retained created IDs, independent readback, and replay/reload.
 These are primitive-level results, not the complete-route/service or release
-gates below. Consist assembly, order/start mutation, whole-job budget, and
-native end-to-end transport remain open.
+gates below. The [configuration checkpoint](M2D_TRAIN_CONFIGURATION_REPORT.md)
+now proves explicit wagon attachment, exact station-order policies, desired-state
+start/stop, historical replay after stopping, and all 24 outcomes after reload.
+Its seven successful commands cost zero, but normal running expense reduced
+cash by two units while the train briefly ran. No connected service is proven.
+Whole-job budget and native end-to-end transport remain open.
 
 Within a declared supported game profile, Copilot completes feasible requests repeatedly, respects the spending/ownership constraints, and detects failures without falsely reporting success. It does not promise to find a railway on every possible map or guarantee future profitability.
 

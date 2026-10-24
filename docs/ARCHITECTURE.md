@@ -6,10 +6,12 @@ Status: M2a identity, M2b bounded mutation, and M2c vehicle-tagged observation c
 
 The native mutation boundary now includes capped station/depot construction
 and default-cargo rail vehicle purchase with retained actual created IDs.
-COPL schema 4 migrates earlier outcomes. Independent asset/parts observations,
+COPL schema 5 migrates earlier outcomes. Independent asset/parts observations,
 immutable replay, and fresh-process reload are measured in the
-[purchase report](M2D_TRAIN_PURCHASE_REPORT.md); consist/order/start control and
-complete railway construction are not yet implemented.
+[purchase report](M2D_TRAIN_PURCHASE_REPORT.md). Bounded native wagon attachment,
+two append-only station orders, and explicit start/stop are now verified in the
+[configuration report](M2D_TRAIN_CONFIGURATION_REPORT.md). Complete railway
+construction and service remain open.
 
 | Component | Owns | Must not do |
 |---|---|---|
@@ -69,8 +71,22 @@ uncertain rather than triggering another purchase. COPL schema 4 persists
 engine identity and migrates older histories. Independent train-part pages
 establish current engine/owner/depot/chain/cargo state. Engine purchases do
 not adopt free wagons; wagon purchases refuse the stock implicit-joining case.
-Assembly, refit, order mutation, and starting remain separate typed operations
-to implement. See [D027](DECISIONS.md#d027--purchase-rail-vehicles-with-the-commands-returned-identity).
+Refit remains unsupported. See [D027](DECISIONS.md#d027--purchase-rail-vehicles-with-the-commands-returned-identity).
+
+Configuration requests 15/16 add explicit free-wagon-chain attachment to an
+owned stopped primary's tail in the same depot, append-index-guarded station
+orders on unshared stopped-depot trains (maximum two), and desired-state
+start/stop. Source policy is full-load-all/no-unload; delivery policy is
+no-load/unload-if-possible. Normal native commands own legality. Starting
+requires two orders and a stopped depot train; stopping uses the observed live
+tile. An already-desired state completes without toggling. Historical start
+replay after a stop returns the original result, not another start.
+Schema 5 retains action/source/target/index/policy and migrates old sentinel
+fields. Earlier status endpoints refuse configuration identities. Independent
+parts/orders verify the result; successful start is not a service proof.
+Starting also permits normal movement and running expenses, which are separate
+from the zero configuration-command charges. See
+[D028](DECISIONS.md#d028--configure-a-train-through-explicit-retained-actions-not-toggle-replay).
 
 M2d infrastructure requests 11/12 extend the same journal with capped new default
 single-platform stations (length 1–7, either axis) and single-tile depots.

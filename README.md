@@ -8,7 +8,7 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**Status: M1 and M2a–M2c complete; M2d is in progress.** An MCP entry point lets a compatible AI client open a disposable OpenTTD map, request the supported coal-railway demo, and inspect verified job status. The current playable job is still a controlled GameScript fixture: it creates test coal industries and a straight railway, rather than planning between arbitrary businesses. The native bridge supports bounded sequential rail pieces and capped new stations/depots with retained outcomes and created-asset IDs. It can also purchase default-cargo rail engines/wagons with capped costs and actual returned vehicle IDs. Consist/order/start configuration, route planning, and native complete-route operation remain open.
+**Status: M1 and M2a–M2c complete; M2d is in progress.** An MCP entry point lets a compatible AI client open a disposable OpenTTD map, request the supported coal-railway demo, and inspect verified job status. The current playable job is still a controlled GameScript fixture: it creates test coal industries and a straight railway, rather than planning between arbitrary businesses. The native bridge supports bounded sequential rail pieces, capped new stations/depots and rail vehicle purchase with actual created IDs, explicit wagon attachment, two append-only station orders, and desired-state start/stop. Route planning and native complete-route operation remain open.
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 
@@ -31,6 +31,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [M2d sequence report](docs/M2D_SEQUENCE_REPORT.md) | Sequential capped native rail commands and retained outcomes across reload |
 | [M2d infrastructure report](docs/M2D_INFRASTRUCTURE_REPORT.md) | Capped native station/depot construction, created IDs, and save migration |
 | [M2d train purchase report](docs/M2D_TRAIN_PURCHASE_REPORT.md) | Capped rail vehicle purchase, actual IDs, and replay/reload |
+| [M2d train configuration report](docs/M2D_TRAIN_CONFIGURATION_REPORT.md) | Native wagon attachment, full-load/delivery orders, explicit start/stop, and replay/reload |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 

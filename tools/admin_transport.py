@@ -46,6 +46,8 @@ _COPILOT_BUILD_INFRASTRUCTURE = 11
 _COPILOT_INFRASTRUCTURE_STATUS = 12
 _COPILOT_BUILD_TRAIN = 13
 _COPILOT_TRAIN_PURCHASE_STATUS = 14
+_COPILOT_CONFIGURE_TRAIN = 15
+_COPILOT_TRAIN_CONFIGURATION_STATUS = 16
 _COPILOT_VEHICLE_EVENTS = 3
 _COPILOT_TILE_SNAPSHOT = 4
 _COPILOT_INDUSTRY_SNAPSHOT = 5
@@ -507,6 +509,85 @@ class AdminClient:
         self._validate_copilot_operation_correlation(
             response, world_id, operation_hi, operation_lo
         )
+        return response
+
+    def copilot_configure_train(
+        self, *, world_id: str, company_id: int, tile: int, action: int,
+        vehicle_id: int, target_id: int, order_index: int, policy: int,
+        max_cost: int, expected_sequence: int, expected_head_hi: int,
+        expected_head_lo: int, operation_hi: int, operation_lo: int,
+        payload_hash_hi: int, payload_hash_lo: int,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None, timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Apply one bounded, idempotent train-consist/order/state operation."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        company_id = self._check_uint("company_id", company_id, 8)
+        tile = self._check_uint("tile", tile, 32)
+        action = self._check_uint("action", action, 8)
+        if action not in (4, 5, 6):
+            raise ValueError("action must be 4 (attach), 5 (append order), or 6 (state)")
+        vehicle_id = self._check_uint("vehicle_id", vehicle_id, 32)
+        target_id = self._check_uint("target_id", target_id, 32)
+        order_index = self._check_uint("order_index", order_index, 16)
+        policy = self._check_uint("policy", policy, 8)
+        if action == 4:
+            if vehicle_id == 0xFFFFFFFF or target_id == 0xFFFFFFFF:
+                raise ValueError("attach requires source and target vehicle IDs")
+            if order_index != 0 or policy != 0:
+                raise ValueError("attach requires order_index=0 and policy=0")
+        elif action == 5:
+            if vehicle_id == 0xFFFFFFFF or target_id >= 0xFFFF:
+                raise ValueError("append order requires vehicle and station IDs")
+            if order_index > 1:
+                raise ValueError("append order_index must be 0 or 1")
+            if policy not in (0, 1):
+                raise ValueError("append order policy must be 0 or 1")
+        else:
+            if vehicle_id == 0xFFFFFFFF or target_id != 0xFFFFFFFF or order_index != 0:
+                raise ValueError("state change requires a vehicle, target_id=UINT32_MAX, and order_index=0")
+            if policy not in (0, 1):
+                raise ValueError("state policy must be 0 (stopped) or 1 (running)")
+        max_cost = self._check_int64("max_cost", max_cost)
+        expected_sequence = self._check_uint("expected_sequence", expected_sequence, 64)
+        expected_head_hi = self._check_uint("expected_head_hi", expected_head_hi, 64)
+        expected_head_lo = self._check_uint("expected_head_lo", expected_head_lo, 64)
+        operation_hi = self._check_uint("operation_hi", operation_hi, 64)
+        operation_lo = self._check_uint("operation_lo", operation_lo, 64)
+        payload_hash_hi = self._check_uint("payload_hash_hi", payload_hash_hi, 64)
+        payload_hash_lo = self._check_uint("payload_hash_lo", payload_hash_lo, 64)
+        payload = struct.pack(
+            "<HBIBIBIIHBqQQQQQQQ", protocol_version, _COPILOT_CONFIGURE_TRAIN,
+            request_id, company_id, tile, action, vehicle_id, target_id, order_index,
+            policy, max_cost, expected_sequence, expected_head_hi, expected_head_lo,
+            operation_hi, operation_lo, payload_hash_hi, payload_hash_lo,
+        ) + self._copilot_world_id(world_id)
+        response = self._copilot_operation_request(
+            _COPILOT_CONFIGURE_TRAIN, "copilot_configure_train", request_id, payload,
+            timeout, {"company_id": company_id, "vehicle_id": vehicle_id, "action": action,
+                      "target_id": target_id, "order_index": order_index, "policy": policy},
+        )
+        self._validate_copilot_operation_correlation(response, world_id, operation_hi, operation_lo)
+        return response
+
+    def copilot_train_configuration_status(
+        self, *, world_id: str, operation_hi: int, operation_lo: int,
+        protocol_version: int = COPILOT_PROTOCOL_VERSION,
+        request_id: int | None = None, timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Read a retained train-configuration outcome without retrying it."""
+        request_id = self._check_copilot_request_header(protocol_version, request_id)
+        operation_hi = self._check_uint("operation_hi", operation_hi, 64)
+        operation_lo = self._check_uint("operation_lo", operation_lo, 64)
+        payload = struct.pack(
+            "<HBIQQ", protocol_version, _COPILOT_TRAIN_CONFIGURATION_STATUS,
+            request_id, operation_hi, operation_lo,
+        ) + self._copilot_world_id(world_id)
+        response = self._copilot_operation_request(
+            _COPILOT_TRAIN_CONFIGURATION_STATUS, "copilot_train_configuration_status",
+            request_id, payload, timeout,
+        )
+        self._validate_copilot_operation_correlation(response, world_id, operation_hi, operation_lo)
         return response
 
     def copilot_build_train(
@@ -1633,6 +1714,74 @@ class AdminClient:
             raise AdminProtocolError("Copilot operation response operation ID mismatch")
 
     @staticmethod
+    def _validate_operation_extension(
+        expected_kind: int, kind: int, length: int, created_asset_id: int, engine_id: int,
+        vehicle_id: int, target_id: int, order_index: int, policy: int,
+        rail_type: int, track: int, state: int,
+    ) -> None:
+        config_kinds = (_COPILOT_CONFIGURE_TRAIN, _COPILOT_TRAIN_CONFIGURATION_STATUS)
+        if kind not in range(7):
+            raise AdminProtocolError("invalid Copilot operation kind")
+        if expected_kind == _COPILOT_CONFIGURE_TRAIN and kind not in (4, 5, 6):
+            raise AdminProtocolError("train configuration build response has invalid kind")
+        if expected_kind == _COPILOT_BUILD_INFRASTRUCTURE and kind not in (1, 2):
+            raise AdminProtocolError("infrastructure build response has invalid kind")
+        if expected_kind == _COPILOT_BUILD_TRAIN and kind != 3:
+            raise AdminProtocolError("train purchase response is not a purchase record")
+        if expected_kind == _COPILOT_TRAIN_PURCHASE_STATUS and kind > 3:
+            raise AdminProtocolError("train purchase status has unsupported configuration kind")
+        if expected_kind == _COPILOT_INFRASTRUCTURE_STATUS and kind not in (0, 1, 2):
+            raise AdminProtocolError("infrastructure status has invalid kind")
+        if expected_kind not in config_kinds and expected_kind not in (
+            _COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS,
+            _COPILOT_BUILD_TRAIN, _COPILOT_TRAIN_PURCHASE_STATUS,
+        ):
+            raise AdminProtocolError("unsupported operation extension kind")
+
+        if kind == 0:
+            if (length, created_asset_id, engine_id, vehicle_id, target_id,
+                    order_index, policy) != (0, 0xFFFFFFFF, 0xFFFF, 0xFFFFFFFF,
+                                             0xFFFFFFFF, 0, 0):
+                raise AdminProtocolError("invalid rail operation sentinels")
+        elif kind in (1, 2):
+            if (kind == 1 and not 1 <= length <= 7) or (kind == 2 and length != 1):
+                raise AdminProtocolError("invalid infrastructure length")
+            if (engine_id != 0xFFFF or vehicle_id != 0xFFFFFFFF or target_id != 0xFFFFFFFF
+                    or order_index != 0 or policy != 0):
+                raise AdminProtocolError("invalid infrastructure sentinels")
+            if state == 2 and created_asset_id == 0xFFFFFFFF:
+                raise AdminProtocolError("completed infrastructure operation lacks created asset ID")
+            if state != 2 and created_asset_id != 0xFFFFFFFF:
+                raise AdminProtocolError("noncompleted infrastructure operation has created asset ID")
+            if kind == 1 and track not in (0, 1):
+                raise AdminProtocolError("invalid Copilot station orientation")
+            if kind == 2 and track > 3:
+                raise AdminProtocolError("invalid Copilot depot orientation")
+        elif kind == 3:
+            if (length != 0 or engine_id == 0xFFFF or vehicle_id != 0xFFFFFFFF
+                    or target_id != 0xFFFFFFFF or order_index != 0 or policy != 0):
+                raise AdminProtocolError("invalid train purchase sentinels")
+            if track != 0 or rail_type != 255:
+                raise AdminProtocolError("invalid Copilot train purchase geometry")
+            if state == 2 and created_asset_id == 0xFFFFFFFF:
+                raise AdminProtocolError("completed train purchase lacks created vehicle ID")
+            if state != 2 and created_asset_id != 0xFFFFFFFF:
+                raise AdminProtocolError("noncompleted train purchase has created vehicle ID")
+        else:
+            if expected_kind not in config_kinds:
+                raise AdminProtocolError("configuration kind is not supported by this endpoint")
+            if (length, created_asset_id, engine_id, track, rail_type) != (0, 0xFFFFFFFF, 0xFFFF, 0, 255):
+                raise AdminProtocolError("invalid train configuration result fields")
+            if vehicle_id == 0xFFFFFFFF:
+                raise AdminProtocolError("train configuration lacks vehicle ID")
+            if kind == 4 and (target_id == 0xFFFFFFFF or order_index != 0 or policy != 0):
+                raise AdminProtocolError("invalid attach configuration fields")
+            if kind == 5 and (target_id >= 0xFFFF or order_index > 1 or policy > 1):
+                raise AdminProtocolError("invalid order configuration fields")
+            if kind == 6 and (target_id != 0xFFFFFFFF or order_index != 0 or policy > 1):
+                raise AdminProtocolError("invalid state configuration fields")
+
+    @staticmethod
     def _decode_copilot_identity(payload: bytes) -> dict[str, Any]:
         if len(payload) < 8:
             raise AdminProtocolError("truncated Copilot response header")
@@ -1733,42 +1882,29 @@ class AdminClient:
         infrastructure_kind = 0
         infrastructure_length = 0
         created_asset_id = 0xFFFFFFFF
+        config_vehicle_id = 0xFFFFFFFF
+        config_target_id = 0xFFFFFFFF
+        config_order_index = 0
+        config_policy = 0
+        engine_id = 0xFFFF
         if expected_kind in (
             _COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS,
             _COPILOT_BUILD_TRAIN, _COPILOT_TRAIN_PURCHASE_STATUS,
+            _COPILOT_CONFIGURE_TRAIN, _COPILOT_TRAIN_CONFIGURATION_STATUS,
         ):
             extension_format = "<BBIH" if expected_kind in (
                 _COPILOT_BUILD_TRAIN, _COPILOT_TRAIN_PURCHASE_STATUS
-            ) else "<BBI"
+            ) else ("<BBIHIIHB" if expected_kind in (
+                _COPILOT_CONFIGURE_TRAIN, _COPILOT_TRAIN_CONFIGURATION_STATUS
+            ) else "<BBI")
             if position + struct.calcsize(extension_format) != len(payload):
                 raise AdminProtocolError("malformed Copilot operation response extension")
             extension_values = struct.unpack_from(extension_format, payload, position)
             infrastructure_kind, infrastructure_length, created_asset_id = extension_values[:3]
             engine_id = extension_values[3] if len(extension_values) == 4 else 0xFFFF
-            if infrastructure_kind == 0:
-                if (expected_kind not in (_COPILOT_INFRASTRUCTURE_STATUS, _COPILOT_TRAIN_PURCHASE_STATUS)
-                        or infrastructure_length != 0 or created_asset_id != 0xFFFFFFFF
-                        or engine_id != 0xFFFF):
-                    raise AdminProtocolError("invalid rail operation extension")
-            elif infrastructure_kind == 1 and not 1 <= infrastructure_length <= 7:
-                raise AdminProtocolError("invalid Copilot station length")
-            elif infrastructure_kind == 2 and infrastructure_length != 1:
-                raise AdminProtocolError("invalid Copilot depot length")
-            elif infrastructure_kind not in (1, 2):
-                if infrastructure_kind != 3 or expected_kind not in (
-                    _COPILOT_BUILD_TRAIN, _COPILOT_TRAIN_PURCHASE_STATUS,
-                ):
-                    raise AdminProtocolError("invalid Copilot operation kind")
-                if infrastructure_length != 0 or engine_id == 0xFFFF:
-                    raise AdminProtocolError("invalid Copilot train purchase extension")
-            if infrastructure_kind in (1, 2):
-                if expected_kind not in (
-                    _COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS,
-                    _COPILOT_TRAIN_PURCHASE_STATUS,
-                ):
-                    raise AdminProtocolError("unexpected infrastructure extension")
-                if engine_id != 0xFFFF:
-                    raise AdminProtocolError("infrastructure operation has an engine ID")
+            if expected_kind in (_COPILOT_CONFIGURE_TRAIN, _COPILOT_TRAIN_CONFIGURATION_STATUS):
+                engine_id = extension_values[3]
+                config_vehicle_id, config_target_id, config_order_index, config_policy = extension_values[4:]
         elif position != len(payload):
             raise AdminProtocolError("Copilot operation response has trailing data")
         (
@@ -1801,6 +1937,16 @@ class AdminClient:
             raise AdminProtocolError("invalid Copilot operation boolean marker")
         if state not in _COPILOT_OPERATION_STATE_NAMES:
             raise AdminProtocolError("invalid Copilot operation state")
+        if expected_kind in (
+            _COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS,
+            _COPILOT_BUILD_TRAIN, _COPILOT_TRAIN_PURCHASE_STATUS,
+            _COPILOT_CONFIGURE_TRAIN, _COPILOT_TRAIN_CONFIGURATION_STATUS,
+        ):
+            AdminClient._validate_operation_extension(
+                expected_kind, infrastructure_kind, infrastructure_length, created_asset_id,
+                engine_id, config_vehicle_id, config_target_id, config_order_index,
+                config_policy, rail_type, track, state,
+            )
         response.update(
             {
                 "world_id": world_id,
@@ -1845,43 +1991,26 @@ class AdminClient:
             }
         )
         if expected_kind in (_COPILOT_BUILD_INFRASTRUCTURE, _COPILOT_INFRASTRUCTURE_STATUS):
-            if infrastructure_kind == 1 and track not in (0, 1):
-                raise AdminProtocolError("invalid Copilot station orientation")
-            if infrastructure_kind == 2 and track > 3:
-                raise AdminProtocolError("invalid Copilot depot orientation")
             response["orientation"] = track
             response["infrastructure_kind"] = infrastructure_kind
             response["length"] = infrastructure_length
             response["created_asset_id"] = created_asset_id
-            if infrastructure_kind in (1, 2):
-                if state == 2 and created_asset_id == 0xFFFFFFFF:
-                    raise AdminProtocolError("completed infrastructure operation lacks created asset ID")
-                if state != 2 and created_asset_id != 0xFFFFFFFF:
-                    raise AdminProtocolError("noncompleted infrastructure operation has created asset ID")
         elif expected_kind in (_COPILOT_BUILD_TRAIN, _COPILOT_TRAIN_PURCHASE_STATUS):
-            if expected_kind == _COPILOT_BUILD_TRAIN and infrastructure_kind != 3:
-                raise AdminProtocolError("train purchase response is not a purchase record")
-            if infrastructure_kind == 3:
-                if track != 0 or rail_type != 255:
-                    raise AdminProtocolError("invalid Copilot train purchase geometry")
-            elif infrastructure_kind == 1 and track not in (0, 1):
-                raise AdminProtocolError("invalid Copilot station orientation")
-            elif infrastructure_kind == 2 and track > 3:
-                raise AdminProtocolError("invalid Copilot depot orientation")
             response["engine_id"] = engine_id
             response["infrastructure_kind"] = infrastructure_kind
             response["length"] = infrastructure_length
             response["created_asset_id"] = created_asset_id
-            if infrastructure_kind == 3:
-                if state == 2 and created_asset_id == 0xFFFFFFFF:
-                    raise AdminProtocolError("completed train purchase lacks created vehicle ID")
-                if state != 2 and created_asset_id != 0xFFFFFFFF:
-                    raise AdminProtocolError("noncompleted train purchase has created vehicle ID")
-            elif infrastructure_kind in (1, 2):
-                if state == 2 and created_asset_id == 0xFFFFFFFF:
-                    raise AdminProtocolError("completed infrastructure operation lacks created asset ID")
-                if state != 2 and created_asset_id != 0xFFFFFFFF:
-                    raise AdminProtocolError("noncompleted infrastructure operation has created asset ID")
+        elif expected_kind in (_COPILOT_CONFIGURE_TRAIN, _COPILOT_TRAIN_CONFIGURATION_STATUS):
+            response.update({
+                "kind": infrastructure_kind,
+                "length": infrastructure_length,
+                "created_asset_id": created_asset_id,
+                "engine_id": engine_id,
+                "vehicle_id": config_vehicle_id,
+                "target_id": config_target_id,
+                "order_index": config_order_index,
+                "policy": config_policy,
+            })
         return response
 
     @staticmethod
