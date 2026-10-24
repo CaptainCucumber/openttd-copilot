@@ -39,9 +39,12 @@ class NativeSession(Experiment):
                  "native_world_snapshot.py", "run_native_railway_probe.py", "play_native.py",
                  "run_vehicle_probe.py", "run_native_train_purchase_probe.py",
                  "run_native_train_configuration_probe.py", "run_native_train_orders_probe.py",
-                 "run_lifecycle_probe.py", "run_environment_probe.py", "run_control_probe.py")
+                 "run_lifecycle_probe.py", "run_environment_probe.py", "run_control_probe.py",
+                 "game_chat.py")
         self.manifest["source_hashes"] = {
             f"tools/{name}": base.sha256_file(ROOT / "tools" / name) for name in names}
+        agent = ".github/agents/openttd.agent.md"
+        self.manifest["source_hashes"][agent] = base.sha256_file(ROOT / agent)
         self.write()
 
     def stage(self, profile, port, admin_port=None):

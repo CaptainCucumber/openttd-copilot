@@ -62,7 +62,7 @@ def _quote(session, world_id, step, industry_id=0xFFFF):
         industry_id=industry_id, cargo_id=1, timeout=session.remaining())
 
 
-def plan_railway(session, source_id, destination_id, cap, reserve):
+def plan_railway(session, source_id, destination_id, cap, reserve, *, record=True):
     for value, name, minimum in ((source_id, "source_id", 0), (destination_id, "destination_id", 0),
                                  (cap, "construction_cap", 1), (reserve, "operating_reserve", 0)):
         _integer(value, name, minimum)
@@ -76,8 +76,9 @@ def plan_railway(session, source_id, destination_id, cap, reserve):
     source, destination = by_id[source_id], by_id[destination_id]
     require(1 in source["produced_cargo"] and 1 in destination["accepted_cargo"],
             "selected businesses do not produce/accept standard coal")
-    session.manifest["job_state"] = "planning"
-    session.write()
+    if record:
+        session.manifest["job_state"] = "planning"
+        session.write()
     window = read_tile_window(session.admin, x=0, y=0, width=identity["map_width"],
                               height=identity["map_height"], max_tiles=128 * 128)
     tiles = {t["tile"]: t for row in window["rows"] for t in row}
@@ -136,9 +137,75 @@ def plan_railway(session, source_id, destination_id, cap, reserve):
         "quotes": quotes, "observation_frame_span": [window["frame_min"], window["frame_max"]],
         "scope": "flat clear isolated standard coal line; no terraform, signals, refit or existing rail reuse",
     }
-    session.manifest["plan"] = result
-    session.write()
+    if record:
+        session.manifest["plan"] = result
+        session.write()
     return result
+
+
+def inspect_game(session):
+    """Collect live bounded observations, without inferring profit or route health."""
+    before = _identity(session)
+    world_id = before["world_id"]
+    businesses = discover(session.admin)
+    assets = purchase.snapshot(session, world_id)
+    catalog, catalog_pages = purchase.read_catalog(session.admin, world_id, 0, session.remaining)
+    primary_parts = [part for part in assets["parts"] if part["is_primary"]]
+    require(len(primary_parts) <= 16, "inspection supports at most 16 primary trains")
+    trains = []
+    frames = [before["frame"], *(page["frame"] for page in catalog_pages)]
+    for primary in primary_parts:
+        vehicle_id = primary["vehicle_id"]
+        parts = [part for part in assets["parts"] if part["first_vehicle_id"] == vehicle_id]
+        orders, order_pages = read_orders(session.admin, world_id, 0, vehicle_id, session.remaining)
+        frames.extend(page["frame"] for page in order_pages)
+        events, cursor, epoch, gap, complete = [], 0, None, False, False
+        for _ in range(4):
+            page = session.admin.copilot_vehicle_events(
+                world_id=world_id, company_id=0, vehicle_id=vehicle_id,
+                cursor=cursor, timeout=session.remaining())
+            require(epoch is None or page["epoch"] == epoch,
+                    "event observation epoch changed during inspection")
+            epoch = page["epoch"]
+            gap |= page["gap"]
+            events.extend(page["events"])
+            frames.append(page["frame"])
+            require(page["next_seq"] >= cursor, "event cursor moved backwards")
+            cursor = page["next_seq"]
+            if len(page["events"]) < 16:
+                complete = True
+                break
+        trains.append({
+            "vehicle_id": vehicle_id, "parts": parts, "orders": orders,
+            "recent_events": {"epoch": epoch, "gap": gap, "complete": complete,
+                              "next_cursor": cursor, "events": events},
+        })
+    after = _identity(session)
+    require(normalize_position(before) == normalize_position(after),
+            "world/operation position changed during live inspection")
+    require(businesses["world_id"] == world_id and assets["world_id"] == world_id,
+            "inspection observations belong to a different world")
+    frames.append(after["frame"])
+    return {
+        "world_id": world_id, "position": {"sequence": after["sequence"], "head": after["head"]},
+        "company_id": 0, "identity": after, "industries": businesses["industries"],
+        "business_pairs": businesses["business_pairs"],
+        "stations": assets["stations"], "depots": assets["depots"],
+        "train_parts": assets["parts"], "trains": trains,
+        "buildable_rail_engines": [engine for engine in catalog if engine["buildable"]],
+        "atomic": False, "observation_frame_span": [min(frames), max(frames)],
+        "units": {"money": "integral engine money units, not formatted GUI currency",
+                  "catalog": "engine-native values; max_speed is not a measured train speed"},
+        "limitations": [
+            "Pages are live observations, not an atomic snapshot.",
+            "The current bridge does not expose per-train profit, actual speed, station waiting "
+            "cargo, industry production rate, reliability or whole-company income breakdown.",
+            "Historical delivery evidence is not proof that the current edited route is healthy.",
+            "Empty departures are not emitted. Missing events do not prove inactivity.",
+            "Business pairs are cargo-compatible observations, not confirmed buildable routes.",
+            "Only one new flat-clear standard coal railway per session is currently executable.",
+        ],
+    }
 
 
 def _persist(path, value):

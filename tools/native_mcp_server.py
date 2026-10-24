@@ -34,7 +34,7 @@ else:
 
 
 STATES = {"opening_map", "waiting_for_build", "planning", "building",
-          "verifying", "operating", "failed"}
+          "verifying", "operating", "rejected", "failed"}
 
 
 def _integer(value: Any, name: str, *, positive: bool = False) -> int:
@@ -118,6 +118,7 @@ class NativeJob:
         self.result: dict[str, Any] | None = None
         self.failure: str | None = None
         self.worker: threading.Thread | None = None
+        self.construction_started = False
         self._finished = False
 
     def open(self, arguments: Any) -> dict[str, Any]:
@@ -156,14 +157,23 @@ class NativeJob:
                 raise ToolError("Open a native map before requesting construction.")
             payload = validate_build(arguments, self.discovery, self.job_id)
             if self.payload is not None:
-                if payload != self.payload:
+                if payload == self.payload:
+                    return self._snapshot_locked()
+                if self.status != "rejected":
                     raise ToolError("A different build payload conflicts with this native job.")
-                return self._snapshot_locked()
-            if self.status != "waiting_for_build":
+            if self.status not in ("waiting_for_build", "rejected"):
                 raise ToolError("The native map is not waiting for a build request.")
+            if self.worker is not None and self.worker.is_alive():
+                raise ToolError("The previous planner is still finishing; wait for it before submitting another request.")
             self.payload = payload
+            self.result = self.failure = None
+            self.construction_started = False
             self.session.deadline = time.monotonic() + self.deadline
             self.status = "planning"
+            self.session.manifest.pop("failure", None)
+            self.session.manifest.pop("plan", None)
+            self.session.manifest.update(status="running", job_state="planning", build_request=payload)
+            self.session.write()
             self.worker = threading.Thread(target=self._run, name="native-railway", daemon=True)
             self.worker.start()
             return self._snapshot_locked()
@@ -175,6 +185,54 @@ class NativeJob:
             if arguments["job_id"] != self.job_id:
                 raise ToolError("Unknown native job ID.")
             return self._snapshot_locked()
+
+    def _idle_session(self):
+        if self.session is None or self._finished:
+            raise ToolError("Open a native map first.")
+        if self.worker is not None and self.worker.is_alive():
+            raise ToolError("A native job is active. Use get_native_status for cached progress; "
+                            "live inspection/planning is available after it finishes.")
+        self.session.deadline = time.monotonic() + 120
+        return self.session
+
+    def inspect(self, arguments: Any) -> dict[str, Any]:
+        if arguments not in ({}, None):
+            raise ToolError("inspect_native_game takes no arguments.")
+        with self.lock:
+            session = self._idle_session()
+            try:
+                observations = native_railway.inspect_game(session)
+            except Exception as exc:
+                raise ToolError(f"Live game inspection failed: {self._redact(str(exc))}") from exc
+            return {"job_id": self.job_id, "job_status": self.status, "read_only": True,
+                    "observations": observations}
+
+    def preview(self, arguments: Any) -> dict[str, Any]:
+        with self.lock:
+            session = self._idle_session()
+            payload = validate_build(arguments, self.discovery, self.job_id)
+            try:
+                plan = native_railway.plan_railway(
+                    session, payload["source_id"], payload["destination_id"],
+                    payload["construction_cap"], payload["operating_reserve"], record=False)
+            except Exception as exc:
+                raise ToolError(f"No construction attempted. Planning did not return an affordable "
+                                f"supported route: {self._redact(str(exc))}") from exc
+            return {
+                "job_id": self.job_id, "read_only": True, "construction_started": False,
+                "world_id": plan["world_id"], "position": plan["position"],
+                "source": plan["source"], "destination": plan["destination"],
+                "quoted_total": plan["quoted_total"], "construction_cap": plan["construction_cap"],
+                "operating_reserve": plan["operating_reserve"],
+                "rail_tiles": len(plan["geometry"]["rails"]),
+                "operations_required": plan["operation_count"],
+                "available_records": plan["available_records"],
+                "locomotive": plan["locomotive"], "wagon": plan["wagon"],
+                "observation_frame_span": plan["observation_frame_span"],
+                "scope": plan["scope"],
+                "limits": "A current bounded construction quote, not a profit forecast or globally optimal route. "
+                          "Building requires a separate explicit request and live replanning.",
+            }
 
     def close(self, arguments: Any) -> dict[str, Any]:
         if arguments not in ({}, None) and not (
@@ -209,6 +267,7 @@ class NativeJob:
             self.status = None
             self.artifact_dir = None
             self.result = self.failure = None
+            self.construction_started = False
             return response
 
     def cleanup(self) -> None:
@@ -233,10 +292,23 @@ class NativeJob:
             with self.lock:
                 session, payload = self.session, self.payload
                 self.status = "planning"
-            plan = native_railway.plan_railway(
-                session, payload["source_id"], payload["destination_id"],
-                payload["construction_cap"], payload["operating_reserve"])
+            try:
+                plan = native_railway.plan_railway(
+                    session, payload["source_id"], payload["destination_id"],
+                    payload["construction_cap"], payload["operating_reserve"])
+            except Exception as exc:
+                with self.lock:
+                    self.status = "rejected"
+                    self.failure = self._redact(str(exc))
+                    session.manifest.setdefault("planning_rejections", []).append({
+                        "request": payload, "failure": self.failure,
+                        "kind": getattr(exc, "kind", type(exc).__name__),
+                        "construction_started": False})
+                    session.manifest.update(job_state="rejected", failure=self.failure)
+                    session.write()
+                return
             with self.lock:
+                self.construction_started = True
                 self.status = "building"
             result = native_railway.execute_railway(session, plan, self.job_id)
             with self.lock:
@@ -270,7 +342,8 @@ class NativeJob:
 
     def _snapshot_locked(self) -> dict[str, Any]:
         response = {"job_id": self.job_id, "status": self.status,
-                    "artifact_dir": self.artifact_dir}
+                    "artifact_dir": self.artifact_dir,
+                    "construction_started": self.construction_started}
         if self.result is not None:
             response["result"] = self.result
         if self.failure is not None:
@@ -283,6 +356,8 @@ class NativeJob:
             "world_id": self.discovery.get("world_id"),
             "industries": self.discovery.get("industries", []),
             "business_pairs": self.discovery.get("business_pairs", []),
+            "business_pairs_note": "Observed coal-compatible pairs, not verified buildable routes. "
+                                   "Only routes of at most 50 rail tiles are supported.",
             "supported_conditions": [
                 "flat clear unowned land only", "standard temperate coal",
                 "one human company", "maximum 64 records",
@@ -309,6 +384,10 @@ class NativeMcpServer(McpServer):
             return self.job.build(arguments)
         if name == "get_native_status":
             return self.job.refresh(arguments)
+        if name == "inspect_native_game":
+            return self.job.inspect(arguments)
+        if name == "plan_native_railway":
+            return self.job.preview(arguments)
         if name == "close_native_map":
             return self.job.close(arguments)
         raise ToolError(f"Unknown tool: {name}")
@@ -332,6 +411,30 @@ class NativeMcpServer(McpServer):
             {"name": "get_native_status", "description": "Read cached native job state.",
              "inputSchema": {"type": "object", "properties": {"job_id": {"type": "string"}},
                              "required": ["job_id"], "additionalProperties": False}},
+            {"name": "inspect_native_game",
+             "description": "Read live company cash/loan, discovered businesses, owned stations/depots, "
+                            "train consists/cargo/stopped state/orders, recent vehicle-tagged events and "
+                            "buildable engine purchase/running-cost catalog. No construction. Profit, "
+                            "production rates, actual speed and station queues are unavailable; do not "
+                            "invent them. Cannot read concurrently with an active build; use cached status.",
+             "annotations": {"readOnlyHint": True, "destructiveHint": False},
+             "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+            {"name": "plan_native_railway",
+             "description": "Read-only live station/route/cost/affordability plan for an explicit observed "
+                            "coal business pair. Use for advice and comparing options without building. "
+                            "Supply existing job/industry IDs, explicit cap/reserve and full load. "
+                            "Cannot run while a build is active. Not a profit or optimality prediction.",
+             "annotations": {"readOnlyHint": True, "destructiveHint": False},
+             "inputSchema": {"type": "object", "properties": {
+                 "job_id": {"type": "string"}, "source_id": {"type": "integer"},
+                 "destination_id": {"type": "integer"},
+                 "construction_cap": {"type": "integer", "minimum": 1},
+                 "operating_reserve": {"type": "integer", "minimum": 0},
+                 "wait_for_full_load": {"type": "boolean", "const": True},
+                 "cargo": {"type": "string", "const": "coal"}},
+                 "required": ["job_id", "source_id", "destination_id", "construction_cap",
+                              "operating_reserve", "wait_for_full_load", "cargo"],
+                 "additionalProperties": False}},
             {"name": "close_native_map", "description": "Save and close an idle native map.",
              "inputSchema": {"type": "object", "properties": {"job_id": {"type": "string"}},
                              "additionalProperties": False}},

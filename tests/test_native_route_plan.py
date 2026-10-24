@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 from tools.native_route_plan import (
     RouteSearchError, _forbidden_90, find_route, station_candidates,
@@ -64,10 +65,27 @@ class NativeRoutePlanTests(unittest.TestCase):
         tiles = grid(10, 10)
         source = [{"tile": 11, "axis": 1, "length": 2, "footprint": (11, 21)}]
         dest = [{"tile": 67, "axis": 1, "length": 2, "footprint": (67, 77)}]
-        with self.assertRaisesRegex(RouteSearchError, "no supported"):
+        with self.assertRaisesRegex(RouteSearchError, "at most 2"):
             find_route(tiles, 10, 10, source, dest, max_rail_tiles=2)
         with self.assertRaisesRegex(RouteSearchError, "expansion bound"):
             find_route(tiles, 10, 10, source, dest, max_expansions=1)
+
+    def test_distant_candidates_reject_before_search_with_length_bound(self):
+        source = [{"tile": 37, "axis": 0, "length": 2, "footprint": [37, 38]}]
+        destination = [{"tile": 99, "axis": 0, "length": 2, "footprint": [99, 100]}]
+        with patch("tools.native_route_plan._search_pair") as search:
+            with self.assertRaises(RouteSearchError) as error:
+                find_route(grid(12, 12), 12, 12, source, destination, max_rail_tiles=2)
+        search.assert_not_called()
+        self.assertEqual(error.exception.kind, "route_length_limit")
+        self.assertIn("at least 5 rail tiles", str(error.exception))
+        self.assertIn("at most 2", str(error.exception))
+
+    def test_exact_lower_bound_is_not_rejected(self):
+        source = [{"tile": 31, "axis": 0, "length": 2, "footprint": [31, 32]}]
+        destination = [{"tile": 37, "axis": 0, "length": 2, "footprint": [37, 38]}]
+        plan = find_route(grid(10, 10), 10, 10, source, destination, max_rail_tiles=4)
+        self.assertEqual(len(plan["rails"]), 4)
 
     def test_deterministic_and_rejects_owned_or_sloped_station(self):
         tiles = grid(8, 8)

@@ -10,14 +10,32 @@ Updated: 2026-10-24, America/Vancouver.
 
 ## Outcome so far
 
-**The native playable alpha is ready for user testing.** Run
-`python3 -B tools/play_native.py`, then enter
-`build coal railway from 10 to 1; full load; budget 50000; reserve 10000`.
-The default new seed-6 map contains those observed Canley businesses. The
-standalone parser is model-free; use the
-[native MCP configuration](NATIVE_PLAYABLE_ALPHA.md) to tell an AI to build it.
-The game stays open after verification. No normal configuration or original
-save is overwritten.
+**Actual AI game conversation is available for user testing.** Run
+`python3 -B tools/game_chat.py` using the installed, signed-in Copilot CLI.
+Ask normally about the live game, compare coal routes with an explicit cap and
+reserve, then authorize construction. Only inspection, read-only quotes and
+cached status are autoallowed; construction retains host permission checks.
+This uses the user's Copilot allowance without a new key/global MCP change.
+The older `play_native.py` is model-free and does not meet the conversational
+requirement. See [guide](NATIVE_PLAYABLE_ALPHA.md) for copied saves and for moving
+from an existing standalone session; this does not attach to that running game.
+
+**Measured bounds:** a real Copilot session resolved named Canley/Hunninghead
+businesses, inspected live cash/assets, compared actual plans without building,
+and saved/closed. Canley 10 -> 1 quoted 14,979/35 rails; Hunninghead 12 -> 1 was
+rejected at a minimum 70 rails against the 50-rail limit. Fresh inspections
+confirmed zero infrastructure/vehicles, sequence 0 and unchanged cash/loan.
+Separate copied-service inspection read train 2, two parts, 30 coal capacity
+and exact two orders without construction/history changes. The current bridge
+does not expose profit, actual speed, production or station queues, so financial
+optimization is not established. [Evidence](evidence/2026-10-24-native-game-chat.json).
+
+**Planning-only failures now remain nonmutating and revisable.** The user's
+12 -> 1 attempt was a preconstruction rejection, not partial work. A real same-map
+regression rejected it without mutation, then built and verified 10 -> 1 for
+14,979 with three full departures/two deliveries. Execution/uncertain failures
+still block revised payloads. No normal configuration or original save is
+overwritten. All 226 Python tests pass.
 
 **M2's simple-profile exit now has native evidence.** Final gate
 `20261024T230856Z-d0747072` passed in 228.091 seconds: 35 rail tiles, two
@@ -64,14 +82,14 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
 | M2: railway builder from structured intent | **Simple-profile exit complete** | Existing seed-6 businesses, whole-job affordability, native build/service, two returns, duplicate/reload/replay; see native railway report. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
-| M4: conversational Copilot | Planned; bounded MCP prototype available | Real native tool flow passed; broader intent/provider/paraphrase acceptance remains open. |
+| M4: conversational Copilot | **Bounded actual Copilot host integrated** | Live inspection, read-only comparison, explicit build boundary; broader paraphrase/ambiguity/cancellation/resumption acceptance remains open. |
 | M5: usable local alpha | Planned release gate; development launcher available | Visible isolated native game can be tried now; packaging and representative-save acceptance remain open. |
 
 ## Next work, in order
 
-1. **User testing point:** inspect the native launcher/MCP on default seed 6 using the guide above. Keep failed/partial artifacts; do not retry an uncertain mutation. The first run can take several minutes of real loading/travel.
-2. **M3 reliability:** add versioned feasible route cases, station axes/approach orientations and obstructed alternatives; fault-inject pending-save and mutation/save/journal windows. Keep the shared 64-record limit explicit and reject jobs that cannot fit without eviction.
-3. **Later gates:** cancellation/resumption, more terrain, held-out seeds, conversational acceptance and packaging; no silent autonomous-company expansion.
+1. **User testing point:** run `game_chat.py`, discuss live state and compare routes before requesting a build. Save/quit the old fixed-command launcher first if continuing its copied world. Keep partial/uncertain artifacts; do not retry mutations automatically.
+2. **Conversation depth:** add native production/waiting-cargo/profit telemetry and observation-window evidence before claiming measured optimization; held-out paraphrases, ambiguity and unintended-action tests remain open.
+3. **M3/later gates:** versioned feasible-route/orientation/obstacle cases, fault-injected mutation/save/journal windows, cancellation/resumption and packaging. Keep 64-record history and scope limits explicit; no autonomous-company expansion.
 
 M1 and the simple M2 path are complete within their recorded scopes. The native
 backend selects explicit observed coal businesses, plans and prices a bounded

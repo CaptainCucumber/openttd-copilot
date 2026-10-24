@@ -46,6 +46,7 @@ def main():
         print("This local parser is model-free; use native_mcp_server.py for an AI client.")
         print("Only flat clear unowned land, standard temperate coal, at most 50 rail tiles.")
         print("No automatic borrowing, clearing, rollback, or retry of partial/uncertain work.")
+        print("Listed pairs are observed businesses, not confirmed buildable routes; choose a nearby pair.")
         for pair in opened["business_pairs"]:
             print(f"{pair['source_id']}: {pair['source']} -> {pair['destination_id']}: "
                   f"{pair['destination']} (anchor distance {pair['distance']})")
@@ -84,6 +85,10 @@ def main():
                     print(f"Train {result['vehicle']} verified two full-load deliveries. "
                           f"Construction cost {result['spent']}; game remains open.")
                     print(f"Save: {result['completed_save']}")
+                elif state["status"] == "rejected":
+                    print(f"Not built: {state.get('failure')}. No construction was attempted. "
+                          "You can submit a different request on this map. "
+                          f"Details: {state['artifact_dir']}.")
                 else:
                     print(f"Not completed: {state.get('failure')}. Inspect {state['artifact_dir']}. "
                           "Partial work is retained, not automatically undone or retried.")

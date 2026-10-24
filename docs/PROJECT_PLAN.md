@@ -125,6 +125,15 @@ Deliver an external local chat interface with one model adapter, entity disambig
 
 Exit: the user's coal request and paraphrases produce the same validated intent as the structured fixture. Invalid model output, invented entities, ambiguity, and unavailable models cause no unintended game actions. End-to-end chat success still requires the M2 operating evidence.
 
+Current bounded implementation (2026-10-24): `tools/game_chat.py` uses the
+installed signed-in Copilot CLI, a game-only custom agent and session-local MCP
+configuration. Actual model/engine evidence covers live inspection and named
+route comparison without construction. Explicit build requests still use M2's
+validated seven-field intent and deterministic execution. The fixed sentence
+parser was not sufficient for the user's conversational requirement.
+Profit/production/queue telemetry, the held-out conversational cohort,
+cancellation and resumption remain open; this is not M4 exit acceptance.
+
 ### M5 — Package a usable local alpha
 
 **Depends on:** M3 and M4.

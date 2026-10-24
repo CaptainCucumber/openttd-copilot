@@ -8,21 +8,25 @@ The first target is a request like:
 
 Success means an affordable railway, suitable stations and train, correct orders, and observed coal deliveries. Construction commands returning successfully are only part of that result.
 
-**A narrow native playable alpha is ready to try.** Open a new isolated map,
-select its existing coal businesses, and build a costed railway with real
-stations, depot, train, full-load orders and verified deliveries. The AI-facing
-MCP backend owns deterministic planning and execution; the standalone text
-launcher is model-free. This is a flat standard-coal alpha, not general terrain
-support or a reliability-qualified release.
+**Talk to an actual AI about your live game.** The local launcher connects your
+signed-in GitHub Copilot CLI to an isolated OpenTTD map. Ask about businesses,
+money, trains and orders; compare read-only construction quotes; then explicitly
+authorize a supported railway. It uses your Copilot allowance, not a new API key.
 
 ```sh
-python3 -B tools/play_native.py
+python3 -B tools/game_chat.py
 ```
 
-Enter `build coal railway from 10 to 1; full load; budget 50000; reserve 10000`
-on the default seed-6 map. The game remains open for play after verification.
-See [launch and AI configuration](docs/NATIVE_PLAYABLE_ALPHA.md) for prerequisites,
-business-name input, saves and supported limits.
+Try: "Compare the Canley and Hunninghead coal mines for supplying Canley Power
+Station. Budget 50000, keep 10000 reserve, full load. Don't build yet."
+Then "Build the Canley option." The AI resolves actual observed businesses;
+deterministic code owns geometry, prices, execution and delivery verification.
+
+The current bridge cannot read train profit, production rates or station queues:
+optimization suggestions are not measured profit forecasts. Construction is
+still one flat-clear standard-coal line, at most 50 rail tiles. The older
+`tools/play_native.py` is a fixed-command, model-free alternative, not AI chat.
+See [launch, permissions, saves and limits](docs/NATIVE_PLAYABLE_ALPHA.md).
 
 GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot) (private repository).
 

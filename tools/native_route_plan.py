@@ -340,6 +340,14 @@ def find_route(
     if min(width, height, max_rail_tiles, max_expansions, max_pairs) < 1:
         raise ValueError("route bounds and map dimensions must be positive")
     records = _normalise_tiles(tiles, width, height)
+    source_candidates = [
+        {**candidate, "footprint": list(_candidate_geometry(candidate, records, width, height)[2])}
+        for candidate in source_candidates
+    ]
+    destination_candidates = [
+        {**candidate, "footprint": list(_candidate_geometry(candidate, records, width, height)[2])}
+        for candidate in destination_candidates
+    ]
     pair_list = [
         (source, destination)
         for source in source_candidates
@@ -355,6 +363,14 @@ def find_route(
         return (distance, source["tile"], source["axis"], destination["tile"], destination["axis"])
 
     pair_list.sort(key=pair_key)
+    if pair_list:
+        minimum_rails = max(0, pair_key(pair_list[0])[0] - 1)
+        if minimum_rails > max_rail_tiles:
+            raise RouteSearchError(
+                f"Selected station candidates require at least {minimum_rails} rail tiles; "
+                f"this alpha supports at most {max_rail_tiles}. Choose a closer business pair.",
+                kind="route_length_limit")
+        pair_list = [pair for pair in pair_list if pair_key(pair)[0] - 1 <= max_rail_tiles]
     budget = {"expansions": 0}
     for pairs, (source, destination) in enumerate(pair_list, 1):
         if pairs > max_pairs:

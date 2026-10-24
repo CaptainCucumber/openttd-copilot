@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "scope": "Bounded actual Copilot CLI advice, read-only live inspection and planning-only rejection recovery; not full M4 acceptance or measured optimization",
+  "engine": {
+    "version": "OpenTTD 15.3 custom native bridge",
+    "head": "96f960a3239e87837919414604a19e3eca9830b7",
+    "revision": "20261024-m2d-native-railway-g96f960a323",
+    "clean": true,
+    "server_sha256": "ed5e9833d0dd3a96e83a21da846ee95f86472de4c95c07152d5b67f9587bb214",
+    "client_sha256": "cddeef25ac6a72626ff34031df1b33c930bdf37a6011d501d4168426966f817b"
+  },
+  "scenario": {
+    "seed": 6,
+    "map": [128, 128],
+    "profile": "isolated temperate standard coal, no initial trees, normal industry density, no active GameScript",
+    "construction_cap": 50000,
+    "operating_reserve": 10000,
+    "max_rail_tiles": 50,
+    "max_retained_operations": 64
+  },
+  "actual_model_host": {
+    "host": "Installed signed-in GitHub Copilot CLI, game-only custom agent and session-local MCP configuration",
+    "mode": "Bounded noninteractive real-host probe using the interactive launcher's command builder; no-show test map",
+    "artifact": "artifacts/native-railway/20261024T233122Z-7d3d1e80",
+    "manifest_sha256": "7937b73d6dc174f9366d1e2a7495a50b4cbaa3cab69826496a8212de7e3b9853",
+    "raw_host_transcript": ".runtime/native-game-chat-final.jsonl",
+    "raw_host_transcript_sha256": "9541a12d5b200ef7d4270dff70cd2aee314b8781301a3dffb59a9884dab927a8",
+    "runtime_agent_sha256": "4aee180410ba62656896ba711250203608be19f53da5a3710315e86bac314ead",
+    "request_summary": "Compare the named Hunninghead and Canley mines supplying Canley Power Station with actual quotes, discuss profitability limits, do not build, inspect again then save/close",
+    "tool_calls": {
+      "open_native_map": 1,
+      "inspect_native_game": 2,
+      "plan_native_railway": 2,
+      "build_native_railway": 0,
+      "close_native_map": 1
+    },
+    "canley_plan": {
+      "source_id": 10,
+      "destination_id": 1,
+      "quoted_total": 14979,
+      "rail_tiles": 35,
+      "operations": 44,
+      "construction_started": false
+    },
+    "hunninghead_plan": {
+      "source_id": 12,
+      "destination_id": 1,
+      "result": "explicit read-only planning error",
+      "selected_candidate_minimum_rail_tiles": 70,
+      "construction_started": false
+    },
+    "independent_assertions": {
+      "two_live_inspections": true,
+      "inspection_frames": [[1394, 1411], [1466, 1483]],
+      "both_inspections_empty_stations_depots_parts_trains": true,
+      "both_inspections_sequence": 0,
+      "both_inspections_cash": 100000,
+      "both_inspections_loan": 100000,
+      "no_construction_call": true,
+      "saved_close": true
+    },
+    "player_save_sha256": "49297a93c21aabfc37118a5bfdadbd703ec8b8365bf2fe4697c9e89b0d1ec500",
+    "wording_followup": "Model correctly declined profit comparison but called missing telemetry a game limitation. Agent/tool text subsequently clarified these are current bridge limitations, not absent OpenTTD features."
+  },
+  "same_map_rejection_recovery": {
+    "artifact": "artifacts/native-railway/20261024T232500Z-e94bdd83",
+    "manifest_sha256": "0da75782dc0f85e347bbe6020c3f9de634e671dc0c7edb719e8c017a6b3ffd7b",
+    "source12_rejected_before_execution": true,
+    "rejection_unchanged_assets_finances_history": true,
+    "rejection_created_no_execution_journals": true,
+    "source10_explicit_revised_request_same_world": true,
+    "spent": 14979,
+    "full_departures": 3,
+    "accepted_delivery_cycles": 2,
+    "duplicate_lookup_and_saved_close": true
+  },
+  "populated_train_inspection": {
+    "artifact": "artifacts/native-railway/20261024T232953Z-0fd5f474",
+    "manifest_sha256": "8862cf0fcc3e56d2d4932ff17f98b3a83011153e282953befdc563e2dfce927c",
+    "source": "copy of rejection-recovery native-service-final.sav",
+    "vehicle_id": 2,
+    "parts": 2,
+    "coal_capacity": 30,
+    "orders": 2,
+    "stations": 2,
+    "depots": 1,
+    "observation_frame_span": [16, 35],
+    "events_after_new_load": 0,
+    "event_epoch": 10699586635354984834,
+    "world_operation_position_assets_and_loan_unchanged": true,
+    "saved_close": true
+  },
+  "all_three_engine_runs": {
+    "status": "success",
+    "normal_profile_unchanged": true,
+    "source_saves_unchanged": true,
+    "secret_files_removed": true,
+    "runtime_config_content_save_and_source_hashes": "Recorded in each ignored artifact manifest; preserve historical tested hashes"
+  },
+  "python_tests": {
+    "command": "python3 -B -m unittest discover -s tests -q",
+    "passed": 226
+  },
+  "limits": [
+    "Single named-business real-model scenario, not a paraphrase/ambiguity cohort.",
+    "Current bridge lacks profit, actual speed, production, queues, reliability and detailed income.",
+    "No train/track optimization mutation tools; construction remains the bounded new coal line.",
+    "Live pages are not atomic; events have explicit epochs/gaps/truncation and do not prove current route health.",
+    "Construction crash-window, cancellation/resumption and M3/M4/M5 release gates remain open."
+  ]
+}

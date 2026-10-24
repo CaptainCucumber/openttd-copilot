@@ -92,7 +92,8 @@ class NativeMcpServerTests(unittest.TestCase):
         listing = self.mcp.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         names = {tool["name"] for tool in listing["result"]["tools"]}
         self.assertEqual(names, {"open_native_map", "build_native_railway",
-                                 "get_native_status", "close_native_map"})
+                                 "get_native_status", "close_native_map",
+                                 "inspect_native_game", "plan_native_railway"})
 
     def test_open_validates_existing_save_and_copies_it_to_session(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -163,6 +164,70 @@ class NativeMcpServerTests(unittest.TestCase):
         self.assertIn("artifact_dir", status)
         self.assertNotEqual(status["status"], "operating")
         self.assertIn("failure", FakeSession.instances[0].manifest)
+        self.assertTrue(status["construction_started"])
+        self.job.build(args)
+        self.assertEqual(self.execute_mock.call_count, 1)
+        with self.assertRaisesRegex(server.ToolError, "conflicts"):
+            self.job.build({**args, "construction_cap": 200})
+
+    def test_planning_rejection_is_nonmutating_and_another_request_can_build(self):
+        self.plan_mock.side_effect = [RuntimeError("route pair search bound exceeded"), {"route": "p"}]
+        self.job.open({})
+        args = {"job_id": self.job.job_id, "source_id": 11, "destination_id": 22,
+                "construction_cap": 100, "operating_reserve": 10,
+                "wait_for_full_load": True, "cargo": "coal"}
+        self.job.build(args)
+        self.job.worker.join(timeout=2)
+        status = self.job.refresh({"job_id": self.job.job_id})
+        self.assertEqual(status["status"], "rejected")
+        self.assertFalse(status["construction_started"])
+        self.assertEqual(status["failure"], "route pair search bound exceeded")
+        self.execute_mock.assert_not_called()
+        self.verify_mock.assert_not_called()
+        self.assertEqual(self.job.build(args)["status"], "rejected")
+        self.assertEqual(self.plan_mock.call_count, 1)
+        revised = {**args, "construction_cap": 200}
+        self.job.build(revised)
+        self.job.worker.join(timeout=2)
+        status = self.job.refresh({"job_id": self.job.job_id})
+        self.assertEqual(status["status"], "operating")
+        self.assertTrue(status["construction_started"])
+        self.assertNotIn("failure", status)
+        self.execute_mock.assert_called_once()
+        history = FakeSession.instances[0].manifest["planning_rejections"]
+        self.assertEqual(history[0]["request"], args)
+        self.assertFalse(history[0]["construction_started"])
+        self.assertNotIn("failure", FakeSession.instances[0].manifest)
+
+    def test_planning_budget_rejection_keeps_map_open_for_changed_budget(self):
+        self.plan_mock.side_effect = RuntimeError("whole railway costs 200, above construction cap 100")
+        self.job.open({})
+        args = {"job_id": self.job.job_id, "source_id": 11, "destination_id": 22,
+                "construction_cap": 100, "operating_reserve": 10,
+                "wait_for_full_load": True, "cargo": "coal"}
+        self.job.build(args)
+        self.job.worker.join(timeout=2)
+        self.assertEqual(self.job.status, "rejected")
+        self.assertEqual(FakeSession.instances[0].finish_calls, 0)
+        self.execute_mock.assert_not_called()
+        self.plan_mock.side_effect = None
+        self.job.build({**args, "construction_cap": 300})
+        self.job.worker.join(timeout=2)
+        self.assertEqual(self.job.status, "operating")
+
+    def test_verification_failure_cannot_authorize_a_different_build(self):
+        self.verify_mock.side_effect = RuntimeError("telemetry gap")
+        self.job.open({})
+        args = {"job_id": self.job.job_id, "source_id": 11, "destination_id": 22,
+                "construction_cap": 100, "operating_reserve": 10,
+                "wait_for_full_load": True, "cargo": "coal"}
+        self.job.build(args)
+        self.job.worker.join(timeout=2)
+        self.assertEqual(self.job.status, "failed")
+        self.assertTrue(self.job.refresh({"job_id": self.job.job_id})["construction_started"])
+        with self.assertRaisesRegex(server.ToolError, "conflicts"):
+            self.job.build({**args, "construction_cap": 300})
+        self.execute_mock.assert_called_once()
 
     def test_refresh_does_not_call_discover_and_close_saves_then_finishes(self):
         self.job.open({})

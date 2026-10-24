@@ -189,3 +189,26 @@ Monitor no-path states, depot trapping, lack of production, loading without prog
 Keep network control local with authentication, bounded messages, version negotiation, and redacted credentials. Game text and model output are data, never executable Squirrel, shell, or arbitrary console instructions. Keep narrow lifecycle controls for the test harness separate from gameplay operations.
 
 The eventual chat UI shows the route, estimated/actual cost, retained cash, current phase, and observed outcome. API keys stay in the external process. In-game chat and visual route previews can be added after the core loop passes acceptance tests.
+
+The current external interface is interactive Copilot CLI (`game_chat.py`),
+with a repository game-only agent and inline session-local native MCP settings.
+No new provider/key or global configuration edit is required. Its six native
+tools separate open/close, live inspection, read-only planning, explicit
+construction and cached job status. Only the three read-only/status tools are
+automatically allowed; host permission checks remain on lifecycle/construction.
+
+Inspection collects bounded current company/business/catalog/asset/consist/order
+pages, at most 16 primary trains and four event pages per train. It checks
+world/operation position before/after, reports non-atomic frame bounds,
+epoch/gaps/truncation and unavailable metrics. The Admin socket is not shared
+with an active construction worker. Read-only planning uses the same actual
+geometry/quote/budget code with manifest recording disabled: it does not change
+the active payload or start a worker. A later build replans live.
+
+A pre-executor planning failure is `rejected`, with
+`construction_started: false`, retained rejection history and permission for a
+changed explicit request on the same map. Set `construction_started` before
+entering execution, conservatively even if its first action later fails.
+Execution/verifier failures retain conflict/no-retry restrictions. A validated
+station-footprint Manhattan lower bound filters pairs exceeding 50 rail tiles;
+it proves only a bound for those selected candidates, not global infeasibility.
