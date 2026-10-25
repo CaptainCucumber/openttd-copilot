@@ -48,25 +48,30 @@ planning algorithm or reliability layer.
 
 The stock experiment hosts a local game and connects the normal client to the human company. Do not assume the Admin interface alone is a general construction API: the GameScript performs gameplay operations. The adapter contract should permit replacement without rewriting the planner.
 
-**Planned topology change (D032, M2f; F1 extracted, endpoint not implemented):** local single-player
+**Planned topology change (D032, M2f; F1/F2 engine checkpoints, endpoint not implemented):** local single-player
 games only. Replace the dedicated server + joining client + Admin connection
 with one visible OpenTTD process hosting a loopback, per-launch-token Copilot
 endpoint polled on the game thread. Request payloads, COPL, journals, planners
 and MCP tools are unchanged; protocol v4 adds hello, local company, game
 mode/pause, tick frames, typed refusals and save/quit. Multiplayer use is
 refused. Transport is loopback TCP for cross-platform support; no Unix-domain
-sockets or OS-specific IPC. The paragraph below describes the currently implemented Admin path.
+sockets or OS-specific IPC. The product still uses the Admin path; the local
+dispatch policy is not yet invoked by a running single-player endpoint.
 See the [M2f plan](M2F_LOCAL_BRIDGE_PLAN.md).
 
-F1 engine `03ac6d9aee` now isolates all Copilot codecs/handlers in
+F1 engine `03ac6d9aee` isolates all Copilot codecs/handlers in
 `copilot_bridge.{h,cpp}` behind `DispatchCopilotBridgeRequest(span<uint8_t>)`.
 The caller must run on the game thread and enforce transport admission.
 The result owns response bytes or reports malformed input, with no socket
 or Admin-session lifetime. Admin remains a thin authenticated loopback
 adapter. Protocol v3, network frames, normal command posting and COPL are
 unchanged; v1/v2 headers remain unsupported by the current bridge.
-Admin-path coal and multi-stop bus regressions passed; this seam alone is
-not safe single-player execution. F2 must address the documented hazards.
+F2 engine commits `59f395beb9` and `1cadb0ad32` add local-mode game/network/
+pause/company guards, `NoEst`, synchronous callback safeguards and saved-tick
+stamps. Admin mode continues to report network frames for v3 compatibility.
+Clean builds and Admin coal, bus insertion and dispatcher regressions pass;
+local-mode runtime testing and the endpoint remain open. See the
+[F2 evidence](evidence/2026-10-25-m2f-single-player-semantics.json).
 
 The selected bridge is deliberately narrow. M2a added protocol v1 identity packets 11 and 130 to the authenticated Admin connection and rejected non-loopback peers. M2b protocol v2 adds a typed single-rail request and operation-status query. A wrapper posts through OpenTTD's normal command pipeline, quotes and checks the cap before execution, and returns authoritative cost plus tile/company readback after the callback. A versioned COPL save chunk persists world/operation sequence and terminal outcome; an external fsynced journal records intent before send. M2c protocol v3 adds paged vehicle-tagged station departures and exact accepted-industry deliveries. Its bounded observation ring is runtime-only and reports gaps; it does not extend the persisted COPL chunk. M2d adds protocol-v3 tile pages (32 contiguous tiles), industry pages (16 IDs/types/anchors/cargo lists), human-company rail catalog pages (16 train definitions), station/depot pages (16 assets), and bounded train-part pages (16 records from at most 256 scanned vehicle IDs). Pages report frames; a multi-page sweep is not atomic and needs dependency revalidation before construction. House and industry tiles are marked unowned without invoking OpenTTD's restricted owner helper. The rail primitive still admits only a flat clear tile; station/depot primitives require a level clear footprint. Their shared retained-operation boundary is described below. The Python service retains intent parsing, future planning, budgets, journaling, and verification. Only copied saves have been tested; stock-build compatibility is not established.
 

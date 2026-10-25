@@ -2,7 +2,7 @@
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
 [`copilot/m2e-town-buses`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2e-town-buses), commit
-`03ac6d9aee0163b3dbd71e1a3991b9f826702684`. It extracts the transport-neutral
+`1cadb0ad329812e4b3551dc1684dc0cb6b89d9d3`. It extracts the transport-neutral
 dispatcher from the multi-town bus revision `faf823d8ab5e76319ffb64ebc535ccb1547a9d4d`,
 which extends the two-town bus revision
 `2fb530eda610857329872eab1acaa9788de49f89` and descends from the native railway
@@ -16,8 +16,8 @@ tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All twenty-two commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0022 in order to the upstream revision if not using the fork branch.
+All twenty-four commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0024 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
@@ -41,11 +41,15 @@ The first binary is the server; the second is the matching graphical client.
 Planned M2f ([D032](../docs/DECISIONS.md#d032---host-the-native-bridge-in-the-single-player-game-process))
 moves the bridge into the single-player GUI process; the dedicated build is
 retained only until that gate passes.
-F1's dispatcher extraction is verified on this revision, but the local
-endpoint and single-player command semantics are not implemented. Patch
-0022 keeps Admin authentication/loopback/framing and v3 behavior unchanged;
-coal, existing-line bus, reload/replay and wire guards passed. See
-[F1 evidence](../docs/evidence/2026-10-25-m2f-dispatcher.json).
+F1's dispatcher and F2's local single-player command semantics are verified
+on this revision; the local endpoint is not implemented. Patches 0023/0024
+add pre-admission game/network/pause/company refusals, `NoEst`, callback
+outcome protection and save-persistent tick stamps for local mode, while
+preserving Admin protocol-v3 network-frame behavior. Both dedicated and GUI
+builds, 286 Python tests, and final-revision Admin dispatcher/coal/bus-insertion
+gates passed. See [F1 evidence](../docs/evidence/2026-10-25-m2f-dispatcher.json)
+and [F2 evidence](../docs/evidence/2026-10-25-m2f-single-player-semantics.json).
+Actual local endpoint/guard acceptance remains F3/F5.
 On this macOS environment optional OpenGL discovery must be disabled for the
 software Cocoa client: default linking otherwise misses CGL symbols. There is
 no supported `OPTION_USE_OPENGL` switch. Both binaries must match the source

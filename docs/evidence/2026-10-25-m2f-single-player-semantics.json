@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "scope": "M2f F2 engine semantics and Admin-path regression evidence",
+  "result": "passed; local single-player endpoint/runtime acceptance remains open",
+  "engine": {
+    "repository": "CaptainCucumber/OpenTTD",
+    "branch": "copilot/m2e-town-buses",
+    "head": "1cadb0ad329812e4b3551dc1684dc0cb6b89d9d3",
+    "commits": [
+      "59f395beb92367ff2e31a69cf7b944c03f1c1554",
+      "1cadb0ad329812e4b3551dc1684dc0cb6b89d9d3"
+    ],
+    "build_revision": "20261025-m2e-town-buses-g1cadb0ad32",
+    "dedicated_build": "passed",
+    "gui_build": "passed",
+    "source_sha256": {
+      "src/copilot_bridge.cpp": "b972b9da329c0af87f60490058b1ac764941075526851b72fcb7efaf3c644b04",
+      "src/copilot_bridge.h": "6cf27a6f9c05cca6a0a6591b5fcfbf82f12dd20ebd9c63470a6912effbb38c65",
+      "src/copilot_cmd.cpp": "fc8da842d868dfbf5288b06d89fc1853238944163e5c9bd700e823b7bc2b959f",
+      "src/copilot_cmd.h": "58f6fdf9d78df15f6c4f4f534849d5299e07f799be0c0367b4c996941fa4a660",
+      "src/copilot_observation.cpp": "45adb73cfcbe9978610e1fa0df5c9d54f15253235a0bacd47a9c7bdf1bb02564",
+      "src/network/network_admin.cpp": "e599c401ec4520161c2d939040eec7e2d48158782ff2c890b6821c5e03a7f760",
+      "src/saveload/copilot_sl.cpp": "630beaf2f6f8e4cbcc686cb3d0a23c47a001034178fa1b032e5ba9a9d3992d76"
+    },
+    "dedicated_binary_sha256": "b94008b03774f6ae34a9fdfee0fe50b043d52cfbb5af6283348f9132825f43ce",
+    "gui_binary_sha256": "b0995d85ec30ecd00f86125385ecfa3ab07853eb3b202e1c7b9533c304c4f394",
+    "patches": [
+      {
+        "file": "engine/patches/0023-Add-single-player-Copilot-command-semantics.patch",
+        "sha256": "83de8f488e3e85d4c318836d7766e4df0e9e610d105894774f0de6d31271bf1f"
+      },
+      {
+        "file": "engine/patches/0024-Preserve-Admin-frame-semantics-in-protocol-v3.patch",
+        "sha256": "7a969826284dcd36708706849f4debc111b6acba6704bc408212dd4883bfc044"
+      }
+    ]
+  },
+  "implementation": {
+    "local_dispatch_mode": "Explicit LocalSinglePlayer mode rejects unsupported conditions before operation admission: networking, non-normal game mode, paused mutation, and mutation for a non-local company. Read-only requests remain allowed while paused.",
+    "command_traits": "All five Copilot command traits set NoEst so Shift cannot convert mutations into estimate-only commands.",
+    "callback": "Post-return fallback records rejection only while the operation is still pending, preserving synchronous callback outcomes.",
+    "frame_stamps": "Admin mode retains network-frame stamps for protocol-v3 compatibility. Local mode uses the save-persistent game tick, truncated to existing 32-bit response/COPL frame fields.",
+    "frame_limit": "Protocol v4 must widen frame stamps and migrate retained outcomes, or define and test an explicit wrap boundary before claiming unbounded monotonicity."
+  },
+  "tests": {
+    "command": "python3 -B -m unittest discover -s tests -q",
+    "result": "286 passed",
+    "source_invariants": "Covered local-mode guards, NoEst traits, frame selection, and synchronous callback fallback."
+  },
+  "runtime_regressions": [
+    {
+      "run": "20261025T215750Z-5e22f7d3",
+      "manifest_sha256": "356bd83e103c89e255ba8655329a34f161cbf6182cfbeaebc31aed936c8e9c30",
+      "gate": "Admin dispatcher and wire guards",
+      "result": "Passed exact error-byte cases across dispatcher kinds, wrong-world requests, malformed payload refusal/reconnect, and nonmutating guards."
+    },
+    {
+      "run": "20261025T215758Z-30b07fa1",
+      "manifest_sha256": "ba3133747c173af3b9e0c3cda083aebbac5b7d0e1dbcbf7f5a223460048dc54d",
+      "gate": "Admin coal railway commissioning/service/replay",
+      "result": "Passed 44 operations costing 14979, two native deliveries, duplicate and budget refusals, all-outcome fresh-process reload and exact replay."
+    },
+    {
+      "run": "20261025T220151Z-d0b9180b",
+      "manifest_sha256": "8a1a37c90bfea219f2d0c40531aac61d8e371ee2380b38b4f311c8dbda0004b2",
+      "gate": "Admin existing bus-line stop insertion/replay",
+      "result": "Passed same-bus insertion at index 1, 23 operations costing 3182, passenger service at all stops, and all 50 outcomes through fresh-process reload/replay."
+    }
+  ],
+  "runtime_protection": {
+    "normal_profile_hashes_unchanged": true,
+    "source_saves_unchanged": true,
+    "temporary_secret_files_removed": true
+  },
+  "limitations": [
+    "The local endpoint does not exist yet, so LocalSinglePlayer mode has not been exercised by an actual single-player runtime.",
+    "Pause, Shift, company-identity, multiplayer, and game-mode local-runtime gates remain open for F3/F5.",
+    "Protocol-v4 local_company identity output and frame/COPL width migration remain unimplemented.",
+    "Existing non-fatal macOS Homebrew libpng/lzo deployment-target link warnings remain."
+  ],
+  "raw_artifacts": [
+    "artifacts/native-railway/20261025T215750Z-5e22f7d3/",
+    "artifacts/native-railway/20261025T215758Z-30b07fa1/",
+    "artifacts/native-railway/20261025T220151Z-d0b9180b/"
+  ]
+}

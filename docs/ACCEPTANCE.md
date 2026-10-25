@@ -113,7 +113,10 @@ unpaced; at least one visible run is required).
    insertion gate `20261025T190737Z-dc540bb2`, 26 exact error-byte cases/four
    malformed refusals `20261025T191117Z-aac637ae`, and legacy coal resave
    `20261025T190943Z-3ae31ac2`. [Evidence](evidence/2026-10-25-m2f-dispatcher.json).
-   Items 2-9 remain open.
+   F2 engine source checks, dedicated/GUI builds and final-revision Admin
+   regressions also passed on `1cadb0ad32`; see
+   [F2 evidence](evidence/2026-10-25-m2f-single-player-semantics.json).
+   This does not exercise the not-yet-wired local mode. Items 2-9 remain open.
 2. **Services:** native coal railway (three full departures, two deliveries)
    and normal-map bus service (accepted passengers at both stops) pass on the
    local path with duplicate lookup, all-outcome fresh-process reload/replay
@@ -129,6 +132,10 @@ unpaced; at least one visible run is required).
    produce an estimate-only or pending record (`NoEst`).
 6. **Frames:** completion/observation/event frames advance in single-player
    and remain monotonic across save/reload.
+   F2 uses the saved game-tick counter in local mode but currently maps it to
+   existing 32-bit v3/COPL stamps. Protocol v4 must widen the stamps and
+   migrate retained outcomes, or establish and test an explicit wrap bound,
+   before claiming unbounded monotonicity.
 7. **Lifecycle:** typed save writes only a validated name in the isolated
    save directory; path-like names are refused; quit ends only the
    launcher-owned process. Normal profile and original saves unchanged.

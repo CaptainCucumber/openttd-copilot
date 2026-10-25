@@ -8,6 +8,10 @@ import run_native_dispatcher_probe as probe
 
 
 class NativeDispatcherProbeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.engine_src = Path(__file__).resolve().parents[1] / "vendor/openttd-copilot-engine/src"
+
     def test_finance_comparison_ignores_automatic_company_naming(self):
         company = {"id": 0, "money": 100000, "loan": 100000, "name": "Unnamed"}
         before = {"companies": [company]}
@@ -58,3 +62,56 @@ class NativeDispatcherProbeTests(unittest.TestCase):
                         struct.pack("<HBIB", 3, 18, 99, 2)):
             with self.subTest(changed=changed), self.assertRaises(probe.AdminProtocolError):
                 probe.check_response(request, changed, 1)
+
+    def test_native_commands_disable_shift_estimates(self):
+        command_header = (self.engine_src / "copilot_cmd.h").read_text()
+        for command in (
+            "CMD_COPILOT_BUILD_SINGLE_RAIL",
+            "CMD_COPILOT_BUILD_INFRASTRUCTURE",
+            "CMD_COPILOT_BUILD_TRAIN",
+            "CMD_COPILOT_CONFIGURE_TRAIN",
+            "CMD_COPILOT_BUS_ACTION",
+        ):
+            with self.subTest(command=command):
+                start = command_header.index(f"DEF_CMD_TRAIT({command},")
+                declaration = command_header[start:command_header.index("\n\n", start)]
+                self.assertIn("CommandFlag::NoEst", declaration)
+
+    def test_local_copilot_frames_use_saved_ticks_and_admin_frames_stay_compatible(self):
+        copilot_sources = (
+            self.engine_src / "copilot_bridge.cpp",
+            self.engine_src / "copilot_observation.cpp",
+        )
+        for source in copilot_sources:
+            with self.subTest(source=source.name):
+                self.assertNotIn("_frame_counter", source.read_text())
+        command_header = (self.engine_src / "copilot_cmd.h").read_text()
+        command_source = (self.engine_src / "copilot_cmd.cpp").read_text()
+        self.assertIn("CopilotCurrentFrame();", command_header)
+        self.assertIn(
+            "return _networking ? _frame_counter : "
+            "static_cast<uint32_t>(TimerGameTick::counter);",
+            command_source,
+        )
+        self.assertEqual(command_source.count("CopilotCurrentFrame()"), 6)
+
+    def test_local_bridge_has_pre_admission_guards_and_callback_fallbacks(self):
+        bridge_header = (self.engine_src / "copilot_bridge.h").read_text()
+        bridge = (self.engine_src / "copilot_bridge.cpp").read_text()
+        self.assertIn("LocalSinglePlayer", bridge_header)
+        self.assertIn("COPILOT_ADMIN_NO_ACTIVE_GAME = 13", bridge)
+        self.assertIn("COPILOT_ADMIN_GAME_PAUSED = 14", bridge)
+        self.assertIn("COPILOT_ADMIN_MULTIPLAYER_UNSUPPORTED = 15", bridge)
+        self.assertIn("COPILOT_ADMIN_NOT_LOCAL_COMPANY = 16", bridge)
+        self.assertIn("if (local && _networking)", bridge)
+        self.assertIn("if (local && _game_mode != GM_NORMAL)", bridge)
+        self.assertIn("if (local && mutating_request && _pause_mode.Any())", bridge)
+        self.assertIn("local && mutating_bus && _pause_mode.Any()", bridge)
+        self.assertIn("company_id != _local_company", bridge)
+        self.assertEqual(
+            bridge.count(
+                "if (!accepted && _copilot_operation.state == "
+                "to_underlying(CopilotOperationState::Pending))"
+            ),
+            2,
+        )
