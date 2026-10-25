@@ -94,7 +94,8 @@ class NativeMcpServerTests(unittest.TestCase):
         self.assertEqual(names, {"open_native_map", "build_native_railway",
                                  "get_native_status", "close_native_map",
                                  "inspect_native_game", "plan_native_railway",
-                                 "plan_native_bus", "build_native_bus"})
+                                 "plan_native_bus", "build_native_bus",
+                                 "plan_native_bus_stops", "add_native_bus_stops"})
 
     def test_open_validates_existing_save_and_copies_it_to_session(self):
         with tempfile.TemporaryDirectory() as directory:

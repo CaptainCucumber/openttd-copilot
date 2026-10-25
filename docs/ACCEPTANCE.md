@@ -70,6 +70,36 @@ independent bus/order inspection and saved close passed; coal/legacy-save
 regressions passed. See [bus evidence](evidence/2026-10-24-native-town-buses.json).
 The broader scenario/recovery/release gates below remain open.
 
+## Multi-town bus line and existing-line edit gate
+
+**Bounded gate passed (D033), including actual-host edit/inspection/saved
+close.** Quote one ordered three-town line without mutation and reject
+insufficient cap/reserve/history before infrastructure. Build exactly one bus
+and depot, verify its exact ordinary orders and accepted passengers at every
+stop. Separately extend an existing two-town running unshared bus at an explicit
+index to make one three-town line; connect both neighbors, preserve the old orders and assets, and observe
+passenger acceptance at all resulting stops. Cover insertion at beginning,
+middle and end in unit tests, stale/shared/unsupported order rejection,
+eight-stop bound, duplicate lookup, all retained outcomes after fresh-process
+reload/replay and older-save refusal. Recheck the prior two-town bus and coal
+gates. Expose ordered planning/build/edit through native-only conversation
+without autoallowing mutations. No general random-world or recovery claim.
+
+Final engine `faf823d8ab` passed direct normal-density three-town service,
+54-outcome replay and older-save refusal (`20261025T175057Z-88a7a87a`).
+The explicit high-town-density seed-20261024 case
+`20261025T175339Z-be1d4f76` inserted Plontford between Pafingfield and Prarnway
+on the same bus 5: orders `[0,1] -> [0,2,1]`, 23 added actions costing 3,182,
+all three stops accepted passengers, no new bus/depot, all 50 combined
+outcomes reloaded/replayed, older-save refusal passed. Original two-town/cap
+guards and final-engine coal legacy resave/replay passed. The normal-density
+copied-line insertion search remained infeasible within the 64-record bound;
+no fourth-town or random-world reliability gate is claimed.
+Actual Copilot gate `20261025T175806Z-63f0d5e9` planned and edited a separate
+copy once, observed passengers at every stop, inspected the same running bus
+with `[0,2,1]` orders and saved/closed. It used only native tools. See
+[source-hashed evidence](evidence/2026-10-25-native-bus-lines.json).
+
 ## M2f single-process gate
 
 Planned (D032). All checks run on the local endpoint in **one** OpenTTD

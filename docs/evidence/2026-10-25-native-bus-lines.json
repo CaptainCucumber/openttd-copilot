@@ -1,0 +1,1026 @@
+{
+  "actual_host_existing_line_build": {
+    "artifact": "artifacts/native-railway/20261025T175806Z-63f0d5e9",
+    "inspections": [
+      {
+        "buses": [
+          {
+            "crashed": false,
+            "engine_id": 116,
+            "orders": [
+              {
+                "destination_id": 0,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              },
+              {
+                "destination_id": 1,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              }
+            ],
+            "orders_shared": false,
+            "owner": 0,
+            "stopped": false,
+            "vehicle_id": 5
+          }
+        ],
+        "sequence": 27
+      },
+      {
+        "buses": [
+          {
+            "crashed": false,
+            "engine_id": 116,
+            "orders": [
+              {
+                "destination_id": 0,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              },
+              {
+                "destination_id": 2,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              },
+              {
+                "destination_id": 1,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              }
+            ],
+            "orders_shared": false,
+            "owner": 0,
+            "stopped": false,
+            "vehicle_id": 5
+          }
+        ],
+        "sequence": 50
+      }
+    ],
+    "manifest_sha256": "da029b96865a09600bf4ef40f1488aeb1c8e1be2402132c22b82cb94533a78f3",
+    "native_tool_calls": {
+      "openttd-copilot-native-add_native_bus_stops": 1,
+      "openttd-copilot-native-close_native_map": 1,
+      "openttd-copilot-native-get_native_status": 29,
+      "openttd-copilot-native-inspect_native_game": 2,
+      "openttd-copilot-native-plan_native_bus_stops": 1
+    },
+    "operating": true,
+    "personal_model_account_telemetry": "not included",
+    "raw_local_transcript": ".runtime/bus-line-chat-edit-build.jsonl",
+    "result": {
+      "orders": [
+        {
+          "destination_id": 0,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 2,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 1,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        }
+      ],
+      "service_summary": {
+        "passengers_delivered": {
+          "0": 28,
+          "1": 5,
+          "2": 62
+        },
+        "scope": "vehicle-tagged passenger acceptance at all ordered stops",
+        "vehicle": 5
+      },
+      "spent": 3182,
+      "stations": [
+        0,
+        2,
+        1
+      ],
+      "vehicle": 5
+    },
+    "saved_and_closed": true,
+    "sha256": "230d98c78c13b76e511db304ff47359b0811e9832106d3f353f1f0f1a6c36df8"
+  },
+  "actual_host_existing_line_plan": {
+    "inspections": [
+      {
+        "buses": [
+          {
+            "crashed": false,
+            "engine_id": 116,
+            "orders": [
+              {
+                "destination_id": 0,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              },
+              {
+                "destination_id": 1,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              }
+            ],
+            "orders_shared": false,
+            "owner": 0,
+            "stopped": false,
+            "vehicle_id": 5
+          }
+        ],
+        "sequence": 27
+      },
+      {
+        "buses": [
+          {
+            "crashed": false,
+            "engine_id": 116,
+            "orders": [
+              {
+                "destination_id": 0,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              },
+              {
+                "destination_id": 1,
+                "load_type": 0,
+                "non_stop": 0,
+                "order_type": 1,
+                "unload_type": 0
+              }
+            ],
+            "orders_shared": false,
+            "owner": 0,
+            "stopped": false,
+            "vehicle_id": 5
+          }
+        ],
+        "sequence": 27
+      }
+    ],
+    "native_tool_calls": {
+      "openttd-copilot-native-close_native_map": 1,
+      "openttd-copilot-native-inspect_native_game": 1,
+      "openttd-copilot-native-plan_native_bus_stops": 1
+    },
+    "personal_model_account_telemetry": "not included",
+    "raw_local_transcript": ".runtime/bus-line-chat-edit-plan.jsonl",
+    "saved_and_closed": true,
+    "sha256": "eba9f564b5bf745c06c7fc5c1387315eec6ed3412530ec63b8bfc3c7172113c6"
+  },
+  "actual_host_ordered_plan": {
+    "inspections": [
+      {
+        "buses": [],
+        "sequence": 0
+      },
+      {
+        "buses": [],
+        "sequence": 0
+      }
+    ],
+    "native_tool_calls": {
+      "openttd-copilot-native-close_native_map": 1,
+      "openttd-copilot-native-inspect_native_game": 1,
+      "openttd-copilot-native-open_native_map": 1,
+      "openttd-copilot-native-plan_native_bus": 2
+    },
+    "personal_model_account_telemetry": "not included",
+    "raw_local_transcript": ".runtime/bus-line-chat-plan.jsonl",
+    "saved_and_closed": true,
+    "sha256": "f74b70862677fbf919495b16d52a03ffbdebab8c217a2b0f23ffa8115f53f890"
+  },
+  "coal_final_build_reload_resave_regression": {
+    "artifact": "artifacts/native-railway/20261025T174219Z-3a0660b2",
+    "checks": [
+      "all_outcomes_reloaded_and_replayed",
+      "legacy_saved_and_reloaded",
+      "older_save_not_false_completion",
+      "selected_industry_quotes_nonmutating"
+    ],
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "elapsed_seconds": 6.945,
+    "engine_head": "faf823d8ab5e76319ffb64ebc535ccb1547a9d4d",
+    "jobs": [
+      {
+        "actual_cost": 14979,
+        "final_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 2,
+            "nonstop_flags": 0,
+            "order_type": 1,
+            "unload_type": 4
+          },
+          {
+            "destination_id": 1,
+            "load_type": 4,
+            "nonstop_flags": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "insert_index": null,
+        "new_road_tiles": null,
+        "old_orders": null,
+        "path": "artifacts/native-railway/20261025T174219Z-3a0660b2/jobs/native-probe.json",
+        "quoted_total": 14979,
+        "retained_actions": 44,
+        "sha256": "4145e8e1c4e19c32ee0cb9b7aada74b13658a3c7e2463eaa6950e0dd33a1f2e6",
+        "state": "operating",
+        "town_ids": null
+      }
+    ],
+    "manifest_sha256": "f02df497d86c6c08825cf9d515e10f67ffb34aeaeffab2d90b4f6981b7634778",
+    "map": [
+      128,
+      128
+    ],
+    "map_style": "railway-fixture",
+    "preservation": {
+      "normal_profile_unchanged": true,
+      "secret_files_removed": true,
+      "source_saves_unchanged": true
+    },
+    "resource_hashes": {
+      "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+      "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+      "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+    },
+    "seed": 6,
+    "server_config_sha256": "d322a98b3c15368bf25fce849989b9ef09ce50a5b30503365903bb1826638926",
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "ab391e922308cdbe43f4952afa40aab729b9f0fda670cdd081a5923299314bb7",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "ed8ae8b7446fc0d597c8ea238f38af406138432988ca5df4045f922f5cdfda8b",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "7c4d8dd3ca1569446d9a5d08374cfa9acbcb61fd447349a912e9382a11c3baaf",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "784861d8081ce3c6af9c7f395aa457bbf8efd22c4bfefc55d7372ff268942f3a",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "town_density": "normal"
+  },
+  "coal_service_command_build_regression": {
+    "artifact": "artifacts/native-railway/20261025T173055Z-89e8c947",
+    "checks": [
+      "duplicate_job_no_mutation",
+      "low_budget_rejected",
+      "native_commissioned",
+      "planning_is_nonmutating",
+      "reload_and_exact_replay",
+      "two_native_deliveries",
+      "whole_job_plan"
+    ],
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "elapsed_seconds": 228.932,
+    "engine_head": "10a825fb4723c88d13ab81403cc0567a39819b50",
+    "jobs": [
+      {
+        "actual_cost": 14979,
+        "final_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 2,
+            "nonstop_flags": 0,
+            "order_type": 1,
+            "unload_type": 4
+          },
+          {
+            "destination_id": 1,
+            "load_type": 4,
+            "nonstop_flags": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "insert_index": null,
+        "new_road_tiles": null,
+        "old_orders": null,
+        "path": "artifacts/native-railway/20261025T173055Z-89e8c947/jobs/native-probe.json",
+        "quoted_total": 14979,
+        "retained_actions": 44,
+        "sha256": "4145e8e1c4e19c32ee0cb9b7aada74b13658a3c7e2463eaa6950e0dd33a1f2e6",
+        "state": "operating",
+        "town_ids": null
+      }
+    ],
+    "manifest_sha256": "aa1ec138db43fadbdddcf15019784100ddfcce18bfd6eaab8b23cd4143abefcb",
+    "map": [
+      128,
+      128
+    ],
+    "map_style": "railway-fixture",
+    "preservation": {
+      "normal_profile_unchanged": true,
+      "secret_files_removed": true,
+      "source_saves_unchanged": true
+    },
+    "resource_hashes": {
+      "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+      "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+      "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+    },
+    "result": {
+      "construction_cap": 50000,
+      "operating_reserve": 10000,
+      "orders": [
+        {
+          "destination_id": 0,
+          "load_type": 2,
+          "nonstop_flags": 0,
+          "order_type": 1,
+          "unload_type": 4
+        },
+        {
+          "destination_id": 1,
+          "load_type": 4,
+          "nonstop_flags": 0,
+          "order_type": 1,
+          "unload_type": 0
+        }
+      ],
+      "service_summary": {
+        "deliveries": 2,
+        "departures": 3,
+        "scope": "vehicle_tagged_native",
+        "vehicle": 2
+      },
+      "spent": 14979,
+      "vehicle": 2
+    },
+    "seed": 6,
+    "server_config_sha256": "fd494984b48210165c423dedf2b4fa42b44c5b42aa1923c3e8032bbf7d5fb16d",
+    "service_save": {
+      "path": "artifacts/native-railway/20261025T173055Z-89e8c947/native-service-final.sav",
+      "sha256": "f5d0ebd036dc449a48fbe123b85a1eec8fa07989519a5a198e9564ab7c46ed76"
+    },
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "ab391e922308cdbe43f4952afa40aab729b9f0fda670cdd081a5923299314bb7",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "92335f666d374ffa0e051c30c9ee170e89d9520d1629675fd182e30ba9ad600a",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "ed8ae8b7446fc0d597c8ea238f38af406138432988ca5df4045f922f5cdfda8b",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "44347e6475a8dd385cbb543284e98e7c9c7a714213f9279b92d5d328f5a44c40",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "784861d8081ce3c6af9c7f395aa457bbf8efd22c4bfefc55d7372ff268942f3a",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "town_density": "normal"
+  },
+  "date": "2026-10-25 America/Vancouver",
+  "direct_three_town_gate": {
+    "artifact": "artifacts/native-railway/20261025T175057Z-88a7a87a",
+    "checks": [
+      "all_line_outcomes_reload_replay",
+      "line_older_save_refusal",
+      "three_town_cap_nonmutation",
+      "three_town_duplicate",
+      "three_town_passenger_service",
+      "three_town_read_only_plan"
+    ],
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "elapsed_seconds": 443.393,
+    "engine_head": "faf823d8ab5e76319ffb64ebc535ccb1547a9d4d",
+    "jobs": [
+      {
+        "actual_cost": 13220,
+        "final_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 1,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 2,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "insert_index": null,
+        "new_road_tiles": 45,
+        "old_orders": null,
+        "path": "artifacts/native-railway/20261025T175057Z-88a7a87a/jobs/three-town-line.json",
+        "quoted_total": 13220,
+        "retained_actions": 54,
+        "sha256": "e4ee48961d2bdc66b22dd411ef88ea16cf747287dff5e53da479f8f355eabaeb",
+        "state": "operating",
+        "town_ids": [
+          0,
+          13,
+          16
+        ]
+      }
+    ],
+    "manifest_sha256": "d585e837dc5e0379ecfd6bfd8e2f37213870d53a2e34f40019252452bf5d93f3",
+    "map": [
+      256,
+      256
+    ],
+    "map_style": "normal",
+    "preservation": {
+      "normal_profile_unchanged": true,
+      "secret_files_removed": true,
+      "source_saves_unchanged": true
+    },
+    "resource_hashes": {
+      "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+      "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+      "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+    },
+    "result": {
+      "construction_cap": 50000,
+      "operating_reserve": 10000,
+      "orders": [
+        {
+          "destination_id": 0,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 1,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 2,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        }
+      ],
+      "service_summary": {
+        "passengers_delivered": {
+          "0": 5,
+          "1": 31,
+          "2": 31
+        },
+        "scope": "vehicle-tagged passenger acceptance at all ordered stops",
+        "vehicle": 6
+      },
+      "spent": 13220,
+      "stations": [
+        0,
+        1,
+        2
+      ],
+      "vehicle": 6
+    },
+    "seed": 20261024,
+    "server_config_sha256": "e3962df4af4cd19febcdb7aa7f572551c8ace72e43922a0b41d0d901a0083e19",
+    "service_save": {
+      "path": "artifacts/native-railway/20261025T175057Z-88a7a87a/bus-service-final.sav",
+      "sha256": "94d36fc892308ff1ef251782dadc791f69713fa4ee36f57cd21c035c63cf11cf"
+    },
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "ed8ae8b7446fc0d597c8ea238f38af406138432988ca5df4045f922f5cdfda8b",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "8cb4cc49cc11ca1c29a692314fbad6be17cf090dddb1ffc2bf6e01664111e850",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "784861d8081ce3c6af9c7f395aa457bbf8efd22c4bfefc55d7372ff268942f3a",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "town_density": "normal"
+  },
+  "engine": {
+    "branch": "copilot/m2e-town-buses",
+    "clean": true,
+    "client_sha256": "fa5ab5e243444b81d4d4870740cae9011410d8fc7f80c1c2a7fd0476c7cf33bc",
+    "copl_schema": 5,
+    "head": "faf823d8ab5e76319ffb64ebc535ccb1547a9d4d",
+    "max_shared_retained_operations": 64,
+    "max_stops": 8,
+    "patches": [
+      "engine/patches/0019-Support-bounded-bus-order-insertion-and-multi-stop-lines.patch",
+      "engine/patches/0020-Observe-bus-stop-town-associations-for-existing-line-edits.patch",
+      "engine/patches/0021-Observe-drive-through-bus-stop-road-geometry.patch"
+    ],
+    "protocol": 3,
+    "revision": "20261025-m2e-town-buses-gfaf823d8ab",
+    "server_sha256": "1a129b4a5ba384bc21c5c7fa4f6243c146d98e987be34009786054a11e6d2509",
+    "source_hashes": {
+      "src/command_type.h": "9fe8cccac98094d36d8dbc1405895f9026b5663e890a07826c35e18bfdf51f61",
+      "src/copilot_cmd.cpp": "1d63fe8653446828873856ee6729232c7305feaf1af7ede147eaa5c8a91a67e0",
+      "src/copilot_cmd.h": "e225f10dfda5947a452c4ca4c8a8fdd3482b96cb90d756f27975d6a2e521eea1",
+      "src/copilot_observation.cpp": "e11e5689cadcd14b689abe55599ce1e15ff8b3ab7e5b2080f02fba6955e788ea",
+      "src/economy.cpp": "e6dfce70889b2a81ed941d62b9bcbd38af37515136afc49bebdf9485499b4c34",
+      "src/network/network_admin.cpp": "260ac5c97abcaf0773d5c87dfdf6623ff33182c671f5fbc627f6335c369d917a",
+      "src/network/network_admin.h": "419ea361790d516f13adddd8875d1e6fb5d616ae7ae1665a3f9b9def28782c9b",
+      "src/network/network_command.cpp": "23cba4bc14457b0eff63709cb87494dd0426134078c113802088e0df748eb6fa",
+      "src/saveload/copilot_sl.cpp": "630beaf2f6f8e4cbcc686cb3d0a23c47a001034178fa1b032e5ba9a9d3992d76"
+    },
+    "version": "OpenTTD 15.3 custom native bridge"
+  },
+  "limits": [
+    "Three stops demonstrated at runtime; eight is an admission bound, not an eight-stop reliability cohort.",
+    "Insertion evidence uses explicit high town density; product default remains normal density and random seed.",
+    "The selected prior normal-density copied line had no affordable insertion within remaining history; refused without mutation.",
+    "Edits require a running owned standard passenger bus, unshared ordinary orders and distinct new towns.",
+    "No automatic retry/rollback, borrowing, replacement bus, demolition, bridges or terraforming.",
+    "Product transport is still server/client/Admin; single-process M2f remains planned."
+  ],
+  "retained_failures": [
+    {
+      "artifact": "artifacts/native-railway/20261025T173428Z-b7c120ee",
+      "failure": "ProbeError: bounded new-stop search returned no plan; inspect retained trials",
+      "manifest_sha256": "4c8b23931cdd046d37f9c8c958d2a1a9d5b8cd46e65079ece4fc43e4d12f738a",
+      "nonmutating_trial_failures": {
+        "existing bus stops must have observed town associations": 1
+      }
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T173606Z-4274df69",
+      "failure": "ProbeError: bounded new-stop search returned no plan; inspect retained trials",
+      "manifest_sha256": "73a2f3f0cbf43be8627873dac2f324f98e54151e501fd3f2ace0d1facd81d137",
+      "nonmutating_trial_failures": {
+        "existing bus stop geometry is not an exact straight drive-through station": 1
+      }
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T173926Z-6a995000",
+      "failure": "ProbeError: bounded new-stop search returned no plan; inspect retained trials",
+      "manifest_sha256": "06df6f509655003df67ea251c2d9f8e64f278e1db972708e09bf8dfb395ad7c7",
+      "nonmutating_trial_failures": {
+        "bus expansion needs 48 retained records, only 37 available; nothing built": 1
+      }
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T174219Z-07ebc2d6",
+      "failure": "ProbeError: bounded new-stop search returned no plan; inspect retained trials",
+      "manifest_sha256": "d62d7cd61329adb285e9017372dbcf024515fa1467c12dadff89cece020cf920",
+      "nonmutating_trial_failures": {
+        "bus expansion needs 48 retained records, only 37 available; nothing built": 1
+      }
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T174317Z-7562bb09",
+      "failure": "ProbeError: bounded new-stop search returned no plan; inspect retained trials",
+      "manifest_sha256": "ae10631d9f91dc7e802fb4db850e51ddb5c839f24297cce01de5632a707414ec",
+      "nonmutating_trial_failures": {
+        "bus expansion needs 48 retained records, only 37 available; nothing built": 1,
+        "no bus route found within the observed corridor/160-tile bound; feasibility unknown": 11
+      }
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T174613Z-0387dc00",
+      "failure": "ProbeError: bounded new-stop search returned no plan; inspect retained trials",
+      "manifest_sha256": "f644d1353717389a4c054d2b9125beb153cbd23d5008cbcda8b4281eb310e378",
+      "nonmutating_trial_failures": {
+        "bus expansion needs 156 retained records, only 14 available; nothing built": 1,
+        "bus expansion needs 25 retained records, only 14 available; nothing built": 2,
+        "bus expansion needs 55 retained records, only 14 available; nothing built": 1,
+        "bus expansion needs 64 retained records, only 14 available; nothing built": 1,
+        "bus expansion needs 82 retained records, only 14 available; nothing built": 1,
+        "bus expansion needs 88 retained records, only 14 available; nothing built": 1,
+        "no bus route found within the observed corridor/160-tile bound; feasibility unknown": 5
+      }
+    }
+  ],
+  "same_bus_middle_insertion_gate": {
+    "artifact": "artifacts/native-railway/20261025T175339Z-be1d4f76",
+    "checks": [
+      "all_line_outcomes_reload_replay",
+      "existing_line_cap_nonmutation",
+      "existing_line_read_only_plan",
+      "insertion_duplicate",
+      "line_older_save_refusal",
+      "same_bus_expanded_passenger_service",
+      "two_town_base_cap_nonmutation",
+      "two_town_base_duplicate",
+      "two_town_base_passenger_service",
+      "two_town_base_read_only_plan"
+    ],
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "elapsed_seconds": 358.161,
+    "engine_head": "faf823d8ab5e76319ffb64ebc535ccb1547a9d4d",
+    "jobs": [
+      {
+        "actual_cost": 8781,
+        "final_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 1,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "insert_index": null,
+        "new_road_tiles": 20,
+        "old_orders": null,
+        "path": "artifacts/native-railway/20261025T175339Z-be1d4f76/jobs/initial-bus-line.json",
+        "quoted_total": 8781,
+        "retained_actions": 27,
+        "sha256": "455c811695b77a94c780c5b0bc92f32eb2ea07fe27397695033db3f2a0db4a22",
+        "state": "operating",
+        "town_ids": [
+          1,
+          23
+        ]
+      },
+      {
+        "actual_cost": 3182,
+        "final_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 2,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 1,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "insert_index": 1,
+        "new_road_tiles": 19,
+        "old_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 1,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "path": "artifacts/native-railway/20261025T175339Z-be1d4f76/jobs/insert-line-stop.json",
+        "quoted_total": 3182,
+        "retained_actions": 23,
+        "sha256": "c0e64c41e2d07cce82a8f47f684748a1fd531911b4882c08cfabd31683d27a5b",
+        "state": "operating",
+        "town_ids": [
+          36
+        ]
+      }
+    ],
+    "manifest_sha256": "6ae81f69e4f1655737cdce0f6644313d46359552caf676787fa9a59bbbcc0347",
+    "map": [
+      256,
+      256
+    ],
+    "map_style": "normal",
+    "preservation": {
+      "normal_profile_unchanged": true,
+      "secret_files_removed": true,
+      "source_saves_unchanged": true
+    },
+    "resource_hashes": {
+      "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+      "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+      "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+    },
+    "result": {
+      "construction_cap": 50000,
+      "operating_reserve": 10000,
+      "orders": [
+        {
+          "destination_id": 0,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 2,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 1,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        }
+      ],
+      "service_summary": {
+        "passengers_delivered": {
+          "0": 12,
+          "1": 21,
+          "2": 5
+        },
+        "scope": "vehicle-tagged passenger acceptance at all ordered stops",
+        "vehicle": 5
+      },
+      "spent": 3182,
+      "stations": [
+        0,
+        2,
+        1
+      ],
+      "vehicle": 5
+    },
+    "seed": 20261024,
+    "server_config_sha256": "df4859988a939cbfe3642c0fe7b3edb39dcc058537ad090562c988ff5f9e3711",
+    "service_save": {
+      "path": "artifacts/native-railway/20261025T175339Z-be1d4f76/bus-service-final.sav",
+      "sha256": "53223c0cc9f8576785de49367a36110867656c61d4aa2b82b56fd6b57d2154b1"
+    },
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "ed8ae8b7446fc0d597c8ea238f38af406138432988ca5df4045f922f5cdfda8b",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "d66af2c356db5430255df3b8b915cc01432db17a6fbddb42ca17c219f9638931",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "784861d8081ce3c6af9c7f395aa457bbf8efd22c4bfefc55d7372ff268942f3a",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "town_density": "high"
+  },
+  "schema": 1,
+  "scope": "R13/D033 bounded multi-town buses and explicit same-bus stop insertion; not M2f, M3 or M5 release acceptance",
+  "two_town_and_guards_regression": {
+    "artifact": "artifacts/native-railway/20261025T175057Z-89e10733",
+    "checks": [
+      "bus_cap_rejection_reload_replay",
+      "bus_independent_commissioning",
+      "bus_invalid_shape_nonadmission",
+      "bus_low_budget_nonmutation",
+      "bus_older_save_refuses_false_completion",
+      "bus_retained_reload_replay",
+      "duplicate_bus_no_mutation",
+      "normal_map_bus_plan",
+      "normal_map_generation",
+      "passenger_deliveries_both_towns"
+    ],
+    "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+    "elapsed_seconds": 230.2,
+    "engine_head": "faf823d8ab5e76319ffb64ebc535ccb1547a9d4d",
+    "jobs": [
+      {
+        "diagnostic_guard": true,
+        "path": "artifacts/native-railway/20261025T175057Z-89e10733/jobs/bus-cap-guard.json",
+        "retained_actions": 1,
+        "sha256": "4ebdb54a62a7b25acfa4e7901b291abdaa6f995b6ab168ce95ebfd54c3cb4e41"
+      },
+      {
+        "actual_cost": 8725,
+        "final_orders": [
+          {
+            "destination_id": 0,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          },
+          {
+            "destination_id": 1,
+            "load_type": 0,
+            "non_stop": 0,
+            "order_type": 1,
+            "unload_type": 0
+          }
+        ],
+        "insert_index": null,
+        "new_road_tiles": 20,
+        "old_orders": null,
+        "path": "artifacts/native-railway/20261025T175057Z-89e10733/jobs/bus-probe.json",
+        "quoted_total": 8725,
+        "retained_actions": 27,
+        "sha256": "325c9a4e0b8b0e2b614f67b2662ca27927e471be63759296270333cef0ccc55a",
+        "state": "operating",
+        "town_ids": [
+          0,
+          13
+        ]
+      },
+      {
+        "diagnostic_guard": true,
+        "path": "artifacts/native-railway/20261025T175057Z-89e10733/jobs/invalid-bus-shape-0.json",
+        "retained_actions": 0,
+        "sha256": "795f2bdb2db5044a6cfcbc1a3cd90f4d1843bcc8bb2c0fd595117961bb333af3"
+      },
+      {
+        "diagnostic_guard": true,
+        "path": "artifacts/native-railway/20261025T175057Z-89e10733/jobs/invalid-bus-shape-1.json",
+        "retained_actions": 0,
+        "sha256": "8dbfe803d7ae61fd2b3fd9a5ea8efa7c568405d062ad6dc4cdf87984b1d63d7a"
+      },
+      {
+        "diagnostic_guard": true,
+        "path": "artifacts/native-railway/20261025T175057Z-89e10733/jobs/invalid-bus-shape-2.json",
+        "retained_actions": 0,
+        "sha256": "7beffd89e78a6b68c5f9140187322c789d9cc52d40ef89124dac09222cdda380"
+      }
+    ],
+    "manifest_sha256": "c1aead36533f78871d75884606c7ee5a032cc9b3d1eeda565487517f2c7359d4",
+    "map": [
+      256,
+      256
+    ],
+    "map_style": "normal",
+    "preservation": {
+      "normal_profile_unchanged": true,
+      "secret_files_removed": true,
+      "source_saves_unchanged": true
+    },
+    "resource_hashes": {
+      "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+      "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+      "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+    },
+    "result": {
+      "construction_cap": 50000,
+      "operating_reserve": 10000,
+      "orders": [
+        {
+          "destination_id": 0,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        },
+        {
+          "destination_id": 1,
+          "load_type": 0,
+          "non_stop": 0,
+          "order_type": 1,
+          "unload_type": 0
+        }
+      ],
+      "service_summary": {
+        "passengers_delivered": {
+          "0": 5,
+          "1": 31
+        },
+        "scope": "vehicle-tagged passenger acceptance at all ordered stops",
+        "vehicle": 6
+      },
+      "spent": 8725,
+      "stations": [
+        0,
+        1
+      ],
+      "vehicle": 6
+    },
+    "seed": 20261024,
+    "server_config_sha256": "cd9e0900d7555e3f67d52becd3e88ff03659375e7afd8479b187dc4774f08ccb",
+    "service_save": {
+      "path": "artifacts/native-railway/20261025T175057Z-89e10733/bus-service-final.sav",
+      "sha256": "9b6e2e3e99a4c50c237b78f4d06d17ba4232730da369bd5270299864674facea"
+    },
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "ed8ae8b7446fc0d597c8ea238f38af406138432988ca5df4045f922f5cdfda8b",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "8cb4cc49cc11ca1c29a692314fbad6be17cf090dddb1ffc2bf6e01664111e850",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "784861d8081ce3c6af9c7f395aa457bbf8efd22c4bfefc55d7372ff268942f3a",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "town_density": "normal"
+  },
+  "unit_tests": {
+    "command": "python3 -B -m unittest discover -s tests",
+    "local_log": ".runtime/bus-line-unit-tests.log",
+    "log_sha256": "c6498dcfd39882fdd8c3398091ada319ff8f6525c2fc499844b3f12bf5592f2f",
+    "passed": 277
+  }
+}

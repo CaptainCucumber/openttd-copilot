@@ -158,6 +158,43 @@ class NativeBusTests(unittest.TestCase):
                 max_expansions=20,
             )
 
+    def test_find_path_uses_non_normal_station_tiles_only_when_explicit_anchors(self):
+        records = {
+            9: tile(9, tile_type=5, road_bits=5, owner=0, road_type=0, normal_road=False),
+            10: tile(10, road_bits=5),
+            11: tile(11, tile_type=5, road_bits=5, owner=0, road_type=0, normal_road=False),
+        }
+        with self.assertRaisesRegex(RuntimeError, "no bus route"):
+            native_bus.find_path(records, 8, 8, [records[9]], [records[11]], max_expansions=20)
+        result = native_bus.find_path(
+            records, 8, 8, [records[9]], [records[11]],
+            anchor_tiles={9, 11}, max_expansions=20,
+        )
+        self.assertEqual(result["path"], [9, 10, 11])
+        self.assertFalse(records[9]["normal_road"])
+        self.assertEqual(records[9]["tile_type"], 5)
+
+    def test_find_path_can_traverse_third_explicit_old_line_stop_between_anchors(self):
+        records = {
+            9: tile(9, tile_type=5, road_bits=5, owner=0, road_type=0, normal_road=False),
+            10: tile(10, road_bits=5),
+            11: tile(11, tile_type=5, road_bits=5, owner=0, road_type=0, normal_road=False),
+            12: tile(12, road_bits=5),
+            13: tile(13, tile_type=5, road_bits=5, owner=0, road_type=0, normal_road=False),
+        }
+        with self.assertRaisesRegex(RuntimeError, "no bus route"):
+            native_bus.find_path(
+                records, 8, 8, [records[9]], [records[13]],
+                anchor_tiles={9, 13}, max_expansions=20,
+            )
+        result = native_bus.find_path(
+            records, 8, 8, [records[9]], [records[13]],
+            anchor_tiles={9, 11, 13}, max_expansions=20,
+        )
+        self.assertEqual(result["path"], [9, 10, 11, 12, 13])
+        self.assertEqual(native_bus.merge_road_steps(
+            [result["path"]], records, 8, 8, protected={9, 11, 13}), [])
+
     def test_neighbour_and_find_path_respect_map_boundaries(self):
         self.assertIsNone(native_bus.neighbour(0, 0, 8, 8))
         self.assertIsNone(native_bus.neighbour(7, 2, 8, 8))
@@ -267,6 +304,306 @@ class NativeBusTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "route|endpoint|stop"):
                 native_bus.plan_bus(session, 1, 2, 1_000, 0)
 
+    def test_plan_multi_town_reuses_exact_intermediate_and_combines_job_counts(self):
+        session = Session(self.root)
+        towns = [
+            {"town_id": 1, "name": "A", "tile": 9},
+            {"town_id": 2, "name": "B", "tile": 11},
+            {"town_id": 3, "name": "C", "tile": 13},
+        ]
+        first = {9: tile(9), 10: tile(10), 11: tile(11), 18: tile(18, tile_type=0)}
+        second = {11: tile(11), 12: tile(12), 13: tile(13)}
+        path_calls = []
+
+        def path(records, width, height, sources, destinations):
+            path_calls.append((sources, destinations))
+            return {
+                "path": [sources[0]["tile"], sources[0]["tile"] + 1, destinations[0]["tile"]],
+                "source": sources[0], "destination": destinations[0], "expansions": 1,
+            }
+
+        quote = {
+            "supported_profile": True, "quote_success": True, "cost": 10,
+            "passenger_acceptance": 8, "passenger_production": 1,
+            "operation_state": 0, "capacity": 100, "retained_count": 0, "error": "",
+        }
+        with patch.object(native_bus, "_identity", return_value=identity()), \
+             patch.object(native_bus, "discover", return_value=towns), \
+             patch.object(native_bus, "read_corridor", side_effect=[(first, [2, 3]), (second, [4, 5])]), \
+             patch.object(native_bus, "candidate_stops",
+                          side_effect=[[first[9]], [first[11]], [second[13]]]), \
+             patch.object(native_bus, "find_path", side_effect=path), \
+             patch.object(native_bus, "quote_step", return_value=quote), \
+             patch.object(native_bus, "paged", return_value=[{
+                 "engine_id": 3, "buildable": True, "default_cargo": 0,
+                 "default_capacity": 20, "road_type": 0, "purchase_cost": 20,
+             }]):
+            plan = native_bus.plan_bus(session, 1, 3, 1_000, 0, via_town_ids=(2,))
+        self.assertIs(path_calls[1][0][0], path_calls[0][1][0])
+        self.assertEqual(plan["town_ids"], [1, 2, 3])
+        self.assertEqual(plan["geometry"]["paths"], [[9, 10, 11], [11, 12, 13]])
+        self.assertEqual(plan["observation_frame_span"], [2, 5])
+        self.assertEqual(plan["operation_count"], len(plan["steps"]) + 5)
+        self.assertEqual([step["town_id"] for step in plan["steps"] if step["kind"] == native_bus.STOP],
+                         [1, 2, 3])
+
+    def test_merge_road_steps_merges_masks_and_protects_selected_stops(self):
+        records = {
+            9: tile(9, road_bits=1),
+            10: tile(10, road_bits=0, tile_type=0),
+            18: tile(18, road_bits=0, tile_type=0),
+        }
+        steps = native_bus.merge_road_steps([[9, 10], [10, 18]], records, 8, 8)
+        self.assertEqual({step["tile"]: step["road_bits"] for step in steps},
+                         {9: 5, 10: 3, 18: 8})
+        with self.assertRaisesRegex(RuntimeError, "station road bits"):
+            native_bus.merge_road_steps([[9, 10]], {
+                9: tile(9, road_bits=1), 10: tile(10, road_bits=0, tile_type=0),
+            }, 8, 8, protected=[9])
+
+    def _observed_existing_bus(self, *, orders_shared=False, crashed=False, stopped=False, orders=None):
+        orders = orders or [
+            {"order_type": 1, "destination_id": 10, "load_type": 0, "unload_type": 0, "non_stop": 0},
+            {"order_type": 1, "destination_id": 20, "load_type": 0, "unload_type": 0, "non_stop": 0},
+            {"order_type": 1, "destination_id": 40, "load_type": 0, "unload_type": 0, "non_stop": 0},
+        ]
+        vehicle = {
+            "vehicle_id": 7, "owner": 0, "engine_id": 3, "cargo_type": 0,
+            "cargo_capacity": 20, "orders_shared": orders_shared, "crashed": crashed,
+            "stopped": stopped, "tile": 22, "orders": orders,
+        }
+        stops = [
+            {"station_id": 10, "town_id": 1, "tile": 9, "road_bits": 5},
+            {"station_id": 20, "town_id": 2, "tile": 11, "road_bits": 5},
+            {"station_id": 40, "town_id": 4, "tile": 13, "road_bits": 5},
+        ]
+        return {"buses": [vehicle], "bus_stops": stops, "towns": [], "bus_engines": []}
+
+    def test_existing_bus_validation_rejects_shared_nonordinary_crashed_and_stopped(self):
+        cases = [
+            (self._observed_existing_bus(orders_shared=True), "shared"),
+            (self._observed_existing_bus(crashed=True), "crashed"),
+            (self._observed_existing_bus(stopped=True), "stopped"),
+            (self._observed_existing_bus(orders=[
+                {"order_type": 2, "destination_id": 10, "load_type": 0, "unload_type": 0, "non_stop": 0},
+                {"order_type": 1, "destination_id": 20, "load_type": 0, "unload_type": 0, "non_stop": 0},
+            ]), "ordinary"),
+        ]
+        for observed, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(RuntimeError, message):
+                native_bus._existing_bus(observed, 7)
+
+    def test_existing_bus_accepts_exact_engine_stop_schema_plus_authoritative_town(self):
+        observed = self._observed_existing_bus()
+        observed["bus_stops"] = [
+            {"station_id": station, "stop_id": index, "tile": tile_id,
+             "orientation": 0, "owner": 0, "town_id": town}
+            for index, (station, tile_id, town) in enumerate(
+                ((10, 9, 1), (20, 11, 2), (40, 13, 4)))
+        ]
+        _, _, stops = native_bus._existing_bus(observed, 7)
+        self.assertEqual(native_bus._stop_fingerprint(stops), [
+            {"station_id": 10, "stop_id": 0, "tile": 9, "orientation": 0, "owner": 0, "town_id": 1},
+            {"station_id": 20, "stop_id": 1, "tile": 11, "orientation": 0, "owner": 0, "town_id": 2},
+            {"station_id": 40, "stop_id": 2, "tile": 13, "orientation": 0, "owner": 0, "town_id": 4},
+        ])
+
+    def test_plan_bus_stops_has_common_preview_shape_and_no_record_when_requested(self):
+        observed = self._observed_existing_bus(orders=[
+            {"order_type": 1, "destination_id": 10, "load_type": 0, "unload_type": 0, "non_stop": 0},
+            {"order_type": 1, "destination_id": 40, "load_type": 0, "unload_type": 0, "non_stop": 0},
+        ])
+        observed["towns"] = [{"town_id": 3, "name": "C", "tile": 11}]
+        observed["bus_engines"] = [{
+            "engine_id": 3, "buildable": True, "default_cargo": 0,
+            "default_capacity": 20, "road_type": 0, "purchase_cost": 100,
+        }]
+        first = {9: tile(9, tile_type=5, owner=0), 10: tile(10), 11: tile(11)}
+        second = {11: tile(11), 12: tile(12), 13: tile(13, tile_type=5, owner=0)}
+        chosen = {**first[11], "step": {
+            "kind": native_bus.STOP, "tile": 11, "orientation": 0, "town_id": 3, "max_cost": 10,
+        }}
+        paths = [
+            {"path": [9, 10, 11], "source": {**first[9], "tile_type": 2, "station_id": 10},
+             "destination": chosen, "expansions": 1},
+            {"path": [11, 12, 13], "source": chosen,
+             "destination": {**second[13], "tile_type": 2, "station_id": 40}, "expansions": 1},
+        ]
+        session = Session(self.root)
+        quote = {
+            "supported_profile": True, "quote_success": True, "cost": 10,
+            "passenger_acceptance": 8, "passenger_production": 1,
+            "operation_state": 0, "capacity": 100, "retained_count": 0, "error": "",
+        }
+        with patch.object(native_bus, "_identity", return_value=identity()), \
+             patch.object(native_bus, "inspect", return_value=observed), \
+             patch.object(native_bus, "read_corridor", side_effect=[(first, [2, 3]), (second, [4, 5])]), \
+             patch.object(native_bus, "candidate_stops", return_value=[first[11]]), \
+             patch.object(native_bus, "find_path", side_effect=paths), \
+             patch.object(native_bus, "road_steps", return_value=[]), \
+             patch.object(native_bus, "quote_step", return_value=quote):
+            plan = native_bus.plan_bus_stops(session, 7, [3], 1, 100, 5, record=False)
+        self.assertEqual(plan["mode"], "add_stops")
+        self.assertEqual(plan["vehicle_id"], 7)
+        self.assertEqual(plan["town_ids"], [3])
+        self.assertEqual(plan["insert_index"], 1)
+        self.assertEqual(plan["quoted_total"], 10)
+        self.assertEqual(plan["operation_count"], 4)
+        self.assertEqual(plan["geometry"]["path"], [9, 10, 11, 12, 13])
+        self.assertEqual(plan["observation_frame_span"], [2, 5])
+        self.assertEqual(plan["engine"]["engine_id"], 3)
+        self.assertEqual(session.writes, 0)
+        self.assertEqual(session.manifest, {})
+
+    def test_execute_add_stops_inserts_at_beginning_middle_and_end_without_purchase(self):
+        class Executor:
+            calls = []
+
+            def __init__(self, session, plan, job_id, record, job_file, identity_value, operation):
+                self.record = record
+
+            def mutate(self, method, fields, cap, operation_id):
+                self.calls.append(dict(fields))
+                self.record["spent"] += cap
+                return {"created_asset_id": 30, "outcome": identity()}
+
+        for insertion in (0, 1, 3):
+            with self.subTest(insertion=insertion):
+                observed = self._observed_existing_bus()
+                old_orders = native_bus._order_fingerprint(observed["buses"][0]["orders"])
+                expected = list(old_orders)
+                expected.insert(insertion, {
+                    "order_type": 1, "destination_id": 30, "load_type": 0,
+                    "unload_type": 0, "non_stop": 0,
+                })
+                running_after_build = json.loads(json.dumps(observed))
+                running_after_build["bus_stops"].append(
+                    {"station_id": 30, "town_id": 3, "tile": 12, "road_bits": 5})
+                stopped = json.loads(json.dumps(running_after_build))
+                stopped["buses"][0]["stopped"] = True
+                configured = json.loads(json.dumps(stopped))
+                configured["buses"][0]["orders"] = expected
+                plan = {
+                    "mode": "add_stops", "world_id": "world-1", "position": {"sequence": 0, "head": None},
+                    "vehicle_id": 7, "vehicle_snapshot": native_bus._vehicle_snapshot(observed["buses"][0]),
+                    "old_orders": old_orders, "old_order_fingerprint": old_orders,
+                    "old_stops": observed["bus_stops"], "insert_index": insertion,
+                    "town_ids": [3], "source": {"town_id": 3}, "destination": {"town_id": 3},
+                    "steps": [{"kind": native_bus.STOP, "tile": 12, "town_id": 3, "max_cost": 10}],
+                    "construction_cap": 100, "operating_reserve": 0,
+                }
+                session = Session(self.root)
+                session.admin.copilot_vehicle_events.return_value = {
+                    "epoch": 1, "gap": False, "events": [], "next_seq": 0,
+                }
+                Executor.calls = []
+                job_id = f"insert-{insertion}"
+                with patch.object(native_bus, "_identity", return_value=identity()), \
+                     patch.object(native_bus, "inspect", side_effect=[
+                         observed, running_after_build, stopped, stopped, configured,
+                     ]), \
+                     patch.object(native_bus, "quote_step", return_value={
+                         "supported_profile": True, "quote_success": True, "cost": 10,
+                         "passenger_acceptance": 8, "passenger_production": 1,
+                         "operation_state": 0, "error": "",
+                     }), \
+                     patch.object(native_bus, "JournaledExecutor", Executor):
+                    result = native_bus.execute_bus(session, plan, job_id)
+                self.assertEqual(result["stations"], [order["destination_id"] for order in expected])
+                self.assertEqual(result["vehicle"], 7)
+                self.assertNotIn(native_bus.PURCHASE, [call["kind"] for call in Executor.calls])
+                order_call = next(call for call in Executor.calls if call["kind"] == native_bus.ORDER)
+                self.assertEqual(order_call["order_index"], insertion)
+
+    def test_execute_adds_two_ordered_stops_at_exact_middle_indices_and_preserves_fingerprints(self):
+        class Executor:
+            calls = []
+            stop_ids = iter((30, 31))
+
+            def __init__(self, session, plan, job_id, record, job_file, identity_value, operation):
+                self.record = record
+
+            def mutate(self, method, fields, cap, operation_id):
+                self.calls.append(dict(fields))
+                self.record["spent"] += cap
+                created = next(self.stop_ids) if fields["kind"] == native_bus.STOP else 0
+                return {"created_asset_id": created, "outcome": identity()}
+
+        observed = self._observed_existing_bus()
+        old_orders = native_bus._order_fingerprint(observed["buses"][0]["orders"])
+        old_stops = native_bus._stop_fingerprint(observed["bus_stops"])
+        after_build = json.loads(json.dumps(observed))
+        after_build["bus_stops"].extend([
+            {"station_id": 30, "town_id": 3, "tile": 12},
+            {"station_id": 31, "town_id": 5, "tile": 14},
+        ])
+        stopped = json.loads(json.dumps(after_build))
+        stopped["buses"][0]["stopped"] = True
+        after_first = json.loads(json.dumps(stopped))
+        after_first["buses"][0]["orders"] = [
+            old_orders[0],
+            {"order_type": 1, "destination_id": 30, "load_type": 0, "unload_type": 0, "non_stop": 0},
+            *old_orders[1:],
+        ]
+        final = json.loads(json.dumps(after_first))
+        final["buses"][0]["orders"].insert(2, {
+            "order_type": 1, "destination_id": 31, "load_type": 0, "unload_type": 0, "non_stop": 0,
+        })
+        plan = {
+            "mode": "add_stops", "world_id": "world-1", "position": {"sequence": 0, "head": None},
+            "vehicle_id": 7, "vehicle_snapshot": native_bus._vehicle_snapshot(observed["buses"][0]),
+            "old_orders": old_orders, "old_order_fingerprint": old_orders,
+            "old_stops": observed["bus_stops"], "old_stop_fingerprint": old_stops,
+            "insert_index": 1, "town_ids": [3, 5],
+            "steps": [
+                {"kind": native_bus.STOP, "tile": 12, "town_id": 3, "max_cost": 10},
+                {"kind": native_bus.STOP, "tile": 14, "town_id": 5, "max_cost": 10},
+            ],
+            "quoted_total": 20, "construction_cap": 100, "operating_reserve": 0,
+        }
+        session = Session(self.root)
+        session.admin.copilot_vehicle_events.return_value = {
+            "epoch": 1, "gap": False, "events": [], "next_seq": 0,
+        }
+        Executor.calls = []
+        Executor.stop_ids = iter((30, 31))
+        with patch.object(native_bus, "_identity", return_value=identity()), \
+             patch.object(native_bus, "inspect", side_effect=[
+                 observed, after_build, stopped, stopped, after_first, after_first, final,
+             ]), \
+             patch.object(native_bus, "quote_step", return_value={
+                 "supported_profile": True, "quote_success": True, "cost": 10,
+                 "passenger_acceptance": 8, "passenger_production": 1,
+                 "operation_state": 0, "error": "",
+             }), \
+             patch.object(native_bus, "JournaledExecutor", Executor):
+            result = native_bus.execute_bus(session, plan, "insert-two")
+        self.assertEqual([order["destination_id"] for order in result["orders"]], [10, 30, 31, 20, 40])
+        self.assertEqual(result["old_orders"], old_orders)
+        self.assertEqual([call["order_index"] for call in Executor.calls
+                          if call["kind"] == native_bus.ORDER], [1, 2])
+        self.assertEqual(native_bus._order_fingerprint(observed["buses"][0]["orders"]), old_orders)
+        self.assertEqual(native_bus._stop_fingerprint(observed["bus_stops"]), old_stops)
+
+    def test_execute_add_stops_rejects_stale_orders_before_first_mutation(self):
+        observed = self._observed_existing_bus()
+        fingerprint = native_bus._order_fingerprint(observed["buses"][0]["orders"])
+        plan = {
+            "mode": "add_stops", "world_id": "world-1", "position": {"sequence": 0, "head": None},
+            "vehicle_id": 7, "vehicle_snapshot": native_bus._vehicle_snapshot(observed["buses"][0]),
+            "old_orders": fingerprint, "old_order_fingerprint": fingerprint,
+            "old_stops": observed["bus_stops"], "insert_index": 1, "town_ids": [3],
+            "steps": [], "quoted_total": 0, "construction_cap": 100, "operating_reserve": 0,
+        }
+        observed["buses"][0]["orders"][0], observed["buses"][0]["orders"][1] = (
+            observed["buses"][0]["orders"][1], observed["buses"][0]["orders"][0])
+        session = Session(self.root)
+        with patch.object(native_bus, "_identity", return_value=identity()), \
+             patch.object(native_bus, "inspect", return_value=observed), \
+             self.assertRaisesRegex(RuntimeError, "orders changed"):
+            native_bus.execute_bus(session, plan, "stale")
+        session.admin.copilot_mutate.assert_not_called()
+
     def _execution_plan(self, *, sequence=0, head=None):
         return {
             "world_id": "world-1",
@@ -361,6 +698,29 @@ class NativeBusTests(unittest.TestCase):
         self.assertEqual(verified["service_summary"]["passengers_delivered"], {"10": 2, "20": 3})
         self.assertEqual(json.loads((jobs / "verify.json").read_text())["result"], verified)
         self.assertEqual(verified["vehicle"], 7)
+
+    def test_verify_requires_attributed_passengers_at_every_ordered_stop(self):
+        session = Session(self.root)
+        result = {
+            "world_id": "world-1", "vehicle": 7, "source_station": 10,
+            "destination_station": 30, "stations": [10, 20, 30],
+            "epoch": 3, "cursor": 0, "initial": {"companies": [{"loan": 2_000}]},
+            "job_file": str(self.root / "jobs" / "all-stops.json"),
+        }
+        session.admin.copilot_vehicle_events.return_value = {
+            "epoch": 3, "gap": False, "next_seq": 3, "events": [
+                {"kind": "delivery", "station": station, "vehicle": 7,
+                 "company": 0, "cargo": 0, "amount": station // 10}
+                for station in (10, 20, 30)
+            ],
+        }
+        jobs = self.root / "jobs"
+        jobs.mkdir()
+        (jobs / "all-stops.json").write_text(json.dumps({"state": "commissioned"}), encoding="utf-8")
+        with patch.object(native_bus, "_identity", return_value=identity()):
+            verified = native_bus.verify_bus(session, result)
+        self.assertEqual(verified["service_summary"]["passengers_delivered"],
+                         {"10": 1, "20": 2, "30": 3})
 
     def test_verify_rejects_wrong_epoch_or_event_gap(self):
         for page in (

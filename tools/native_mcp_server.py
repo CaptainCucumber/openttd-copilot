@@ -107,15 +107,59 @@ def validate_build(arguments: Any, discovery: dict[str, Any], job_id: str) -> di
 
 def validate_bus(arguments: Any, job_id: str) -> dict[str, Any]:
     fields = {"job_id", "source_town_id", "destination_town_id", "construction_cap", "operating_reserve"}
-    if not isinstance(arguments, dict) or set(arguments) != fields:
-        raise ToolError("Supply exactly the five documented bus fields.")
+    if (not isinstance(arguments, dict) or not fields <= set(arguments) or
+            set(arguments) - fields - {"via_town_ids"}):
+        raise ToolError("Supply the five documented bus fields and optional ordered via_town_ids.")
     if arguments["job_id"] != job_id:
         raise ToolError("Unknown native job ID.")
     for key in fields - {"job_id"}:
         _integer(arguments[key], key, positive=key == "construction_cap")
     if arguments["source_town_id"] == arguments["destination_town_id"]:
         raise ToolError("Bus endpoints must be different observed towns.")
+    via = arguments.get("via_town_ids", [])
+    _town_ids(via, "via_town_ids", minimum=0, maximum=6)
+    towns = [arguments["source_town_id"], *via, arguments["destination_town_id"]]
+    if len(set(towns)) != len(towns):
+        raise ToolError("Bus line towns must be distinct and ordered.")
     return dict(arguments)
+
+
+def _town_ids(value: Any, name: str, *, minimum: int, maximum: int) -> list[int]:
+    if not isinstance(value, list) or not minimum <= len(value) <= maximum:
+        raise ToolError(f"{name} must be an ordered array of {minimum} through {maximum} town IDs.")
+    for town_id in value:
+        _integer(town_id, name)
+    if len(set(value)) != len(value):
+        raise ToolError(f"{name} must contain distinct observed town IDs.")
+    return value
+
+
+def validate_bus_stops(arguments: Any, job_id: str) -> dict[str, Any]:
+    fields = {"job_id", "vehicle_id", "town_ids", "insert_index",
+              "construction_cap", "operating_reserve"}
+    if not isinstance(arguments, dict) or set(arguments) != fields:
+        raise ToolError("Supply exactly the six documented add-stops fields.")
+    if arguments["job_id"] != job_id:
+        raise ToolError("Unknown native job ID.")
+    for key in fields - {"job_id", "town_ids"}:
+        _integer(arguments[key], key, positive=key == "construction_cap")
+    _town_ids(arguments["town_ids"], "town_ids", minimum=1, maximum=6)
+    if arguments["insert_index"] > 8:
+        raise ToolError("insert_index exceeds the eight-stop line bound.")
+    return dict(arguments)
+
+
+def _plan_bus_payload(session, payload, *, record=True):
+    if "vehicle_id" in payload:
+        return native_bus.plan_bus_stops(
+            session, payload["vehicle_id"], payload["town_ids"], payload["insert_index"],
+            payload["construction_cap"], payload["operating_reserve"], record=record)
+    kwargs = {"record": record}
+    if "via_town_ids" in payload:
+        kwargs["via_town_ids"] = payload["via_town_ids"]
+    return native_bus.plan_bus(
+        session, payload["source_town_id"], payload["destination_town_id"],
+        payload["construction_cap"], payload["operating_reserve"], **kwargs)
 
 
 class NativeJob:
@@ -170,11 +214,12 @@ class NativeJob:
                 raise ToolError(self.failure or "Could not open native map.")
             return self._open_response_locked()
 
-    def build(self, arguments: Any, *, bus=False) -> dict[str, Any]:
+    def build(self, arguments: Any, *, bus=False, bus_stops=False) -> dict[str, Any]:
         with self.lock:
             if self.job_id is None or self.discovery is None:
                 raise ToolError("Open a native map before requesting construction.")
-            payload = (validate_bus(arguments, self.job_id) if bus else
+            payload = (validate_bus_stops(arguments, self.job_id) if bus_stops else
+                       validate_bus(arguments, self.job_id) if bus else
                        validate_build(arguments, self.discovery, self.job_id))
             if self.payload is not None:
                 if payload == self.payload:
@@ -276,13 +321,13 @@ class NativeJob:
                           "Building requires a separate explicit request and live replanning.",
             }
 
-    def preview_bus(self, arguments: Any) -> dict[str, Any]:
+    def preview_bus(self, arguments: Any, *, bus_stops=False) -> dict[str, Any]:
         with self.lock:
             session = self._idle_session()
-            payload = validate_bus(arguments, self.job_id)
+            payload = (validate_bus_stops(arguments, self.job_id) if bus_stops else
+                       validate_bus(arguments, self.job_id))
             try:
-                plan = native_bus.plan_bus(session, payload["source_town_id"], payload["destination_town_id"],
-                                           payload["construction_cap"], payload["operating_reserve"], record=False)
+                plan = _plan_bus_payload(session, payload, record=False)
             except Exception as exc:
                 raise ToolError(f"No construction attempted. Bus planning failed: {self._redact(str(exc))}") from exc
             return {key: plan[key] for key in (
@@ -292,8 +337,13 @@ class NativeJob:
                     "job_id": self.job_id, "read_only": True, "construction_started": False,
                     "route_tiles": len(plan["geometry"]["path"]),
                     "clearing": "New road/depot tiles may clear trees within the quoted footprint; no houses, existing assets or terrain are removed.",
-                    "orders": "ordinary passenger pickup and unloading at both stops, not full load",
-                    "limits": "Current bounded construction quote, not a profit forecast. Building replans live."}
+                    "town_ids": [payload["source_town_id"], *payload.get("via_town_ids", []),
+                                 payload["destination_town_id"]] if not bus_stops else payload["town_ids"],
+                    "existing_vehicle_id": payload.get("vehicle_id"),
+                    "insert_index": payload.get("insert_index"),
+                    "orders": "ordinary passenger pickup and unloading at every stop, not full load",
+                    "limits": "Current bounded construction quote, not a profit forecast. Building replans live."
+                } | {key: plan[key] for key in ("towns", "old_orders") if key in plan}
 
     def close(self, arguments: Any) -> dict[str, Any]:
         if arguments not in ({}, None) and not (
@@ -355,10 +405,8 @@ class NativeJob:
                 session, payload = self.session, self.payload
                 self.status = "planning"
             try:
-                bus = "source_town_id" in payload
-                plan = (native_bus.plan_bus(
-                    session, payload["source_town_id"], payload["destination_town_id"],
-                    payload["construction_cap"], payload["operating_reserve"]) if bus else
+                bus = "source_town_id" in payload or "vehicle_id" in payload
+                plan = (_plan_bus_payload(session, payload) if bus else
                     native_railway.plan_railway(
                         session, payload["source_id"], payload["destination_id"],
                         payload["construction_cap"], payload["operating_reserve"]))
@@ -457,6 +505,10 @@ class NativeMcpServer(McpServer):
             return self.job.build(arguments, bus=True)
         if name == "plan_native_bus":
             return self.job.preview_bus(arguments)
+        if name == "add_native_bus_stops":
+            return self.job.build(arguments, bus_stops=True)
+        if name == "plan_native_bus_stops":
+            return self.job.preview_bus(arguments, bus_stops=True)
         if name == "get_native_status":
             return self.job.refresh(arguments)
         if name == "inspect_native_game":
@@ -520,20 +572,48 @@ class NativeMcpServer(McpServer):
         bus_schema = {"type": "object", "properties": {
             "job_id": {"type": "string"}, "source_town_id": {"type": "integer", "minimum": 0},
             "destination_town_id": {"type": "integer", "minimum": 0},
+            "via_town_ids": {"type": "array", "items": {"type": "integer", "minimum": 0},
+                             "maxItems": 6, "uniqueItems": True,
+                             "description": "Ordered intermediate observed towns; one bus line, not separate services."},
             "construction_cap": {"type": "integer", "minimum": 1},
             "operating_reserve": {"type": "integer", "minimum": 0}},
             "required": ["job_id", "source_town_id", "destination_town_id",
                          "construction_cap", "operating_reserve"], "additionalProperties": False}
         tools += [
             {"name": "plan_native_bus", "description": "Read-only costed passenger bus service between observed towns. "
-             "Two new drive-through stops, connected depot, one available bus and ordinary orders. "
+             "One line through source, optional ordered via_town_ids, and destination (2-8 distinct towns). "
+             "New drive-through stops, connected depot, one available bus and ordinary orders. "
              "Reuses two-way roads; may add bounded roads and clear trees at quoted cost. "
              "No house demolition, bridges or terraforming. Cap/reserve required. Not a profit forecast.",
              "inputSchema": bus_schema, "annotations": {"readOnlyHint": True, "destructiveHint": False}},
             {"name": "build_native_bus", "description": "Explicitly authorized passenger bus construction and "
-             "verification of passenger delivery at both stops. Uses the same supported scope as plan_native_bus; "
+             "verification of passenger delivery at every stop. Uses the same supported scope as plan_native_bus; "
              "may clear trees on disclosed new road/depot tiles. No automatic retry of partial/uncertain work.",
              "inputSchema": bus_schema},
+        ]
+        stops_schema = {"type": "object", "properties": {
+            "job_id": {"type": "string"}, "vehicle_id": {"type": "integer", "minimum": 0},
+            "town_ids": {"type": "array", "items": {"type": "integer", "minimum": 0},
+                         "minItems": 1, "maxItems": 6, "uniqueItems": True},
+            "insert_index": {"type": "integer", "minimum": 0, "maximum": 8,
+                             "description": "Zero-based insertion index in the observed orders; count appends."},
+            "construction_cap": {"type": "integer", "minimum": 1},
+            "operating_reserve": {"type": "integer", "minimum": 0}},
+            "required": ["job_id", "vehicle_id", "town_ids", "insert_index",
+                         "construction_cap", "operating_reserve"], "additionalProperties": False}
+        tools += [
+            {"name": "plan_native_bus_stops",
+             "description": "Read-only quote to insert ordered new town stops into an observed running owned "
+             "passenger bus line, before insert_index (count appends). Preserves the bus, depot and all old "
+             "orders; connects both neighboring stops. Unshared ordinary orders only; total at most eight. "
+             "Includes new stops, bounded road links/tree clearing and explicit cap/reserve.",
+             "inputSchema": stops_schema, "annotations": {"readOnlyHint": True, "destructiveHint": False}},
+            {"name": "add_native_bus_stops",
+             "description": "Explicitly authorized insertion of new town stops into an existing bus line. "
+             "Same scope as plan_native_bus_stops. Stops the selected bus only to edit its orders, then resumes "
+             "and verifies accepted passengers at every stop. No new bus/depot, replacement of old orders, "
+             "shared-order edits or automatic retry/rollback; a partial failure may leave the bus stopped.",
+             "inputSchema": stops_schema},
         ]
         return tools
 

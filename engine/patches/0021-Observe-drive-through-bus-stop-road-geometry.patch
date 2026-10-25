@@ -1,0 +1,34 @@
+From faf823d8ab5e76319ffb64ebc535ccb1547a9d4d Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Sun, 25 Oct 2026 10:38:52 -0700
+Subject: [PATCH] Observe drive-through bus stop road geometry
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/network/network_admin.cpp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 597fbc2ba..c88bd5bb2 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -1289,13 +1289,14 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 				bool valid = IsValidTile(tile);
+ 				TileType type = valid ? GetTileType(tile) : MP_VOID;
+ 				bool normal_road = valid && IsNormalRoadTile(tile);
++				bool bus_stop = valid && IsDriveThroughStopTile(tile) && GetRoadStopType(tile) == RoadStopType::Bus;
+ 				Owner owner = valid && type != MP_HOUSE && type != MP_INDUSTRY ? GetTileOwner(tile) : OWNER_NONE;
+ 				nlohmann::json record = {
+ 					{"tile", raw_tile}, {"valid", valid}, {"tile_type", to_underlying(type)},
+ 					{"owner", owner.base()}, {"slope", valid ? to_underlying(GetTileSlope(tile)) : 0},
+ 					{"height", valid ? TileHeight(tile) : 0},
+-					{"road_bits", normal_road ? CopilotRoadBitsToWire(GetRoadBits(tile, RTT_ROAD)) : 0},
+-					{"road_type", normal_road ? to_underlying(GetRoadTypeRoad(tile)) : UINT8_MAX},
++					{"road_bits", normal_road || bus_stop ? CopilotRoadBitsToWire(GetAnyRoadBits(tile, RTT_ROAD)) : 0},
++					{"road_type", normal_road || bus_stop ? to_underlying(GetRoadTypeRoad(tile)) : UINT8_MAX},
+ 					{"normal_road", normal_road},
+ 					{"one_way", normal_road ? to_underlying(GetDisallowedRoadDirections(tile)) : 0},
+ 				};
+-- 
+2.49.0
+

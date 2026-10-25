@@ -36,6 +36,8 @@ Compare passenger bus options between nearby towns.
 Use a 50000 cap and keep 10000 reserve. Don't build yet.
 Build the option we just discussed.
 What is my bus carrying, and what are its orders?
+Quote one bus line from town A via town B to town C, in that order.
+Add a stop in town D between the first and second stops of that bus.
 What optimization ideas would you suggest, and what can't you measure yet?
 ```
 
@@ -57,8 +59,9 @@ Live inspection/planning is unavailable while a construction worker is active.
 rates, station waiting cargo, reliability or detailed company income.** OpenTTD
 itself has additional information. Advice must distinguish measured facts,
 general suggestions and unknowns; a cost quote is not a profitability forecast.
-No vehicle replacement, extra-vehicle optimization, order optimization or track removal tool
-is implemented.
+No vehicle replacement, extra-vehicle optimization, autonomous order
+optimization or track removal tool is implemented. Explicitly requested bus
+stop insertion is supported as described below.
 
 Allow several minutes for construction verification and actual coal travel.
 The train keeps running and the game stays open after verification. Keep the
@@ -71,19 +74,34 @@ Use `--seed INTEGER` for a reproducible newly generated normal map or
 `--save /absolute/path/world.sav` to load a **copy**. These options do not
 guarantee a supported route exists. Loading arbitrary old saves is not the
 alpha acceptance cohort. Bus planning reads a bounded corridor, at most
-192x192 tiles and a 160-tile path, not an unrestricted whole-map search.
+192x192 tiles and a 160-tile path per leg, not an unrestricted whole-map search.
 Coal railway planning remains limited to maps no larger than 128x128.
 
 ## Passenger buses
 
 `plan_native_bus` and `build_native_bus` accept `job_id`, observed
 `source_town_id`/`destination_town_id`, `construction_cap` and `operating_reserve`.
-The plan supplies actual normal-command prices for road additions, two new
+Optional ordered `via_town_ids` makes this **one line through 2-8 distinct
+towns**, not separate pairwise services. The plan supplies actual
+normal-command prices for road additions, new
 drive-through stops and a connected roadside depot, plus a currently buildable
 standard passenger bus. Stops must have actual acceptance and production from
-the specified town. Buses load/unload ordinarily at both ends, **not full load**.
+the specified town. Buses load/unload ordinarily at every stop, **not full load**.
 Service verification requires passenger acceptance attributed to that bus at
-both stops, not merely a successful start command.
+every ordered stop, not merely a successful start command.
+
+To add town stops to an existing line, `plan_native_bus_stops` and
+`add_native_bus_stops` take `job_id`, an observed `vehicle_id`, ordered new
+`town_ids`, zero-based `insert_index`, `construction_cap` and `operating_reserve`.
+Index 0 inserts before the first order; the current order count appends.
+The plan connects both neighbors and preserves the bus, depot and all old
+orders/stops. The executor constructs the new stop/links, stops the bus for
+order edits, independently checks the exact list and resumes. It verifies
+accepted passengers at every resulting stop. A partial failure may leave new
+infrastructure or a stopped bus; it is not automatically rolled back or retried.
+Initially this requires a **running owned standard passenger bus with unshared
+ordinary station orders**, at most eight resulting stops and distinct town
+stops. Shared lists, stopped/crashed buses and other order policies are refused.
 
 Roads are ordinary two-way standard roads. Existing roads can be reused,
 including traversable slopes; new links are currently flat clear/tree tiles.
@@ -97,8 +115,14 @@ After verified service, a different explicit request starts a separate durable
 job if remaining cash and retained history permit. An identical request returns
 cached status. Partial/uncertain execution blocks further construction.
 The shared **64-operation world history** has no automatic eviction: a new bus
-service needs seven operations before any new road tiles. An obstructed,
+two-town service needs seven operations before any new road tiles; each extra
+town adds a stop and an order. An existing-line edit also retains its explicit
+stop/start and order actions. An obstructed,
 distant or record-heavy pair is rejected rather than silently changing towns.
+For example, adding Drahill to the accepted normal-density two-town save was
+refused at 48 additional records against 37 remaining. Successful insertion
+evidence uses an explicitly high-town-density ordinary generated world; it
+does not promise that every existing line has enough history or legal roads.
 
 ## What comes next
 

@@ -33,6 +33,62 @@ class NativeBusMcpTests(unittest.TestCase):
                 self.job.build({**self.args, **fields}, bus=True)
         self.mocks[2].assert_not_called()
 
+    def test_ordered_via_towns_are_validated_and_dispatched_to_one_plan(self):
+        for via in (None, "3", [True], [-1], [1], [2], [3, 3], list(range(3, 10))):
+            with self.subTest(via=via), self.assertRaises(server.ToolError):
+                server.validate_bus({**self.args, "via_town_ids": via}, self.job.job_id)
+        args = {**self.args, "via_town_ids": [4, 3]}
+        self.job.build(args, bus=True)
+        self.job.worker.join(2)
+        self.assertEqual(self.job.status, "operating")
+        self.mocks[2].assert_called_once_with(
+            self.job.session, 1, 2, 10000, 1000, record=True, via_town_ids=[4, 3])
+        self.mocks[3].assert_called_once()
+        self.job.build(args, bus=True)
+        self.assertEqual(self.mocks[2].call_count, 1)
+
+    def test_existing_line_contract_and_dispatch_preserve_explicit_position(self):
+        args = {"job_id": self.job.job_id, "vehicle_id": 9, "town_ids": [3, 4],
+                "insert_index": 1, "construction_cap": 5000, "operating_reserve": 1000}
+        for change in ({"vehicle_id": True}, {"town_ids": []}, {"town_ids": [True]},
+                       {"town_ids": [3, 3]}, {"insert_index": -1}, {"insert_index": 9},
+                       {"job_id": "other"}, {"construction_cap": 0}, {"extra": 1}):
+            with self.subTest(change=change), self.assertRaises(server.ToolError):
+                server.validate_bus_stops({**args, **change}, self.job.job_id)
+        with patch.object(server.native_bus, "plan_bus_stops", create=True,
+                          return_value={"mode": "add_stops"}) as plan:
+            self.job.build(args, bus_stops=True)
+            self.job.worker.join(2)
+            self.assertEqual(self.job.status, "operating")
+            plan.assert_called_once_with(self.job.session, 9, [3, 4], 1, 5000, 1000, record=True)
+            self.mocks[2].assert_not_called()
+            self.mocks[3].assert_called_once()
+            self.job.build(args, bus_stops=True)
+            self.assertEqual(plan.call_count, 1)
+
+    def test_existing_line_preview_is_read_only_and_has_separate_mutation_tool(self):
+        args = {"job_id": self.job.job_id, "vehicle_id": 9, "town_ids": [3],
+                "insert_index": 1, "construction_cap": 5000, "operating_reserve": 1000}
+        plan = {"world_id": "world-1", "source": {}, "destination": {}, "quoted_total": 1000,
+                "construction_cap": 5000, "operating_reserve": 1000, "operation_count": 4,
+                "available_records": 37, "engine": {}, "observation_frame_span": [1, 2],
+                "road_tiles_to_build": 0, "scope": "add_stops", "geometry": {"path": [1, 2]}}
+        before, writes = copy.deepcopy(self.job.session.manifest), self.job.session.write_count
+        with patch.object(server.native_bus, "plan_bus_stops", create=True, return_value=plan) as planner:
+            result = server.NativeMcpServer(self.job)._call_tool("plan_native_bus_stops", args)
+            planner.assert_called_once_with(self.job.session, 9, [3], 1, 5000, 1000, record=False)
+        self.assertTrue(result["read_only"])
+        self.assertEqual(result["existing_vehicle_id"], 9)
+        self.assertEqual(result["insert_index"], 1)
+        self.assertEqual(self.job.session.manifest, before)
+        self.assertEqual(self.job.session.write_count, writes)
+        self.assertIsNone(self.job.worker)
+        self.assertIsNone(self.job.payload)
+        tools = {tool["name"]: tool for tool in server.NativeMcpServer._tools()}
+        self.assertTrue(tools["plan_native_bus_stops"]["annotations"]["readOnlyHint"])
+        self.assertNotIn("annotations", tools["add_native_bus_stops"])
+        self.assertIn("via_town_ids", tools["build_native_bus"]["inputSchema"]["properties"])
+
     def test_bus_dispatch_duplicate_and_revised_request_after_rejection(self):
         self.mocks[2].side_effect = RuntimeError("road corridor blocked")
         self.job.build(self.args, bus=True)

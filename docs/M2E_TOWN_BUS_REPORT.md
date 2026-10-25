@@ -1,7 +1,9 @@
 # M2e town buses and ordinary maps
 
-Status: **bounded M2e exit passed**, 2026-10-24 America/Vancouver.
-Published engine: `2fb530eda610857329872eab1acaa9788de49f89`,
+Status: **bounded M2e exit passed**, 2026-10-24 America/Vancouver; multi-town
+and existing-line follow-up below, 2026-10-25. Original accepted engine:
+`2fb530eda610857329872eab1acaa9788de49f89`. Current published engine:
+`faf823d8ab5e76319ffb64ebc535ccb1547a9d4d`,
 branch `copilot/m2e-town-buses`; matching binaries rebuilt.
 
 The user requested passenger buses between towns and an ordinary playable map.
@@ -89,7 +91,7 @@ release claim. Next are M3 supported-map fixtures and interruption/recovery,
 M4 richer grounded observations/advice and conversational resumption, then
 M5 reproducible setup/restart/packaging. See [sequencing](PROJECT_PLAN.md#next-milestone-sequencing).
 
-## Scope and retained limits
+## Original two-town scope and retained limits
 
 One standard passenger bus per explicit service, two distinct observed towns,
 actual selected-town production/acceptance at both stops, existing ordinary
@@ -104,3 +106,73 @@ records without eviction. Partial/uncertain execution blocks changed requests
 and is never automatically undone or retried. Save/command atomicity,
 fault-injected recovery, the random-map cohort and packaged release remain
 open. The bridge still lacks profit, production-rate and station-queue data.
+
+## 2026-10-25 follow-up: one line through multiple towns and added stops
+
+The playtest request expands one line to 2-8 distinct ordered towns through
+optional `via_town_ids`. Deterministic code joins adjacent legs at the exact
+same intermediate stop and merges road masks/quotes, rather than creating
+separate buses. Every ordered stop must accept bus-attributed passengers.
+
+`plan_native_bus_stops` / `add_native_bus_stops` bind an observed running owned
+passenger bus, its unshared ordinary order list, old station identities and
+road axes. New town stops are inserted at an explicit index; both neighbors
+remain connected, old orders are preserved, and no replacement bus or depot
+is purchased. The bus is stopped only for indexed edits, rechecked, resumed
+and verified at every stop. All old line stops can be traversed with their
+axes protected; unrelated stations remain blocked. Failure can leave partial
+infrastructure or a stopped bus, with no automatic retry or rollback.
+
+Final engine `faf823d8ab` passed the direct normal-density three-town gate
+`20261025T175057Z-88a7a87a` in 443.393 seconds: Dudinghall -> Hudinghattan
+Ridge -> Drahill, one bus, 54 actions costing 13,220, accepted passengers
+5/31/31 at stations 0/1/2, exact orders, duplicate lookup, all-outcome
+fresh-process reload/replay and older-save refusal.
+
+Separate same-bus insertion gate `20261025T175339Z-be1d4f76` passed in
+358.161 seconds on an explicitly high-town-density ordinary generated map,
+seed 20261024. It first built the Pafingfield/Prarnway line, then inserted
+Plontford between them on bus 5. Existing orders `[0,1]` became `[0,2,1]`;
+the bus/depot/old stops remained unchanged. Nineteen new road tiles, one stop,
+stop/insert/start consumed 23 additional records and cost 3,182. Accepted
+passengers at stations 0/2/1 were 12/5/21. All 50 combined outcomes survived
+fresh-process reload/exact replay; duplicate insertion and older-save refusal
+passed. The initial high-density three-town-then-fourth-town trial exceeded
+remaining history; this is a two-to-three insertion gate, not a fourth-town
+or unlimited-growth claim.
+
+The original normal-density two-town/cap/shape/rejected-record gate passed on
+the final engine (`20261025T175057Z-89e10733`), as did all 44 coal outcomes
+through replay/resave/reload (`20261025T174219Z-3a0660b2`). A full coal service
+regression passed on the command-identical `10a825fb47` build before the two
+observation-only fixes. All 277 Python tests pass. Native-only actual Copilot
+planning correctly used ordered `via_town_ids` and the separate add-stop
+planner. Actual-host copied-line gate `20261025T175806Z-63f0d5e9` passed in
+375.719 seconds: one add-stop call, spent 3,182, accepted passengers 28/62/5
+at stations 0/2/1, independent inspection of the same running bus's exact
+`[0,2,1]` orders, saved close. All 34 calls were native tools, including 29
+bounded status waits; no retry, replacement vehicle or extra construction.
+Normal profiles/source saves stayed unchanged and temporary secrets were
+removed. Exact provenance, negative trials and raw local transcript hashes
+are in [the follow-up evidence](evidence/2026-10-25-native-bus-lines.json);
+personal/model account telemetry is not published.
+
+Reproduce the deterministic gates:
+
+```sh
+python3 -B tools/run_native_bus_line_probe.py --line-only --towns 0 13 16
+python3 -B tools/run_native_bus_line_probe.py --town-density high --towns 1 23 36 --add-town 36 --insert-index 1
+```
+
+For manual AI testing of adding a stop to the measured original two-stop
+line, load a copy of its commissioned world:
+
+```sh
+python3 -B tools/game_chat.py --save artifacts/native-railway/20261025T175339Z-be1d4f76/bus-commissioned.sav
+```
+
+Ask to quote adding Plontford between Pafingfield and Prarnway with an explicit
+cap/reserve, then authorize the insertion. These IDs/names/settings are
+selected observations, not universal fixtures. The normal launcher stays
+random normal-density; M2f topology, M3 recovery/cohorts and M5 packaging
+remain open. The 64-record bound can refuse an otherwise affordable line.

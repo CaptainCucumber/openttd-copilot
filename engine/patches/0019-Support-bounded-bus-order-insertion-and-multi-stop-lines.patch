@@ -1,0 +1,107 @@
+From 10a825fb4723c88d13ab81403cc0567a39819b50 Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Sun, 25 Oct 2026 10:29:28 -0700
+Subject: [PATCH] Support bounded bus order insertion and multi-stop lines
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/copilot_cmd.cpp           | 11 +++++++----
+ src/copilot_cmd.h             |  1 +
+ src/network/network_admin.cpp |  5 +++--
+ src/saveload/copilot_sl.cpp   |  2 +-
+ 4 files changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/src/copilot_cmd.cpp b/src/copilot_cmd.cpp
+index 7de27292c..9d9161ad5 100644
+--- a/src/copilot_cmd.cpp
++++ b/src/copilot_cmd.cpp
+@@ -423,8 +423,9 @@ std::tuple<CommandCost, VehicleID> CmdCopilotBusAction(DoCommandFlags flags, Til
+ 						Station::GetIfValid(StationID{static_cast<uint16_t>(target_id)}) : nullptr;
+ 				if (orientation != 0 || road_bits != 0 || engine_id != EngineID::Invalid() || policy != 0 ||
+ 						bus == nullptr || bus->type != VEH_ROAD || bus->owner != _current_company ||
+-						!bus->IsPrimaryVehicle() || !bus->IsStoppedInDepot() || bus->IsOrderListShared() ||
+-						order_index > 1 || bus->GetNumOrders() != order_index ||
++						!bus->IsPrimaryVehicle() || !bus->vehstatus.Test(VehState::Stopped) ||
++						bus->vehstatus.Test(VehState::Crashed) || bus->IsOrderListShared() ||
++						order_index > bus->GetNumOrders() || bus->GetNumOrders() >= COPILOT_MAX_BUS_ORDERS ||
+ 						station == nullptr || station->owner != _current_company ||
+ 						!station->facilities.Test(StationFacility::BusStop)) return {CMD_ERROR, VehicleID::Invalid()};
+ 				return {Command<CMD_INSERT_ORDER>::Do(command_flags, vehicle_id, order_index,
+@@ -438,7 +439,8 @@ std::tuple<CommandCost, VehicleID> CmdCopilotBusAction(DoCommandFlags flags, Til
+ 						!bus->IsPrimaryVehicle()) return {CMD_ERROR, VehicleID::Invalid()};
+ 				bool running = !bus->vehstatus.Test(VehState::Stopped);
+ 				if (running == (policy == 1)) return {CommandCost(), VehicleID::Invalid()};
+-				if (policy == 1 && (!bus->IsStoppedInDepot() || bus->GetNumOrders() != 2)) {
++				if (policy == 1 && (bus->GetNumOrders() < 2 || bus->GetNumOrders() > COPILOT_MAX_BUS_ORDERS ||
++						bus->vehstatus.Test(VehState::Crashed))) {
+ 					return {CMD_ERROR, VehicleID::Invalid()};
+ 				}
+ 				return {Command<CMD_START_STOP_VEHICLE>::Do(command_flags, vehicle_id, true), VehicleID::Invalid()};
+@@ -500,7 +502,8 @@ void CcCopilotBusAction(Commands cmd, const CommandCost &result, VehicleID creat
+ 		}
+ 		case 11: {
+ 			const Vehicle *bus = Vehicle::GetIfValid(vehicle_id);
+-			verified &= bus != nullptr && bus->GetNumOrders() == order_index + 1;
++			verified &= bus != nullptr && order_index < bus->GetNumOrders() &&
++					bus->GetNumOrders() <= COPILOT_MAX_BUS_ORDERS;
+ 			if (verified) {
+ 				const Order &order = bus->Orders()[order_index];
+ 				verified = order.IsType(OT_GOTO_STATION) && order.GetDestination().base() == target_id &&
+diff --git a/src/copilot_cmd.h b/src/copilot_cmd.h
+index 1748cc68d..832011ed4 100644
+--- a/src/copilot_cmd.h
++++ b/src/copilot_cmd.h
+@@ -18,6 +18,7 @@
+ #include "vehicle_type.h"
+ 
+ constexpr size_t COPILOT_MAX_OPERATIONS = 64;
++constexpr uint16_t COPILOT_MAX_BUS_ORDERS = 8;
+ 
+ enum class CopilotOperationState : uint8_t {
+ 	Empty = 0,
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index 787c873fa..b64101b87 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -1358,6 +1358,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 						{"stopped", vehicle->vehstatus.Test(VehState::Stopped)},
+ 						{"crashed", vehicle->vehstatus.Test(VehState::Crashed)},
+ 						{"in_depot", vehicle->IsInDepot()},
++						{"orders_shared", vehicle->IsOrderListShared()},
+ 					});
+ 				}
+ 			} else if (kind == "stops") {
+@@ -1396,7 +1397,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 			}
+ 			const Vehicle *vehicle = Vehicle::GetIfValid(VehicleID{static_cast<uint32_t>(vehicle_raw)});
+ 			if (vehicle == nullptr || vehicle->type != VEH_ROAD || vehicle->owner != company_id ||
+-					!vehicle->IsPrimaryVehicle() || vehicle->GetNumOrders() > 2) {
++					!vehicle->IsPrimaryVehicle() || vehicle->GetNumOrders() > COPILOT_MAX_BUS_ORDERS) {
+ 				return this->SendCopilotBus(request_kind, request_id, COPILOT_ADMIN_INVALID_ARGUMENT);
+ 			}
+ 			nlohmann::json orders = nlohmann::json::array();
+@@ -1506,7 +1507,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 						order_index == 0 && policy == 0) ||
+ 					(kind == 11 && orientation == 0 && road_bits == 0 &&
+ 						engine_raw == UINT16_MAX && vehicle_raw != UINT32_MAX && target_raw < UINT16_MAX &&
+-						order_index <= 1 && policy == 0) ||
++						order_index < COPILOT_MAX_BUS_ORDERS && policy == 0) ||
+ 					(kind == 12 && orientation == 0 && road_bits == 0 &&
+ 						engine_raw == UINT16_MAX && vehicle_raw != UINT32_MAX && target_raw == UINT32_MAX &&
+ 						order_index == 0 && policy <= 1);
+diff --git a/src/saveload/copilot_sl.cpp b/src/saveload/copilot_sl.cpp
+index c3ba961d8..133d44b91 100644
+--- a/src/saveload/copilot_sl.cpp
++++ b/src/saveload/copilot_sl.cpp
+@@ -130,7 +130,7 @@ struct COPLChunkHandler : ChunkHandler {
+ 						(operation.kind == 6 && operation.target_id == UINT32_MAX &&
+ 							operation.order_index == 0 && operation.policy <= 1) ||
+ 						(operation.kind == 11 && operation.target_id < UINT16_MAX &&
+-							operation.order_index <= 1 && operation.policy == 0) ||
++							operation.order_index < COPILOT_MAX_BUS_ORDERS && operation.policy == 0) ||
+ 						(operation.kind == 12 && operation.target_id == UINT32_MAX &&
+ 							operation.order_index == 0 && operation.policy <= 1)));
+ 			if (!geometry_valid || !engine_valid || !config_valid || operation.max_cost < 0) {
+-- 
+2.49.0
+

@@ -24,6 +24,7 @@ The user's coal example is our first end-to-end acceptance case. It is a represe
 | R10 | Build passenger buses between towns and play on an ordinary map | Explicit 2026-10-24 user request; expand beyond the selected flat coal fixture |
 | R11 | Local single-player games only; multiplayer is not needed | Explicit 2026-10-24 user statement; run Copilot inside one game process (D032) |
 | R12 | Cross-platform (macOS, Windows, Linux) | Explicit 2026-10-25 user requirement; loopback TCP, portable engine/Python code; runtime evidence on each OS before claiming support |
+| R13 | One bus line through more than two towns; add stops to an existing line | Explicit 2026-10-25 playtest feedback; ordered towns and explicit existing-bus stop insertion, not separate pairwise services |
 
 Initial target: local macOS play (cross-platform design per R12; other OSes tested at M5), one human company, OpenTTD 15.3, temperate climate, standard vehicles/industries. This is a testable starting scope, not a permanent restriction on the project. The user accepts a custom build; do not spend extended effort working around stock API limits if a narrow engine integration provides more dependable control.
 
@@ -141,6 +142,30 @@ orders, and observe vehicle-tagged passenger acceptance at both stops. Preserve
 loan/source saves/normal profile; prove duplicate/reload/replay and older-save
 refusal. Exercise the new tools through the actual conversational host. Record
 bounded failed routes, not a broad random-map feasibility/optimality claim.
+
+### M2e follow-up - Multi-town bus lines and stop insertion
+
+Bounded exit passed 2026-10-25 (D033), including actual-host edit/inspection/
+saved close. Prioritized ahead of the planned M2f transport refactor because
+the user identified these two gaps during playtesting. Interpret "bus lane" as
+one bus service, not dedicated one-way road infrastructure. Build one bus with
+an ordered list of 2-8 distinct observed towns, reusing the exact same
+intermediate stop across adjacent route legs. The eight-stop limit is a
+provisional bounded JSON/operation-history limit, not an OpenTTD limit.
+
+Add explicitly selected new town stops at a specified index in an existing
+running owned passenger bus's unshared ordinary order list. Preserve the
+vehicle and all existing orders; connect both neighbors, stop only for order
+edits and resume after independent exact readback. Reject unsupported/shared
+orders and stale edits before spending. Preserve cap/reserve, original
+assets, normal commands and partial/uncertain-work blocking.
+
+Exit: read-only whole-line quotes and budget/history refusal, actual passenger
+acceptance at every stop of a new three-town line, and a separate two-town
+existing-bus insertion producing one three-town line without a second
+vehicle/depot or replaced orders, all-outcome reload/replay,
+older-save refusal, old two-town/coal regressions and conversational exposure.
+This does not complete M2f or general route reliability.
 
 ### M2f — Single-process local bridge
 

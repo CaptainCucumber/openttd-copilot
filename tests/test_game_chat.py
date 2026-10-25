@@ -26,6 +26,7 @@ class GameChatLauncherTests(unittest.TestCase):
         self.assertEqual(server["tools"], [
             "open_native_map", "inspect_native_game", "plan_native_railway",
             "build_native_railway", "plan_native_bus", "build_native_bus",
+            "plan_native_bus_stops", "add_native_bus_stops",
             "get_native_status", "close_native_map",
         ])
         self.assertIn("--no-show", server["args"])
@@ -37,6 +38,7 @@ class GameChatLauncherTests(unittest.TestCase):
             "--allow-tool=openttd-copilot-native(inspect_native_game)",
             "--allow-tool=openttd-copilot-native(plan_native_railway)",
             "--allow-tool=openttd-copilot-native(plan_native_bus)",
+            "--allow-tool=openttd-copilot-native(plan_native_bus_stops)",
             "--allow-tool=openttd-copilot-native(get_native_status)",
         })
         prompt = command[-1].casefold()

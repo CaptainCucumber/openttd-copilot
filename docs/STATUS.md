@@ -1,14 +1,32 @@
 # Current status
 
-Updated: 2026-10-24, America/Vancouver.
+Updated: 2026-10-25, America/Vancouver.
 
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Engine bus branch `copilot/m2e-town-buses` is published at `2fb530eda610857329872eab1acaa9788de49f89`, fork remote SHA verified; matching clean server/client rebuilt and patch 0018 exported. Project bus implementation/direction records `a7563ba50a4bf26e6aff23db5f73973d40fd967a` and final evidence/acceptance `b86d677743c2fa6d0de1fb210341ee70a6f1b43e` are published on `origin/main`, exact remote SHAs verified. Final clean bus/coal/legacy/actual-host acceptance passed; this records-only publication handoff follows. Both repositories use the required no-reply Git identity.
+- Engine bus branch `copilot/m2e-town-buses` is published at `faf823d8ab5e76319ffb64ebc535ccb1547a9d4d`, exact fork SHA verified; matching clean server/client rebuilt and patches 0019-0021 exported/reverse-checked. This update contains the multi-town/same-bus insertion implementation and evidence. The prior two-town acceptance baseline was engine `2fb530eda6` and project `b86d677743c2fa6d0de1fb210341ee70a6f1b43e`; its historical evidence remains unchanged. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
+
+**Multi-town bus lines and adding stops are ready for bounded user testing
+(R13/D033).** One line can
+serve 2-8 ordered towns. Final-engine direct three-town gate
+`20261025T175057Z-88a7a87a` passed actual passengers at all three stops and all
+54 outcomes/reload/replay/older-save guards. Existing-line gate
+`20261025T175339Z-be1d4f76` inserted Plontford between Pafingfield and Prarnway
+on the same bus 5: 3,182/23 new actions, orders `[0,1] -> [0,2,1]`, passengers
+at all three stops and all 50 combined outcomes reloaded/replayed. No second
+bus/depot or old-order replacement. This selected insertion case uses an
+explicit high-town-density generated world; the prior normal-density copied
+line's attempted additions exceeded remaining history and were safely
+refused. Eight stops and 64 shared records remain bounds, not a promise of
+every route. Actual Copilot edited a copy exactly once, reached verified
+operation, independently inspected orders and saved/closed using only native
+tools. All 277 tests pass. See [evidence](evidence/2026-10-25-native-bus-lines.json)
+and the [operator guide](NATIVE_PLAYABLE_ALPHA.md). M2f single-process work
+remains planned.
 
 **Town buses on normal maps are ready for bounded user testing.** The launcher
 defaults to a randomly seeded ordinary 256x256 temperate world. Final clean
@@ -94,13 +112,14 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
 | M2: railway builder from structured intent | **Simple-profile exit complete** | Existing seed-6 businesses, whole-job affordability, native build/service, two returns, duplicate/reload/replay; see native railway report. |
 | M2e: town buses and ordinary maps | **Bounded exit complete** | Clean-engine passenger service, 27 outcomes/reload/replay, cap/shape/rejected-record guards, coal/legacy regressions and actual native-only conversational build passed. |
+| M2e follow-up: multi-town lines / adding stops | **Bounded exit complete** | Direct three-town service, same-bus middle insertion, all-stop passengers, all-outcome replay/older-save guards, actual-host edit/inspection/saved close; 277 tests pass. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | **Bounded actual Copilot host integrated** | Live inspection, read-only comparison, explicit build boundary; broader paraphrase/ambiguity/cancellation/resumption acceptance remains open. |
 | M5: usable local alpha | Planned release gate; development launcher available | Visible isolated native game can be tried now; packaging and representative-save acceptance remain open. |
 
 ## Next work, in order
 
-1. **User testing point:** run `python3 -B tools/game_chat.py`, compare nearby town bus options with an explicit cap/reserve, then authorize a service. Use `--seed 20261024` for the tested Dudinghall -> Hudinghattan Ridge pair. Save/close through the AI; partial/uncertain jobs are not retried. Broader normal-map feasibility remains unproven.
+1. **User testing point:** run `python3 -B tools/game_chat.py`, compare an ordered multi-town line with an explicit cap/reserve, then authorize it. Use `--seed 20261024` for Dudinghall -> Hudinghattan Ridge -> Drahill. To test adding a stop to the measured existing two-stop line, copy-load the commissioned world in the [guide](M2E_TOWN_BUS_REPORT.md#2026-10-25-follow-up-one-line-through-multiple-towns-and-added-stops) and ask to insert Plontford between Pafingfield and Prarnway. Save/close through the AI; partial/uncertain jobs are not retried. Broader normal-map feasibility remains unproven.
 2. **M2f single-process local bridge (planned, D032):** user confirmed local single-player only. Replace server + client + Admin transport with one visible process and a loopback token endpoint; fix single-player hazards found in source (no `NoEst` on Copilot commands, frozen `_frame_counter`, pause popups, console-only saves). Execute work packages F1–F7 in the [M2f plan](M2F_LOCAL_BRIDGE_PLAN.md); gate in [acceptance](ACCEPTANCE.md#m2f-single-process-gate). Cross-platform is required (R12): loopback TCP, not Unix sockets; F4 removes macOS-only Python code. Start with F1 (dispatcher refactor, no behavior change).
 3. **M3a/M3b:** establish varied independently feasible supported road/map cases, then inject reply/process/journal/save failures and cancellation. Prove reconciliation or explicit uncertainty; do not add terrain scope or automatic retries as shortcuts.
 4. **M4a/M4b:** expose production/waiting-cargo/financial observations and observation-window evidence for useful advice, then held-out phrasing/ambiguity/unintended-action checks and authorized durable resumption.

@@ -1,0 +1,25 @@
+From 5e57fdfb2bd365dc154a9dace760af5551e938e0 Mon Sep 17 00:00:00 2001
+From: CaptainCucumber <37813159+CaptainCucumber@users.noreply.github.com>
+Date: Sun, 25 Oct 2026 10:35:09 -0700
+Subject: [PATCH] Observe bus stop town associations for existing-line edits
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+---
+ src/network/network_admin.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/network/network_admin.cpp b/src/network/network_admin.cpp
+index b64101b87..597fbc2ba 100644
+--- a/src/network/network_admin.cpp
++++ b/src/network/network_admin.cpp
+@@ -1370,6 +1370,7 @@ NetworkRecvStatus ServerNetworkAdminSocketHandler::Receive_ADMIN_COPILOT(Packet
+ 					records.push_back({
+ 						{"station_id", GetStationIndex(stop->xy).base()}, {"stop_id", stop->index.base()},
+ 						{"tile", stop->xy.base()}, {"orientation", to_underlying(GetDriveThroughStopAxis(stop->xy))},
++						{"town_id", Station::Get(GetStationIndex(stop->xy))->town->index.base()},
+ 						{"owner", company_id.base()},
+ 					});
+ 				}
+-- 
+2.49.0
+

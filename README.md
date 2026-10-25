@@ -22,10 +22,11 @@ New games use an ordinary randomly seeded 256x256 map with towns, hills, water
 and trees. `--save /absolute/path/world.sav` plays a copy of an existing world.
 The old flat seed-6 coal map is now explicit: `--map-style railway-fixture`.
 
-**Bus testing point:** clean-engine two-town passenger service, command guards,
-retained replay and actual conversational construction have passed on one
-selected normal map. This is not a random-map reliability or profitability
-claim. See [current status](docs/STATUS.md).
+**Bus testing point:** one line can now visit multiple towns, and new town
+stops can be inserted into an existing bus's orders without replacing its bus,
+depot or old stops. Three-town service and same-bus middle insertion have
+real-engine passenger/reload/replay evidence. This remains bounded, not a
+random-map reliability or profitability claim. See [current status](docs/STATUS.md).
 
 Try: "Which nearby towns could we connect with a passenger bus? Budget 50000,
 keep 10000 reserve. Compare plans, don't build yet."
@@ -34,10 +35,13 @@ deterministic code owns geometry, prices, execution and delivery verification.
 
 The current bridge cannot read train profit, production rates or station queues:
 optimization suggestions are not measured profit forecasts. Bus services use
-two passenger stops, connected road depot, one bus and ordinary orders; bounded
+2-8 ordered town stops, a connected road depot, one bus and ordinary orders; bounded
 road links/tree clearing are quoted before construction. No bridges, terrain
 editing or house demolition. Railway construction retains its flat-clear
 standard-coal/50-rail limit. The shared native history is limited to 64 operations.
+Adding stops initially supports a running owned bus with unshared ordinary
+orders. Ask where to insert the stop; shared orders and automatic extra buses
+remain unsupported.
 The older
 `tools/play_native.py` is a fixed-command, model-free alternative, not AI chat.
 See [launch, permissions, saves and limits](docs/NATIVE_PLAYABLE_ALPHA.md).
@@ -92,7 +96,8 @@ prices and execution; the engine and independent readback establish results.
 
 The native coal-railway path is demonstrated. The active M2e expansion adds
 town passenger buses and ordinary maps, with its bounded clean-engine exit
-demonstrated. Next: reliability on varied supported
+demonstrated. The playtest follow-up adds ordered multi-town bus lines and
+explicit stop insertion (D033). Next: reliability on varied supported
 roads/maps and interrupted jobs (M3), richer production/queue/profit observations
 and grounded conversational advice (M4), then restart/resume and reproducible
 local-alpha packaging (M5). Before M3, M2f moves Copilot into one

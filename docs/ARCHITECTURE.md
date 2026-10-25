@@ -188,6 +188,17 @@ service-outcome reload/replay, older-save refusal, coal regressions and actual
 conversational build/inspection/saved close. See [bus report](M2E_TOWN_BUS_REPORT.md).
 This does not close broader supported-world or fault-injected recovery gates.
 
+**Multi-town/edit extension (D033; bounded deterministic acceptance passed):** one bus has
+2-8 ordered town stops, with an exact shared intermediate stop and merged
+road overlay across legs. Existing-line insertion binds an observed running
+passenger bus, its unshared ordinary order list and old station geometry.
+New roads/stops connect the predecessor and successor, not a separate service.
+Stop the bus only for indexed order edits, recheck the old list, verify all
+old/new orders and resume. No vehicle/depot replacement or implicit shared
+order edits. Each action uses the same durable executor; failures may leave
+partial infrastructure or a stopped vehicle. Every stop needs passenger
+acceptance before `operating`; the old two-town gate remains separate evidence.
+
 Next architectural work follows the existing layers rather than new transport
 types: version supported-world fixtures and failure boundaries; add explicit
 cancellation and durable job/world reconciliation; extend read-only telemetry
