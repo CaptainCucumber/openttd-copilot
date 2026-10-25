@@ -93,7 +93,8 @@ class NativeMcpServerTests(unittest.TestCase):
         names = {tool["name"] for tool in listing["result"]["tools"]}
         self.assertEqual(names, {"open_native_map", "build_native_railway",
                                  "get_native_status", "close_native_map",
-                                 "inspect_native_game", "plan_native_railway"})
+                                 "inspect_native_game", "plan_native_railway",
+                                 "plan_native_bus", "build_native_bus"})
 
     def test_open_validates_existing_save_and_copies_it_to_session(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -138,17 +139,20 @@ class NativeMcpServerTests(unittest.TestCase):
         self.assertEqual(self.job.result["deliveries"], 2)
         self.assertNotIn("verification", self.job.result)
 
-    def test_conflicting_duplicate_rejected_without_worker(self):
+    def test_new_explicit_request_after_verified_service_uses_new_job(self):
         self.job.open({})
         args = {"job_id": self.job.job_id, "source_id": 11, "destination_id": 22,
                 "construction_cap": 100, "operating_reserve": 10,
                 "wait_for_full_load": True, "cargo": "coal"}
         self.job.build(args)
         self.job.worker.join(timeout=2)
+        first_execution = self.job.execution_id
         args["construction_cap"] = 101
-        with self.assertRaises(server.ToolError):
-            self.job.build(args)
-        self.assertEqual(self.plan_mock.call_count, 1)
+        self.job.build(args)
+        self.job.worker.join(timeout=2)
+        self.assertEqual(self.plan_mock.call_count, 2)
+        self.assertNotEqual(first_execution, self.job.execution_id)
+        self.assertEqual(len(self.job.session.manifest["completed_jobs"]), 1)
 
     def test_worker_error_is_failed_with_partial_artifact_not_operating(self):
         self.execute_mock.side_effect = RuntimeError("construction stopped after station")

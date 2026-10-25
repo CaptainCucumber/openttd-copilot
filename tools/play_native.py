@@ -43,7 +43,7 @@ def main():
     try:
         opened = job.open({"save": args.save} if args.save else {})
         print("OpenTTD native alpha: isolated profile, existing businesses, one railway per session.")
-        print("This local parser is model-free; use native_mcp_server.py for an AI client.")
+        print("This is the model-free railway fixture; use game_chat.py for AI chat, normal maps and buses.")
         print("Only flat clear unowned land, standard temperate coal, at most 50 rail tiles.")
         print("No automatic borrowing, clearing, rollback, or retry of partial/uncertain work.")
         print("Listed pairs are observed businesses, not confirmed buildable routes; choose a nearby pair.")

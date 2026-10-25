@@ -203,7 +203,8 @@ def inspect_game(session):
             "Historical delivery evidence is not proof that the current edited route is healthy.",
             "Empty departures are not emitted. Missing events do not prove inactivity.",
             "Business pairs are cargo-compatible observations, not confirmed buildable routes.",
-            "Only one new flat-clear standard coal railway per session is currently executable.",
+            "Coal railway jobs require flat-clear standard coal routes of at most 50 rail tiles; "
+            "all transport jobs share the world's 64 retained operation records.",
         ],
     }
 
@@ -223,6 +224,60 @@ def _persist(path, value):
         os.fsync(directory)
     finally:
         os.close(directory)
+
+
+class JournaledExecutor:
+    """Shared sequential send boundary for railway and bus construction."""
+
+    def __init__(self, session, plan, job_id, record, job_file, identity, poll):
+        self.session, self.plan, self.job_id = session, plan, job_id
+        self.record, self.job_file, self.identity = record, job_file, identity
+        self.remaining_cost, self.poll = plan["quoted_total"], poll
+
+    def mutate(self, method, fields, bound, label):
+        session, plan, record = self.session, self.plan, self.record
+        current = _identity(session)
+        require(normalize_position(current) == normalize_position(self.identity), "world/position changed; construction stopped")
+        require(current["companies"][0]["loan"] == record["initial"]["companies"][0]["loan"], "loan changed during job")
+        require(record["spent"] + self.remaining_cost <= plan["construction_cap"], "remaining construction exceeds cap")
+        require(current["companies"][0]["money"] >= self.remaining_cost + plan["operating_reserve"],
+                "cash no longer covers remaining construction and reserve; partial work retained")
+        operation = uuid.uuid4().int
+        hi, lo = operation >> 64, operation & ((1 << 64) - 1)
+        request = {"world_id": plan["world_id"], "company_id": 0, **fields, "max_cost": bound,
+                   "expect_sequence": current["sequence"], "expect_head": current["head"],
+                   "operation": {"hi": hi, "lo": lo}}
+        digest = hashlib.blake2b(json.dumps(request, sort_keys=True).encode(), digest_size=16).digest()
+        wire = {key: value for key, value in request.items()
+                if key not in ("expect_sequence", "expect_head", "operation")}
+        wire.update(expected_sequence=current["sequence"], expected_head_hi=current["head_hi"],
+                    expected_head_lo=current["head_lo"], operation_hi=hi, operation_lo=lo,
+                    payload_hash_hi=int.from_bytes(digest[:8], "big"),
+                    payload_hash_lo=int.from_bytes(digest[8:], "big"))
+        journal_path = session.artifacts / "journals" / self.job_id / f"{len(record['outcomes']):04d}-{label}.json"
+        journal = Journal.create(journal_path, current)
+        require(journal.record_pending(request), "intent was not durably recorded")
+        record["pending_journal"] = str(journal_path)
+        _persist(self.job_file, record)
+        outcome = method(**wire, timeout=session.remaining())
+        while outcome["state_name"] == "pending":
+            time.sleep(min(0.05, session.remaining()))
+            outcome = self.poll(world_id=plan["world_id"], operation_hi=hi, operation_lo=lo,
+                                timeout=session.remaining())
+        self.identity = _identity(session)
+        state = journal.reconcile(self.identity, outcome)
+        record["outcomes"].append({"label": label, "wire": wire, "outcome": outcome,
+                                   "journal": str(journal_path)})
+        record["pending_journal"] = None
+        record["spent"] += outcome["actual_cost"]
+        self.remaining_cost -= bound
+        _persist(self.job_file, record)
+        session.manifest["completed_operations"] = len(record["outcomes"])
+        session.manifest["spent"] = record["spent"]
+        session.write()
+        require(state == "completed", f"{label} ended {state}; existing partial work retained: {journal_path}")
+        require(0 <= outcome["actual_cost"] <= bound, f"{label} command cost exceeded bound")
+        return outcome
 
 
 def execute_railway(session, plan, job_id):
@@ -248,52 +303,9 @@ def execute_railway(session, plan, job_id):
     session.manifest["job_state"] = "building"
     session.manifest["job_file"] = str(job_file)
     session.write()
-    remaining_cost = plan["quoted_total"]
-
-    def mutate(method, fields, bound, label):
-        nonlocal identity, remaining_cost
-        current = _identity(session)
-        require(normalize_position(current) == normalize_position(identity), "world/position changed; construction stopped")
-        require(current["companies"][0]["loan"] == initial["companies"][0]["loan"], "loan changed during job")
-        require(record["spent"] + remaining_cost <= plan["construction_cap"], "remaining construction exceeds cap")
-        require(current["companies"][0]["money"] >= remaining_cost + plan["operating_reserve"],
-                "cash no longer covers remaining construction and reserve; partial work retained")
-        operation = uuid.uuid4().int
-        hi, lo = operation >> 64, operation & ((1 << 64) - 1)
-        request = {"world_id": plan["world_id"], "company_id": 0, **fields, "max_cost": bound,
-                   "expect_sequence": identity["sequence"], "expect_head": identity["head"],
-                   "operation": {"hi": hi, "lo": lo}}
-        digest = hashlib.blake2b(json.dumps(request, sort_keys=True).encode(), digest_size=16).digest()
-        wire = {key: value for key, value in request.items()
-                if key not in ("expect_sequence", "expect_head", "operation")}
-        wire.update(expected_sequence=identity["sequence"], expected_head_hi=identity["head_hi"],
-                    expected_head_lo=identity["head_lo"], operation_hi=hi, operation_lo=lo,
-                    payload_hash_hi=int.from_bytes(digest[:8], "big"),
-                    payload_hash_lo=int.from_bytes(digest[8:], "big"))
-        journal_path = session.artifacts / "journals" / job_id / f"{len(record['outcomes']):04d}-{label}.json"
-        journal = Journal.create(journal_path, identity)
-        require(journal.record_pending(request), "intent was not durably recorded")
-        record["pending_journal"] = str(journal_path)
-        _persist(job_file, record)
-        outcome = method(**wire, timeout=session.remaining())
-        while outcome["state_name"] == "pending":
-            time.sleep(min(0.05, session.remaining()))
-            outcome = session.admin.copilot_train_configuration_status(
-                world_id=plan["world_id"], operation_hi=hi, operation_lo=lo, timeout=session.remaining())
-        identity = _identity(session)
-        state = journal.reconcile(identity, outcome)
-        record["outcomes"].append({"label": label, "wire": wire, "outcome": outcome,
-                                   "journal": str(journal_path)})
-        record["pending_journal"] = None
-        record["spent"] += outcome["actual_cost"]
-        remaining_cost -= bound
-        _persist(job_file, record)
-        session.manifest["completed_operations"] = len(record["outcomes"])
-        session.manifest["spent"] = record["spent"]
-        session.write()
-        require(state == "completed", f"{label} ended {state}; existing partial work retained: {journal_path}")
-        require(0 <= outcome["actual_cost"] <= bound, f"{label} command cost exceeded bound")
-        return outcome
+    executor = JournaledExecutor(session, plan, job_id, record, job_file, identity,
+                                 session.admin.copilot_train_configuration_status)
+    mutate = executor.mutate
 
     try:
         built = []

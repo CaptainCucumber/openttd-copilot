@@ -5,10 +5,24 @@ Updated: 2026-10-24, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Engine branch `copilot/m2d-native-railway` remains published at `96f960a3239e87837919414604a19e3eca9830b7`, unchanged. Project live-conversation/planning-recovery implementation/tests/evidence/records `033e1b8f0a239e6e76fb65c3a174e6a62ed50aa6` is published on `origin/main`, remote SHA verified; this records-only publication handoff follows. Both repositories use the required no-reply Git identity.
+- Engine bus branch `copilot/m2e-town-buses` is published at `2fb530eda610857329872eab1acaa9788de49f89`, fork remote SHA verified; matching clean server/client rebuilt and patch 0018 exported. Project bus implementation/direction-record progress publication is in progress; final clean bus/coal/legacy/chat acceptance is still running. The previous accepted project conversation baseline remains `033e1b8f0a239e6e76fb65c3a174e6a62ed50aa6`. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
+
+**Active expansion (not yet accepted):** the user explicitly requested
+town-to-town buses and ordinary maps. Native bus observation/construction,
+deterministic bus planning, chat tools and a randomly seeded normal-map profile
+are being implemented. The M2e exit requires real passenger deliveries and
+replay/reload evidence; the previously published capabilities below remain the
+accepted baseline until that evidence passes.
+Full dirty-engine gate `20261025T002814Z-4145a74f` built two stops, depot,
+20 road tiles and bus 6 for 8,725, delivered passengers at both stops and
+passed duplicate/reload/replay/older-save checks. Actual native-only bus advice
+also passed. Final command-cap guards exposed a test/execute mismatch; the
+corrected guard-only runtime passed, including rejected-record reload. Final
+clean-engine service/regression gates are running before acceptance. Earlier partial
+jobs are retained and never automatically retried. See [bus report](M2E_TOWN_BUS_REPORT.md).
 
 **Actual AI game conversation is available for user testing.** Run
 `python3 -B tools/game_chat.py` using the installed, signed-in Copilot CLI.
@@ -81,20 +95,26 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
 | M2: railway builder from structured intent | **Simple-profile exit complete** | Existing seed-6 businesses, whole-job affordability, native build/service, two returns, duplicate/reload/replay; see native railway report. |
+| M2e: town buses and ordinary maps | **Final integration in progress** | Dirty-engine passenger service, all 27 outcomes/reload/replay, older-save refusal and actual native-only advice passed; cap guards and final clean-engine publication remain open. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | **Bounded actual Copilot host integrated** | Live inspection, read-only comparison, explicit build boundary; broader paraphrase/ambiguity/cancellation/resumption acceptance remains open. |
 | M5: usable local alpha | Planned release gate; development launcher available | Visible isolated native game can be tried now; packaging and representative-save acceptance remain open. |
 
 ## Next work, in order
 
-1. **User testing point:** run `game_chat.py`, discuss live state and compare routes before requesting a build. Save/quit the old fixed-command launcher first if continuing its copied world. Keep partial/uncertain artifacts; do not retry mutations automatically.
-2. **Conversation depth:** add native production/waiting-cargo/profit telemetry and observation-window evidence before claiming measured optimization; held-out paraphrases, ambiguity and unintended-action tests remain open.
-3. **M3/later gates:** versioned feasible-route/orientation/obstacle cases, fault-injected mutation/save/journal windows, cancellation/resumption and packaging. Keep 64-record history and scope limits explicit; no autonomous-company expansion.
+1. **Finish M2e:** pass native cap/shape/rejected-record guards, rebuild the final clean engine, rerun bus/coal/legacy-save gates, publish matching engine patch/pins and project records, and verify both remote SHAs. Current development is not yet final accepted publication.
+2. **M3a/M3b:** establish varied independently feasible supported road/map cases, then inject reply/process/journal/save failures and cancellation. Prove reconciliation or explicit uncertainty; do not add terrain scope or automatic retries as shortcuts.
+3. **M4a/M4b:** expose production/waiting-cargo/financial observations and observation-window evidence for useful advice, then held-out phrasing/ambiguity/unintended-action checks and authorized durable resumption.
+4. **M5:** reproducible setup/compatibility, representative copied-save and restart/resume acceptance, packaging and a scoped release report. Keep the shared 64-record bound and no-autonomous-management direction explicit.
+
+See [next milestone sequencing](PROJECT_PLAN.md#next-milestone-sequencing)
+for the concrete exit evidence and dependencies.
 
 M1 and the simple M2 path are complete within their recorded scopes. The native
 backend selects explicit observed coal businesses, plans and prices a bounded
-route, constructs it and verifies service. General maps, shared networks,
-non-coal transport and M3 recovery gates remain open. Historical primitive
+route, constructs it and verifies service. Ordinary-map passenger buses are the
+active measured expansion; general terrain, shared networks, other transport
+modes and M3 recovery gates remain open. Historical primitive
 checkpoints below retain their original narrower conclusions.
 
 ## Implemented and tested checkpoint
@@ -131,7 +151,7 @@ checkpoints below retain their original narrower conclusions.
 - **User confirmed:** “Full train” means depart the mine fully loaded, then deliver to the power station. Production-based sizing is a separate later capability.
 - “Current budget” means existing cash, with a disclosed operating reserve and no automatic loan increase.
 - **User confirmed:** a custom OpenTTD build is acceptable; prioritize reliable control. M1 evidence now selects a narrow native bridge; stock GameScript/Admin fixtures remain regression/reference tools rather than the production adapter.
-- **Recommendation under discussion:** use local MCP for the first conversational interface so compatible AI clients can supply their own model access; retain one deterministic game-control core and allow in-game chat later. This is not yet a user-confirmed change to M4 or a working integration. See [D010](DECISIONS.md#d010--recommend-mcp-as-the-first-conversational-interface).
+- **Implemented provisional host:** installed signed-in Copilot CLI with session-local MCP, no new key/global server changes. Actual live advice and nonmutating planning are measured; the user's provider preference and broad M4 acceptance are not inferred. This supersedes the earlier D010 host recommendation; see D030/D031.
 
 The user answered both initial questions during this session. Remaining environment/profile choices are defaults to validate against the eventual test world.
 

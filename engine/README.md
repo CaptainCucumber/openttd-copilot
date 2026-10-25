@@ -1,8 +1,9 @@
 # Custom OpenTTD engine
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
-[`copilot/m2d-native-railway`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2d-native-railway), commit
-`96f960a3239e87837919414604a19e3eca9830b7`. It descends from configuration
+[`copilot/m2e-town-buses`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2e-town-buses), commit
+`2fb530eda610857329872eab1acaa9788de49f89`. It descends from the native railway
+commit `96f960a3239e87837919414604a19e3eca9830b7`, configuration
 commit `ff8bd20ef55b26505693e315d71d291967cce0a9`, purchase
 commit `7252756e936740771bac43fa74b66b050b8c68ce`, infrastructure
 commit `2c4dfef1bdee73f9994323c8139afd25768db150`, sequential-rail
@@ -12,13 +13,13 @@ tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All seventeen commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0017 in order to the upstream revision if not using the fork branch.
+All eighteen commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0018 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
 ```sh
-git clone --branch copilot/m2d-native-railway \
+git clone --branch copilot/m2e-town-buses \
   https://github.com/CaptainCucumber/OpenTTD.git vendor/openttd-copilot-engine
 cmake -S vendor/openttd-copilot-engine -B build/openttd-m2a \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -42,6 +43,22 @@ and base-set resources from the installed OpenTTD 15.3 application into a
 disposable profile. It never uses the normal profile for execution.
 
 ## Boundary
+
+Protocol-v3 request 18 adds bounded JSON town/road/engine/asset/order reads,
+normal-command quotes and retained passenger-bus actions 7-12. Road tile pages
+contain at most eight records. All bus/rail actions share the non-evicting
+64-record history. Canonical kind-specific fields are checked before admission
+so even rejected records remain readable under COPL schema 5's unchanged
+layout; earlier layouts still migrate. Wire invalid vehicle ID `0xFFFFFFFF`
+is normalized to the engine's invalid VehicleID. Commands must return the same
+cap rejection in test and execute phases. Bus station orders explicitly use
+the normal non-train stop-location setting and ordinary load/unload policy.
+
+Town acceptance adds vehicle-tagged passenger events to the existing runtime
+ring, with the industry field explicitly unavailable. This is not profit or
+production-rate telemetry. See [bus report](../docs/M2E_TOWN_BUS_REPORT.md) for
+current clean-build acceptance gates and [the plan](../docs/PROJECT_PLAN.md#next-milestone-sequencing)
+for reliability/observation/resumption work before broader transport scope.
 
 Read-only protocol-v3 request 17 tests the normal rail/station/depot wrapper
 without admitting an operation, returns authoritative cost/error and shared

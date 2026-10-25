@@ -25,7 +25,8 @@ class GameChatLauncherTests(unittest.TestCase):
         self.assertTrue(Path(server["args"][1]).is_absolute())
         self.assertEqual(server["tools"], [
             "open_native_map", "inspect_native_game", "plan_native_railway",
-            "build_native_railway", "get_native_status", "close_native_map",
+            "build_native_railway", "plan_native_bus", "build_native_bus",
+            "get_native_status", "close_native_map",
         ])
         self.assertIn("--no-show", server["args"])
 
@@ -35,11 +36,16 @@ class GameChatLauncherTests(unittest.TestCase):
         self.assertEqual(set(allowlisted), {
             "--allow-tool=openttd-copilot-native(inspect_native_game)",
             "--allow-tool=openttd-copilot-native(plan_native_railway)",
+            "--allow-tool=openttd-copilot-native(plan_native_bus)",
             "--allow-tool=openttd-copilot-native(get_native_status)",
         })
         prompt = command[-1].casefold()
         self.assertIn("do not construct anything", prompt)
         self.assertNotIn("build_native_railway", prompt)
+        self.assertIn("--deny-tool=shell", command)
+        self.assertIn("--deny-tool=write", command)
+        for tool in ("shell", "bash", "sql", "skill", "read", "edit", "write"):
+            self.assertIn("--excluded-tools=" + tool, command)
 
     def test_save_path_is_resolved_and_passed_to_native_server(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -69,6 +75,18 @@ class GameChatLauncherTests(unittest.TestCase):
             with patch("sys.argv", ["game_chat.py", "--no-show"]):
                 game_chat.main()
         call.assert_called_once()
+
+    def test_normal_map_is_random_and_fixture_remains_explicit(self):
+        with patch.object(game_chat.secrets, "randbits", return_value=123456):
+            normal = game_chat.launch_command("copilot")
+            fixture = game_chat.launch_command("copilot", map_style="railway-fixture")
+        def args(command):
+            return json.loads(command[8])["mcpServers"]["openttd-copilot-native"]["args"]
+        self.assertEqual(args(normal)[args(normal).index("--seed") + 1], "123456")
+        self.assertEqual(args(normal)[args(normal).index("--map-style") + 1], "normal")
+        self.assertEqual(args(fixture)[args(fixture).index("--seed") + 1], "6")
+        with self.assertRaises(ValueError):
+            game_chat.launch_command("copilot", map_style="made-up")
 
 
 if __name__ == "__main__":

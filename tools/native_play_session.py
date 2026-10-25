@@ -22,14 +22,19 @@ class NativeSession(Experiment):
     probe_kind = "native-railway"
 
     def __init__(self, binary=SERVER_BINARY, client_binary=CLIENT_BINARY, *,
-                 timeout=900, seed=6, visible=False):
+                 timeout=900, seed=6, visible=False, map_style="railway-fixture"):
+        if map_style not in ("normal", "railway-fixture"):
+            raise ValueError("map_style must be normal or railway-fixture")
         super().__init__(Path(binary).resolve(), timeout, seed)
+        self.map_style = map_style
         self.client_binary = Path(client_binary).resolve()
         self.visible_client = visible
         self.source_fingerprints = {}
-        self.manifest["scope"] = "native existing-business railway; isolated development profile"
-        self.manifest["limits"] = {"operations": 64, "cargo": "standard temperate coal",
-                                   "terrain": "flat clear unowned land only"}
+        self.manifest["scope"] = "native town buses and existing-business railway; isolated player profile"
+        self.manifest["map_style"] = map_style
+        self.manifest["limits"] = {
+            "operations": 64, "railway": "flat clear standard coal, at most 50 rail tiles",
+            "bus": "standard passenger bus, bounded two-way roads, no house/asset demolition or terraform"}
         self.manifest["binary_sha256"] = base.sha256_file(self.binary)
         self.manifest["client_binary_sha256"] = base.sha256_file(self.client_binary)
         self.manifest["engine"] = engine_provenance(self.binary, allow_dirty=True)
@@ -40,7 +45,8 @@ class NativeSession(Experiment):
                  "run_vehicle_probe.py", "run_native_train_purchase_probe.py",
                  "run_native_train_configuration_probe.py", "run_native_train_orders_probe.py",
                  "run_lifecycle_probe.py", "run_environment_probe.py", "run_control_probe.py",
-                 "game_chat.py")
+                 "game_chat.py", "native_bus.py", "native_bus_transport.py", "run_native_bus_probe.py",
+                 "check_native_railway_reload.py")
         self.manifest["source_hashes"] = {
             f"tools/{name}": base.sha256_file(ROOT / "tools" / name) for name in names}
         agent = ".github/agents/openttd.agent.md"
@@ -54,12 +60,24 @@ class NativeSession(Experiment):
         archive = base.stage_opengfx(base.find_opengfx_archive(), profile)
         config, private = base.write_config(profile, port, include_game_script=False,
                                             server=admin_port is not None)
+        if self.map_style == "normal":
+            private.write_text(private.read_text(encoding="utf-8").replace(
+                "Copilot Probe Server", "OpenTTD Copilot").replace(
+                "Copilot Probe Human", "Copilot Player"), encoding="utf-8")
         text = config.read_text(encoding="utf-8")
         if admin_port is not None:
             text = text.replace("server_admin_port = 0",
                                 f"server_admin_port = {admin_port}\nallow_insecure_admin_login = true")
-            text = text.replace("[game_creation]\n", "[game_creation]\ntree_placer = 0\n")
-            text = text.replace("[difficulty]\n", "[difficulty]\nindustry_density = 4\n")
+            if self.map_style == "railway-fixture":
+                text = text.replace("[game_creation]\n", "[game_creation]\ntree_placer = 0\n")
+                text = text.replace("[difficulty]\n", "[difficulty]\nindustry_density = 4\n")
+            else:
+                text = text.replace("map_x = 7", "map_x = 8").replace("map_y = 7", "map_y = 8")
+                text = text.replace("amount_of_rivers = 0", "amount_of_rivers = 1")
+                text = text.replace("terrain_type = 0", "terrain_type = 1")
+                text = text.replace("quantity_sea_lakes = 0", "quantity_sea_lakes = 1")
+                text = text.replace("[game_creation]\n", "[game_creation]\ntree_placer = 2\n")
+                text = text.replace("[difficulty]\n", "[difficulty]\nnumber_towns = 2\nindustry_density = 4\n")
             private.write_text(private.read_text(encoding="utf-8") +
                                "\n[server_bind_addresses]\n127.0.0.1 =\n", encoding="utf-8")
         config.write_text(text, encoding="utf-8")

@@ -21,6 +21,7 @@ The user's coal example is our first end-to-end acceptance case. It is a represe
 | R7 | Maintain a durable plan and action history | Explicit requirement; project records implement this |
 | R8 | Preserve the requested transport mode, endpoints, and budget | Do not silently replace a railway with trucks or borrow money |
 | R9 | Prioritize reliable control; a custom OpenTTD build is acceptable | Explicit user confirmation during planning |
+| R10 | Build passenger buses between towns and play on an ordinary map | Explicit 2026-10-24 user request; expand beyond the selected flat coal fixture |
 
 Initial target: local macOS play, one human company, OpenTTD 15.3, temperate climate, standard vehicles/industries. This is a testable starting scope, not a permanent restriction on the project. The user accepts a custom build; do not spend extended effort working around stock API limits if a narrow engine integration provides more dependable control.
 
@@ -40,11 +41,14 @@ Initial target: local macOS play, one human company, OpenTTD 15.3, temperate cli
 - Recover safely from lost connections and service restarts without blindly duplicating purchases or construction.
 - Run against a repeatable real-engine scenario suite, not just a single demonstration map.
 
-The flat-map build in M2 is an engineering checkpoint. The first usable alpha additionally needs M3's terrain and failure coverage and M4's chat experience.
+The flat-map build in M2 is an engineering checkpoint. The development
+launcher already supplies bounded actual conversation; M2e adds town buses
+and ordinary worlds at the user's request. A generally reliable alpha still
+needs M3's terrain/failure coverage and M4's broader conversational acceptance.
 
 ## Deferred scope
 
-Shared rail networks, multi-train signaling and junctions, automatic network expansion, passenger service, roads/ships/aircraft, advanced NewGRF support, multiplayer administration, polished in-game chat, cross-platform packaging, and unrestricted terraforming. Add them through separate milestones after the coal railway is measured and dependable.
+Shared rail networks, multi-train signaling and junctions, automatic network expansion, passenger rail, ships/aircraft, advanced NewGRF support, multiplayer administration, polished in-game chat, cross-platform packaging, and unrestricted terraforming. Passenger buses and bounded road links moved into the active scope at the user's explicit 2026-10-24 request; this does not authorize autonomous network management.
 
 Existing infrastructure is protected by default. Initial routes can avoid it; reuse, rebuilding, and demolition require explicit supported policies. Ordinary terrain preparation within a disclosed construction footprint can be added in M3. Full autonomy as company president is a separate product decision.
 
@@ -107,6 +111,31 @@ route/terrain/recovery behavior belongs to M3.
 
 Exit: on a known feasible flat-map fixture, construct the complete coal route and observe **two loaded departures and two deliveries by the assigned train**, then return toward the mine again. Charges remain within the authorized construction cap; original assets and loan are unchanged. Repeating a request does not create a second route accidentally. A route that lacks money for its train must fail before infrastructure construction.
 
+### M2e - Town passenger buses and ordinary playable maps
+
+**User-requested expansion, 2026-10-24; implementation in progress.**
+Default the conversational launcher to an ordinary randomly seeded 256x256
+temperate world with towns, trees, hills and water. Retain the old selected
+flat seed-6 world only as explicit `--map-style railway-fixture`. Copied saves
+retain their settings and must remain unchanged at their source.
+
+Observe actual towns, roads, passenger engines, road vehicles/stops/depots and
+orders. Plan one bus service between two explicit towns: accepting/producing
+drive-through stops on ordinary two-way roads, connected depot, one currently
+available passenger bus and ordinary load/unload orders. Reuse roads and add
+bounded clear/tree road links, priced by normal commands. No houses/assets
+demolished, no borrowing, bridges, tunnels or terraforming. Keep whole-job
+cap/reserve, retained history, journal-before-send and uncertainty boundaries.
+After verified service another explicit service can start within remaining
+history/cash; failed/uncertain execution blocks further requests.
+
+Exit: on an ordinary generated world, quote without mutation, reject insufficient
+budget before infrastructure, construct/independently inspect stops/depot/bus/
+orders, and observe vehicle-tagged passenger acceptance at both stops. Preserve
+loan/source saves/normal profile; prove duplicate/reload/replay and older-save
+refusal. Exercise the new tools through the actual conversational host. Record
+bounded failed routes, not a broad random-map feasibility/optimality claim.
+
 ### M3 — Make construction and recovery dependable
 
 **Depends on:** the M2 end-to-end path.
@@ -144,9 +173,35 @@ Exit: the player can start the game and Copilot, issue the request, observe comp
 
 ## Dependencies and effort management
 
-Critical path: **game control → observable world → costed railway builder → operating verification → recovery/terrain coverage → usable chat/packaging**. UI prototyping must not replace progress on this path.
+Critical path: **accepted native control/coal service -> complete normal-map bus
+gate -> supported-world reliability and safe interruption -> richer grounded
+advice/conversational acceptance -> restart/resume and packaged alpha**.
+The actual conversational host is already integrated; more UI work must not
+replace transport, recovery or observation evidence.
 
-Do not give a calendar completion date until M1 measures the adapter and identifies engine work. At each milestone, split the next one into bounded tasks, record what changed and what was learned, and revise the forecast. This is a multi-milestone engineering project, not a chat integration weekend task.
+Do not infer completion dates from a single successful route. At each milestone,
+split the next one into bounded tasks, record measured results and retained
+failures, and revise the forecast.
+
+## Next milestone sequencing
+
+These are bounded work packages inside the existing milestones, not promises
+that their capabilities already exist.
+
+| Order | Work package | Exit evidence |
+|---|---|---|
+| 1 | Finish M2e bus alpha and publish a reproducible testing point | Final clean-engine normal-world construction/passengers, cap/shape/rejected-record guards, duplicate/reload/older-save checks, coal regression, actual chat tools, pinned engine patch and remote verification |
+| 2 | M3a supported road/map reliability | Versioned nearby-town cases with independently feasible routes, varied stop/depot orientations, existing road slopes and protected obstacles; explicit bounds/unsupported results; no relaxed ownership, money or demolition rules |
+| 3 | M3b interruption and durable recovery | Inject reply loss and journal/save/process failures; demonstrate reconciliation or explicit uncertainty without duplicate purchases; cancellation between operations reports retained assets and spend |
+| 4 | M4a richer game observations and useful advice | Native production rates, station waiting cargo and vehicle/company financial telemetry with units/freshness; advice separates measured facts from suggestions and observes changes over a stated window |
+| 5 | M4b conversational acceptance and controlled resumption | Held-out phrasing/ambiguity/unsupported-policy tests, no unintended mutation, bounded progress/cancellation, restored world/job identity and authorization after restart |
+| 6 | M5 reproducible local alpha | Fresh setup/build/compatibility instructions, normal generated and representative copied-save acceptance, restart/resume without manual script edits, published limitations and release evidence |
+
+M3a does not silently add bridges, tunnels, terraforming or house demolition.
+Their later introduction needs explicit geometry, pricing, policy and real-engine
+acceptance. Likewise, richer telemetry does not authorize automatic replacement,
+extra buses or company management. Any supported expansion continues to preserve
+the user's mode, endpoints, existing assets, construction cap and reserve.
 
 ## Principal risks
 

@@ -43,6 +43,28 @@ Issue a structured request first, then the natural-language equivalent at M4. As
 
 Full load is checked against actual coal capacity immediately before leaving the source station. Destination evidence must associate the assigned train with delivery to an accepting destination. A decrease in load by itself or revenue from another train is insufficient.
 
+## M2e bus expansion gate
+
+The requested normal-map passenger-bus alpha has a separate narrow exit:
+observe ordinary map features and real towns; plan without changing assets,
+finances or retained position; reject insufficient whole-job budget; construct
+two distinct accepting/producing stops, connected roads/depot and one available
+passenger bus; independently inspect capacity and ordinary two-stop orders;
+observe passenger acceptance attributed to that bus at **both stops**.
+No borrowing or house/asset demolition is allowed. Tree clearing is limited
+to the disclosed quoted new-road/depot footprint.
+
+Duplicate lookup must not construct; fresh-process reload and exact replay
+must preserve every retained action, including orientation, road bits,
+historical operation sequence, cost and returned identities. An older initial
+save must not inherit completed external job state. Preserve original saves
+and normal profiles. Exercise the actual signed-in conversational host with
+bounded game output and no shell/SQL/coding fallback. A selected normal seed
+is not a random-world feasibility, profitability or reliability cohort.
+
+**Current result:** infrastructure and bus purchase passed; ordinary orders
+and complete passenger service remain open. See [work log](WORK_LOG.md).
+
 ## Scenario matrix
 
 | Family | Cases | Required outcome |

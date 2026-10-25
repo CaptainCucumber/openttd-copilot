@@ -47,7 +47,7 @@ def engine_provenance(binary: Path, allow_dirty: bool) -> dict:
         "src/command_type.h", "src/copilot_cmd.cpp", "src/copilot_cmd.h",
         "src/network/network_admin.cpp", "src/network/network_admin.h",
         "src/network/network_command.cpp",
-        "src/saveload/copilot_sl.cpp",
+        "src/saveload/copilot_sl.cpp", "src/copilot_observation.cpp", "src/economy.cpp",
     )
     return {"head": head, "clean": not bool(dirty), "revision": match.group(1),
             "source_hashes": {name: base.sha256_file(ENGINE_SOURCE / name) for name in files}}

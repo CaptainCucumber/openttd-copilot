@@ -132,6 +132,58 @@ purchase, or automatic recovery. See [D026](DECISIONS.md#d026--build-bounded-new
 
 The first line has one train, two terminal stations, and connected depot access, so it can avoid shared-track signals. The route must permit travel and reversal in both directions under the actual settings. Signals and junction capacity enter when supporting multiple trains, not as decorative construction.
 
+## Town passenger buses and normal worlds
+
+The user-requested M2e expansion adds protocol-v3 request 18: bounded JSON
+queries for towns, road tiles, road engines, assets and orders, normal-command
+quotes and retained actions. Tile pages contain at most eight records.
+Actions 7-12 add road bits, a new drive-through stop, a new road depot,
+a default-cargo passenger bus, an append-only ordinary station order and an
+explicit running state. They share COPL schema 5's existing fields and
+64-record history; no layout change, eviction or transaction is introduced.
+Road-vehicle departures and town-accepted passenger deliveries use the
+existing bounded runtime event ring.
+
+`native_bus.py` owns a bounded 192x192 corridor and multi-source road search,
+at most 160 path tiles and 100,000 expansions. It prefers existing standard
+two-way roads; new road/depot footprints are flat clear/tree land. It rejects
+houses, water, rail, bridges/tunnels, one-way roads and unsupported content.
+Prospective stops require actual passenger production and at least eight
+eighths of acceptance from the explicitly selected town's house callbacks,
+not mere proximity to its anchor. Stops are secured before tree clearing can
+affect local-authority permission. The cheapest currently buildable supported
+passenger bus is selected; this is not an optimality or profitability claim.
+
+Rail and bus execution share `JournaledExecutor`'s identity, cap/reserve,
+loan, fsynced-intent, polling and reconciliation boundary. Independent bus
+asset/order observations precede startup; `operating` additionally requires
+vehicle/company/cargo-attributed passenger acceptance at both selected stops.
+Different explicit requests may start new durable jobs only after verified
+operation, while cash/history permit. An identical request is a lookup;
+partial/uncertain jobs still block changed requests.
+
+The conversational launcher defaults to a randomly seeded normal 256x256
+temperate world with towns, trees, hills and water/rivers. The selected flat
+seed-6 profile remains an explicit railway fixture. Copied saves keep their
+settings. Profiles, saves and MCP configuration are isolated from normal play.
+Inspection exposes only currently buildable standard passenger engines to
+bound host-visible output. Coding tools are explicitly excluded; output
+truncation is not permission for shell/SQL fallback.
+
+**Integration status:** infrastructure and bus purchase have real-engine
+evidence; ordinary orders and end-to-end passenger service are still under
+investigation. The complete surface above is not yet accepted; see
+[current records](WORK_LOG.md).
+
+Next architectural work follows the existing layers rather than new transport
+types: version supported-world fixtures and failure boundaries; add explicit
+cancellation and durable job/world reconciliation; extend read-only telemetry
+for production, waiting cargo and finance with freshness/units; then expose
+authorized restart/resume through conversation. Observation does not grant
+optimization-mutation permission. Bridges/terrain/shared networks require
+separate explicit acceptance before expanding planner or command scope.
+See [milestone sequencing](PROJECT_PLAN.md#next-milestone-sequencing).
+
 ## Dry-run limits
 
 OpenTTD test mode checks commands without retaining their mutations. Testing “build track” and then “place a signal on that track” against the untouched map is not a sequential simulation. Likewise a train purchase cannot be proven against a depot that only exists in the plan. Test mode is useful but does not supply transaction semantics. [Test-mode source](https://github.com/OpenTTD/OpenTTD/blob/14ec60f248547d4d062a1160f0fc26d742319888/src/script/api/script_testmode.hpp).

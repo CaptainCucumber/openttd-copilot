@@ -1,8 +1,12 @@
 # Native playable alpha
 
-This is the existing-business native railway path, not the older controlled
+This is the native town-bus/existing-business railway path, not the older controlled
 GameScript demo. The opened map contains naturally generated industries;
-construction uses their observed IDs and never creates replacement businesses.
+construction uses observed town/business IDs and never creates replacement endpoints.
+
+**Current development note:** the bus expansion is being integrated and is not
+yet accepted. See STATUS for the real-engine gates; do not treat a listed tool
+or a unit test as passenger-service proof.
 
 ## Run locally
 
@@ -20,16 +24,17 @@ python3 -B tools/game_chat.py
 
 This is actual interactive AI conversation, using your Copilot account and its
 allowance. No separate provider key or global MCP configuration change is needed.
-Approve opening the game when Copilot requests permission. Default seed **6**
-contains the tested Canley Coal Mine (10) and Canley Power Station (1).
+Approve opening the game when Copilot requests permission. New games now use a
+randomly seeded **normal 256x256 temperate map** with ordinary towns, hills,
+water/rivers and trees. It is not a prebuilt route or a specially placed pair.
 Ask normally, for example:
 
 ```text
-What businesses are on this map, and how much money do I have?
-Compare Canley and Hunninghead for supplying Canley Power Station.
-Use a 50000 cap and keep 10000 reserve, full load. Don't build yet.
-Build the Canley option.
-What is my train carrying, and what are its orders?
+What towns and businesses are here, and how much money do I have?
+Compare passenger bus options between nearby towns.
+Use a 50000 cap and keep 10000 reserve. Don't build yet.
+Build the option we just discussed.
+What is my bus carrying, and what are its orders?
 What optimization ideas would you suggest, and what can't you measure yet?
 ```
 
@@ -39,7 +44,8 @@ permission; opening/closing also retain host permission prompts. Do not enable
 blanket approval just to get advice. The game-only custom agent has no coding
 or shell tools. It is not an autonomous company manager.
 
-Live observations include cash/loan, named industries, owned stations/depots,
+Live observations include towns/populations, passenger bus availability,
+road vehicles/stops/depots/orders, cash/loan, named industries, owned rail stations/depots,
 train parts/cargo/stopped state/orders, recent vehicle-tagged events and the
 available engine purchase/running-cost catalog. Pages are not an atomic
 snapshot. Events are bounded and reset on loading a world; missing events do
@@ -50,7 +56,7 @@ Live inspection/planning is unavailable while a construction worker is active.
 rates, station waiting cargo, reliability or detailed company income.** OpenTTD
 itself has additional information. Advice must distinguish measured facts,
 general suggestions and unknowns; a cost quote is not a profitability forecast.
-No vehicle replacement, extra trains, order optimization or track removal tool
+No vehicle replacement, extra-vehicle optimization, order optimization or track removal tool
 is implemented.
 
 Allow several minutes for construction verification and actual coal travel.
@@ -60,10 +66,62 @@ Closing writes `player-save.sav` into the reported artifact directory. Session
 shutdown also attempts saved close and waits for an active bounded job.
 Never interrupt a mutation and then assume it is safe to retry.
 
-Use `--seed INTEGER` for another newly generated map or
+Use `--seed INTEGER` for a reproducible newly generated normal map or
 `--save /absolute/path/world.sav` to load a **copy**. These options do not
 guarantee a supported route exists. Loading arbitrary old saves is not the
-alpha acceptance cohort; maps larger than 128 by 128 are rejected for planning.
+alpha acceptance cohort. Bus planning reads a bounded corridor, at most
+192x192 tiles and a 160-tile path, not an unrestricted whole-map search.
+Coal railway planning remains limited to maps no larger than 128x128.
+
+## Passenger buses
+
+`plan_native_bus` and `build_native_bus` accept `job_id`, observed
+`source_town_id`/`destination_town_id`, `construction_cap` and `operating_reserve`.
+The plan supplies actual normal-command prices for road additions, two new
+drive-through stops and a connected roadside depot, plus a currently buildable
+standard passenger bus. Stops must have actual acceptance and production from
+the specified town. Buses load/unload ordinarily at both ends, **not full load**.
+Service verification requires passenger acceptance attributed to that bus at
+both stops, not merely a successful start command.
+
+Roads are ordinary two-way standard roads. Existing roads can be reused,
+including traversable slopes; new links are currently flat clear/tree tiles.
+Trees may be cleared only on the quoted road/depot footprint. Houses, existing
+assets, rails and water are not cleared; no bridges, tunnels, trams,
+terraforming or automatic loans. Normal authority/ownership/money rules still
+apply. The cheapest observed available supported bus is chosen, not a proven
+optimal vehicle or profitable network.
+
+After verified service, a different explicit request starts a separate durable
+job if remaining cash and retained history permit. An identical request returns
+cached status. Partial/uncertain execution blocks further construction.
+The shared **64-operation world history** has no automatic eviction: a new bus
+service needs seven operations before any new road tiles. An obstructed,
+distant or record-heavy pair is rejected rather than silently changing towns.
+
+## What comes next
+
+The immediate gate is final clean-engine bus acceptance/publication, with the
+existing coal path preserved. Following work targets varied supported roads
+and normal maps, interruption/cancellation and honest recovery; then live
+production, waiting-cargo and financial observations for more useful advice.
+Held-out conversational cases, restart/resume and reproducible packaging
+remain separate release gates. No automatic network expansion or unsupported
+terrain work is implied. See the [milestone sequence](PROJECT_PLAN.md#next-milestone-sequencing)
+and [current status](STATUS.md).
+
+## Explicit railway fixture
+
+The old flat selected scenario remains reproducible:
+
+```sh
+python3 -B tools/game_chat.py --map-style railway-fixture
+```
+
+Its default seed **6** contains Canley Coal Mine (10) and Canley Power Station
+(1). Ask for a full-load coal railway with cap 50000/reserve 10000. These IDs
+are fixture observations, not universal constants. A normal hilly map does not
+guarantee a supported coal railway.
 
 This starts a new isolated session, **not** an attachment to a running
 `play_native.py` game. To continue that world, first enter `save`, note its save
@@ -132,7 +190,7 @@ player edits the railway. `close_native_map` saves/closes an idle session.
 
 ## Supported boundary
 
-One railway per session, one human company 0, standard temperate coal,
+Railway boundary: one human company 0, standard temperate coal,
 single-head locomotive plus one default coal wagon, two-tile platforms,
 flat clear unowned equal-height land, at most 50 rail tiles and 64 retained
 operations including prior records. No trees, roads, slopes, bridges, tunnels,

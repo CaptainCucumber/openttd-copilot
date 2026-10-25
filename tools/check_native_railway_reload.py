@@ -119,6 +119,21 @@ def main():
         require(read_orders(session.admin, result["world_id"], 0, result["vehicle"], session.remaining)[0]
                 == result["orders"], "reload/replay changed orders")
         session.check("all_outcomes_reloaded_and_replayed", {"outcomes": replies, "snapshot": after})
+        migrated_save = session.save("latest-migrated")
+        session.start_world("resaved-latest", save=migrated_save)
+        resaved = purchase.snapshot(session, result["world_id"])
+        for key in ("world_id", "sequence", "head", "stations", "depots"):
+            require(resaved[key] == after[key], f"resaved legacy world changed {key}")
+        require(stable(resaved) == stable(after), "resaved legacy world changed consist")
+        for entry in record["outcomes"]:
+            wire = entry["wire"]
+            status = session.admin.copilot_train_configuration_status(
+                world_id=result["world_id"], operation_hi=wire["operation_hi"],
+                operation_lo=wire["operation_lo"], timeout=session.remaining())
+            require(immutable_outcome(status, status["kind"]) ==
+                    immutable_outcome(entry["outcome"], status["kind"]),
+                    "legacy outcome changed after saving/reloading current schema")
+        session.check("legacy_saved_and_reloaded", {"records": len(record["outcomes"]), "snapshot": resaved})
     except Exception as exc:
         failure = exc
     return session.finish(failure)

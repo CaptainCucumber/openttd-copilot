@@ -11,20 +11,33 @@ Success means an affordable railway, suitable stations and train, correct orders
 **Talk to an actual AI about your live game.** The local launcher connects your
 signed-in GitHub Copilot CLI to an isolated OpenTTD map. Ask about businesses,
 money, trains and orders; compare read-only construction quotes; then explicitly
-authorize a supported railway. It uses your Copilot allowance, not a new API key.
+authorize a supported bus service or railway. It uses your Copilot allowance,
+not a new API key.
 
 ```sh
 python3 -B tools/game_chat.py
 ```
 
-Try: "Compare the Canley and Hunninghead coal mines for supplying Canley Power
-Station. Budget 50000, keep 10000 reserve, full load. Don't build yet."
-Then "Build the Canley option." The AI resolves actual observed businesses;
+New games use an ordinary randomly seeded 256x256 map with towns, hills, water
+and trees. `--save /absolute/path/world.sav` plays a copy of an existing world.
+The old flat seed-6 coal map is now explicit: `--map-style railway-fixture`.
+
+**Bus development status:** actual two-town passenger service and retained
+replay have passed on a development build; final command guards and clean-build
+publication are still in progress. See [current status](docs/STATUS.md).
+
+Try: "Which nearby towns could we connect with a passenger bus? Budget 50000,
+keep 10000 reserve. Compare plans, don't build yet."
+Then authorize the chosen service. The AI resolves actual observed towns/businesses;
 deterministic code owns geometry, prices, execution and delivery verification.
 
 The current bridge cannot read train profit, production rates or station queues:
-optimization suggestions are not measured profit forecasts. Construction is
-still one flat-clear standard-coal line, at most 50 rail tiles. The older
+optimization suggestions are not measured profit forecasts. Bus services use
+two passenger stops, connected road depot, one bus and ordinary orders; bounded
+road links/tree clearing are quoted before construction. No bridges, terrain
+editing or house demolition. Railway construction retains its flat-clear
+standard-coal/50-rail limit. The shared native history is limited to 64 operations.
+The older
 `tools/play_native.py` is a fixed-command, model-free alternative, not AI chat.
 See [launch, permissions, saves and limits](docs/NATIVE_PLAYABLE_ALPHA.md).
 
@@ -51,6 +64,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [M2d train purchase report](docs/M2D_TRAIN_PURCHASE_REPORT.md) | Capped rail vehicle purchase, actual IDs, and replay/reload |
 | [M2d train configuration report](docs/M2D_TRAIN_CONFIGURATION_REPORT.md) | Native wagon attachment, full-load/delivery orders, explicit start/stop, and replay/reload |
 | [Native railway report](docs/M2D_NATIVE_RAILWAY_REPORT.md) | Existing-business route, whole-job budget, native service, visible MCP and replay evidence |
+| [Town bus report](docs/M2E_TOWN_BUS_REPORT.md) | Ordinary-map bus service evidence, integration gates and bounded road scope |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 
@@ -59,7 +73,7 @@ Start each development session with `docs/STATUS.md`. Update the status and work
 ```mermaid
 flowchart LR
     A[Chat request] --> B[Validated goal and constraints]
-    B --> C[Deterministic railway planner]
+    B --> C[Deterministic transport planner]
     C --> D[Costed construction plan]
     D --> E[Game adapter and execution journal]
     E --> F[OpenTTD]
@@ -68,11 +82,31 @@ flowchart LR
     G --> H[Progress or precise failure report]
 ```
 
-Prove control of the player's company first, then build a complete railway from a structured request, then add natural language. The first adapter experiment targeted stock OpenTTD 15.3 through GameScript and its Admin interface. M1 measured essential gaps and selected a small engine integration. M2a–M2c established identity, one typed mutation, and vehicle-tagged service observations; the first M2d slice adds tile data. See the [engine fork and build instructions](engine/README.md).
+The direction is a **player-directed transport companion**, not an autonomous
+company president: discuss the live game, compare grounded options, then
+construct only the explicitly requested service within its cap and reserve.
+Natural language chooses goals; deterministic code chooses geometry, vehicles,
+prices and execution; the engine and independent readback establish results.
+
+The native coal-railway path is demonstrated. The active M2e expansion adds
+town passenger buses and ordinary maps; final command-boundary and clean-build
+publication gates remain in progress. Next: reliability on varied supported
+roads/maps and interrupted jobs (M3), richer production/queue/profit observations
+and grounded conversational advice (M4), then restart/resume and reproducible
+local-alpha packaging (M5). These are proposed deliverables, not implemented
+general terrain, measured optimization or unrestricted transport support.
+See [milestone sequencing](docs/PROJECT_PLAN.md#next-milestone-sequencing)
+and the [engine fork/build instructions](engine/README.md).
+
+## Historical checkpoints
+
+The initial stock GameScript/Admin experiment measured essential gaps and
+selected the narrow native engine bridge. The following probes and controlled
+demos retain their original scope; they are not the current normal-map launcher.
 
 The first implementation checkpoint is an isolated rail/station control probe. See [running and inspecting the probe](docs/CONTROL_PROBE.md) and [current verification status](docs/STATUS.md). It uses the installed OpenTTD binary, copied graphics, and disposable profiles.
 
-The next checkpoint also verifies bounded Admin requests and recovery across disconnects, pause, and save reloads. See [running the lifecycle probe](docs/LIFECYCLE_PROBE.md).
+The lifecycle checkpoint verifies bounded Admin requests and recovery across disconnects, pause, and save reloads. See [running the lifecycle probe](docs/LIFECYCLE_PROBE.md).
 
 The five-world stock-adapter throughput checkpoint is documented in [the M1 throughput probe](docs/THROUGHPUT_PROBE.md).
 
