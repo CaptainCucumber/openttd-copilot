@@ -35,6 +35,9 @@ cmake --build build/openttd-native-client --target openttd -j 8
 ```
 
 The first binary is the server; the second is the matching graphical client.
+Planned M2f ([D032](../docs/DECISIONS.md#d032---host-the-native-bridge-in-the-single-player-game-process))
+moves the bridge into the single-player GUI process; the dedicated build is
+retained only until that gate passes.
 On this macOS environment optional OpenGL discovery must be disabled for the
 software Cocoa client: default linking otherwise misses CGL symbols. There is
 no supported `OPTION_USE_OPENGL` switch. Both binaries must match the source

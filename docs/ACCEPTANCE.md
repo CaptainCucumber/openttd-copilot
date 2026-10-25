@@ -70,6 +70,37 @@ independent bus/order inspection and saved close passed; coal/legacy-save
 regressions passed. See [bus evidence](evidence/2026-10-24-native-town-buses.json).
 The broader scenario/recovery/release gates below remain open.
 
+## M2f single-process gate
+
+Planned (D032). All checks run on the local endpoint in **one** OpenTTD
+process with no dedicated server, joining client, Admin password or client key.
+Record binary/source hashes, video driver and pacing (headless `null` runs are
+unpaced; at least one visible run is required).
+
+1. **Refactor neutrality (before behavior changes):** existing Admin-path coal
+   and bus gates pass on the dispatcher-refactored binary.
+2. **Services:** native coal railway (three full departures, two deliveries)
+   and normal-map bus service (accepted passengers at both stops) pass on the
+   local path with duplicate lookup, all-outcome fresh-process reload/replay
+   and older-save refusal.
+3. **Legacy saves:** the accepted 44-outcome coal save and 27-outcome bus save
+   load, replay and resave unchanged in content.
+4. **Endpoint guards:** no endpoint without a configured token; wrong token,
+   non-loopback peer, oversize frame and second concurrent connection are
+   refused without game effect.
+5. **Single-player guards, each with zero mutation and zero history use:**
+   main menu / no active game; paused game (reads still succeed); wrong or
+   non-local company; networked game; Shift held during a mutation does not
+   produce an estimate-only or pending record (`NoEst`).
+6. **Frames:** completion/observation/event frames advance in single-player
+   and remain monotonic across save/reload.
+7. **Lifecycle:** typed save writes only a validated name in the isolated
+   save directory; path-like names are refused; quit ends only the
+   launcher-owned process. Normal profile and original saves unchanged.
+8. **Actual host:** `game_chat.py` opens one visible process; Copilot inspects,
+   plans, builds a bus service to verified operation, saves and closes using
+   only native tools.
+
 ## Scenario matrix
 
 | Family | Cases | Required outcome |

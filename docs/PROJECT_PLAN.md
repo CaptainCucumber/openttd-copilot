@@ -22,6 +22,7 @@ The user's coal example is our first end-to-end acceptance case. It is a represe
 | R8 | Preserve the requested transport mode, endpoints, and budget | Do not silently replace a railway with trucks or borrow money |
 | R9 | Prioritize reliable control; a custom OpenTTD build is acceptable | Explicit user confirmation during planning |
 | R10 | Build passenger buses between towns and play on an ordinary map | Explicit 2026-10-24 user request; expand beyond the selected flat coal fixture |
+| R11 | Local single-player games only; multiplayer is not needed | Explicit 2026-10-24 user statement; run Copilot inside one game process (D032) |
 
 Initial target: local macOS play, one human company, OpenTTD 15.3, temperate climate, standard vehicles/industries. This is a testable starting scope, not a permanent restriction on the project. The user accepts a custom build; do not spend extended effort working around stock API limits if a narrow engine integration provides more dependable control.
 
@@ -140,6 +141,20 @@ loan/source saves/normal profile; prove duplicate/reload/replay and older-save
 refusal. Exercise the new tools through the actual conversational host. Record
 bounded failed routes, not a broad random-map feasibility/optimality claim.
 
+### M2f — Single-process local bridge
+
+Status: **planned (D032).** Replace the dedicated-server + joining-client
+topology with one visible single-player OpenTTD process hosting a loopback,
+token-authenticated Copilot endpoint. Keep request payloads, COPL, journals,
+planners and MCP tools. Handle single-player command semantics explicitly:
+Shift estimate mode, pause, menu/non-game states, local company, synchronous
+callbacks and tick-based frames. Add bounded save/quit lifecycle requests.
+
+Exit: [M2f gate](ACCEPTANCE.md#m2f-single-process-gate) on the local path,
+including coal and bus services, legacy-save reload, guard cases and an actual
+Copilot build/save/close in one visible process. Work packages F1–F7 are in the
+[M2f plan](M2F_LOCAL_BRIDGE_PLAN.md).
+
 ### M3 — Make construction and recovery dependable
 
 **Depends on:** the M2 end-to-end path.
@@ -179,7 +194,7 @@ Exit: the player can start the game and Copilot, issue the request, observe comp
 ## Dependencies and effort management
 
 Critical path: **accepted native control/coal service -> complete normal-map bus
-gate -> supported-world reliability and safe interruption -> richer grounded
+gate -> single-process local bridge -> supported-world reliability and safe interruption -> richer grounded
 advice/conversational acceptance -> restart/resume and packaged alpha**.
 The actual conversational host is already integrated; more UI work must not
 replace transport, recovery or observation evidence.
@@ -196,11 +211,12 @@ that their capabilities already exist.
 | Order | Work package | Exit evidence |
 |---|---|---|
 | 1 | M2e bus alpha testing point (bounded exit passed) | Clean-engine normal-world passengers, cap/shape/rejected-record guards, duplicate/reload/older-save checks, coal/legacy regressions, actual chat construction and pinned engine patch; publication recorded in STATUS |
-| 2 | M3a supported road/map reliability | Versioned nearby-town cases with independently feasible routes, varied stop/depot orientations, existing road slopes and protected obstacles; explicit bounds/unsupported results; no relaxed ownership, money or demolition rules |
-| 3 | M3b interruption and durable recovery | Inject reply loss and journal/save/process failures; demonstrate reconciliation or explicit uncertainty without duplicate purchases; cancellation between operations reports retained assets and spend |
-| 4 | M4a richer game observations and useful advice | Native production rates, station waiting cargo and vehicle/company financial telemetry with units/freshness; advice separates measured facts from suggestions and observes changes over a stated window |
-| 5 | M4b conversational acceptance and controlled resumption | Held-out phrasing/ambiguity/unsupported-policy tests, no unintended mutation, bounded progress/cancellation, restored world/job identity and authorization after restart |
-| 6 | M5 reproducible local alpha | Fresh setup/build/compatibility instructions, normal generated and representative copied-save acceptance, restart/resume without manual script edits, published limitations and release evidence |
+| 2 | M2f single-process local bridge (D032) | One visible process, loopback token endpoint, no Admin/client harness on the product path; coal/bus/legacy regressions and single-player guard cases pass; actual Copilot build/save/close. See [plan](M2F_LOCAL_BRIDGE_PLAN.md) |
+| 3 | M3a supported road/map reliability | Versioned nearby-town cases with independently feasible routes, varied stop/depot orientations, existing road slopes and protected obstacles; explicit bounds/unsupported results; no relaxed ownership, money or demolition rules |
+| 4 | M3b interruption and durable recovery | Inject reply loss and journal/save/process failures; demonstrate reconciliation or explicit uncertainty without duplicate purchases; cancellation between operations reports retained assets and spend |
+| 5 | M4a richer game observations and useful advice | Native production rates, station waiting cargo and vehicle/company financial telemetry with units/freshness; advice separates measured facts from suggestions and observes changes over a stated window |
+| 6 | M4b conversational acceptance and controlled resumption | Held-out phrasing/ambiguity/unsupported-policy tests, no unintended mutation, bounded progress/cancellation, restored world/job identity and authorization after restart |
+| 7 | M5 reproducible local alpha | Fresh setup/build/compatibility instructions, normal generated and representative copied-save acceptance, restart/resume without manual script edits, published limitations and release evidence |
 
 M3a does not silently add bridges, tunnels, terraforming or house demolition.
 Their later introduction needs explicit geometry, pricing, policy and real-engine
@@ -221,6 +237,7 @@ the user's mode, endpoints, existing assets, construction cap and reserve.
 | Human edits or loading an older save invalidates the plan | World identity, save lineage, dependency fingerprints, replan or stop |
 | Full-load train never departs | Monitor production, waiting cargo, loading progress, station catchment, and vehicle compatibility |
 | Tests overstate reliability | Fixed feasible fixtures, independent checks, disclosed generated cohorts, retained failures |
+| Single-player command semantics differ from the server path (Shift estimates, pause popups, synchronous callbacks, frozen `_frame_counter`) | M2f source-checked guards and explicit gate cases before retiring the server path |
 | Custom build becomes expensive to maintain | Keep a small patch and pinned engine version; isolate adapter from planner and chat |
 
 ## Working cadence

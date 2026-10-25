@@ -101,9 +101,10 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 ## Next work, in order
 
 1. **User testing point:** run `python3 -B tools/game_chat.py`, compare nearby town bus options with an explicit cap/reserve, then authorize a service. Use `--seed 20261024` for the tested Dudinghall -> Hudinghattan Ridge pair. Save/close through the AI; partial/uncertain jobs are not retried. Broader normal-map feasibility remains unproven.
-2. **M3a/M3b:** establish varied independently feasible supported road/map cases, then inject reply/process/journal/save failures and cancellation. Prove reconciliation or explicit uncertainty; do not add terrain scope or automatic retries as shortcuts.
-3. **M4a/M4b:** expose production/waiting-cargo/financial observations and observation-window evidence for useful advice, then held-out phrasing/ambiguity/unintended-action checks and authorized durable resumption.
-4. **M5:** reproducible setup/compatibility, representative copied-save and restart/resume acceptance, packaging and a scoped release report. Keep the shared 64-record bound and no-autonomous-management direction explicit.
+2. **M2f single-process local bridge (planned, D032):** user confirmed local single-player only. Replace server + client + Admin transport with one visible process and a loopback token endpoint; fix single-player hazards found in source (no `NoEst` on Copilot commands, frozen `_frame_counter`, pause popups, console-only saves). Execute work packages F1–F7 in the [M2f plan](M2F_LOCAL_BRIDGE_PLAN.md); gate in [acceptance](ACCEPTANCE.md#m2f-single-process-gate). Start with F1 (dispatcher refactor, no behavior change).
+3. **M3a/M3b:** establish varied independently feasible supported road/map cases, then inject reply/process/journal/save failures and cancellation. Prove reconciliation or explicit uncertainty; do not add terrain scope or automatic retries as shortcuts.
+4. **M4a/M4b:** expose production/waiting-cargo/financial observations and observation-window evidence for useful advice, then held-out phrasing/ambiguity/unintended-action checks and authorized durable resumption.
+5. **M5:** reproducible setup/compatibility, representative copied-save and restart/resume acceptance, packaging and a scoped release report. Keep the shared 64-record bound and no-autonomous-management direction explicit.
 
 See [next milestone sequencing](PROJECT_PLAN.md#next-milestone-sequencing)
 for the concrete exit evidence and dependencies.
@@ -145,6 +146,7 @@ checkpoints below retain their original narrower conclusions.
 ## Confirmed decisions and provisional defaults
 
 - Local play on macOS, one human company, external chat first.
+- **User confirmed 2026-10-24:** local single-player only; multiplayer not needed. Planned single-process bridge (D032); the current implementation still uses server + client + Admin until M2f passes.
 - OpenTTD 15.3, temperate climate, standard vehicles and industries, no additional gameplay NewGRFs for the initial test profile.
 - **User confirmed:** “Full train” means depart the mine fully loaded, then deliver to the power station. Production-based sizing is a separate later capability.
 - “Current budget” means existing cash, with a disclosed operating reserve and no automatic loan increase.
