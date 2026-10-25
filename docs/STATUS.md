@@ -5,24 +5,22 @@ Updated: 2026-10-24, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Engine bus branch `copilot/m2e-town-buses` is published at `2fb530eda610857329872eab1acaa9788de49f89`, fork remote SHA verified; matching clean server/client rebuilt and patch 0018 exported. Project bus implementation/direction-record progress publication is in progress; final clean bus/coal/legacy/chat acceptance is still running. The previous accepted project conversation baseline remains `033e1b8f0a239e6e76fb65c3a174e6a62ed50aa6`. Both repositories use the required no-reply Git identity.
+- Engine bus branch `copilot/m2e-town-buses` is published at `2fb530eda610857329872eab1acaa9788de49f89`, fork remote SHA verified; matching clean server/client rebuilt and patch 0018 exported. Project bus implementation/direction records `a7563ba50a4bf26e6aff23db5f73973d40fd967a` are published on `origin/main`, exact remote SHA verified. Final clean bus/coal/legacy/actual-host acceptance passed; the evidence/acceptance handoff follows. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
 
-**Active expansion (not yet accepted):** the user explicitly requested
-town-to-town buses and ordinary maps. Native bus observation/construction,
-deterministic bus planning, chat tools and a randomly seeded normal-map profile
-are being implemented. The M2e exit requires real passenger deliveries and
-replay/reload evidence; the previously published capabilities below remain the
-accepted baseline until that evidence passes.
-Full dirty-engine gate `20261025T002814Z-4145a74f` built two stops, depot,
-20 road tiles and bus 6 for 8,725, delivered passengers at both stops and
-passed duplicate/reload/replay/older-save checks. Actual native-only bus advice
-also passed. Final command-cap guards exposed a test/execute mismatch; the
-corrected guard-only runtime passed, including rejected-record reload. Final
-clean-engine service/regression gates are running before acceptance. Earlier partial
-jobs are retained and never automatically retried. See [bus report](M2E_TOWN_BUS_REPORT.md).
+**Town buses on normal maps are ready for bounded user testing.** The launcher
+defaults to a randomly seeded ordinary 256x256 temperate world. Final clean
+gate `20261025T003710Z-042103ac` built two stops, depot, 20 road tiles and bus 6
+for 8,725, accepted 31 passengers at station 1 and five at station 0, and passed
+all 27 outcomes/duplicate/reload/replay/older-save, malformed-field and
+below-cap rejected-record guards. Actual Copilot build `20261025T003929Z-33e9b3d4`
+reached verified operation, inspected real bus/orders and saved/closed using
+only native tools. Coal and all 44 legacy resaved outcomes passed regressions.
+All 263 tests pass. This is one selected pair, not random-map reliability or
+measured profit. Earlier partial jobs are retained and never automatically retried.
+See [report](M2E_TOWN_BUS_REPORT.md) and [evidence](evidence/2026-10-24-native-town-buses.json).
 
 **Actual AI game conversation is available for user testing.** Run
 `python3 -B tools/game_chat.py` using the installed, signed-in Copilot CLI.
@@ -95,14 +93,14 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 | M0: requirements, source research, durable plan | Complete as an initial baseline | [Plan](PROJECT_PLAN.md), [research](RESEARCH.md), [decisions](DECISIONS.md), [acceptance criteria](ACCEPTANCE.md) |
 | M1: prove game control and choose adapter | **Complete** | Stock capability, lifecycle, vehicle, throughput, copied-save, and one-GameScript-slot evidence recorded. Production choice: narrow native OpenTTD bridge; see [M1 report](M1_REPORT.md). |
 | M2: railway builder from structured intent | **Simple-profile exit complete** | Existing seed-6 businesses, whole-job affordability, native build/service, two returns, duplicate/reload/replay; see native railway report. |
-| M2e: town buses and ordinary maps | **Final integration in progress** | Dirty-engine passenger service, all 27 outcomes/reload/replay, older-save refusal and actual native-only advice passed; cap guards and final clean-engine publication remain open. |
+| M2e: town buses and ordinary maps | **Bounded exit complete** | Clean-engine passenger service, 27 outcomes/reload/replay, cap/shape/rejected-record guards, coal/legacy regressions and actual native-only conversational build passed. |
 | M3: terrain, budget, and recovery reliability | Planned | No implementation |
 | M4: conversational Copilot | **Bounded actual Copilot host integrated** | Live inspection, read-only comparison, explicit build boundary; broader paraphrase/ambiguity/cancellation/resumption acceptance remains open. |
 | M5: usable local alpha | Planned release gate; development launcher available | Visible isolated native game can be tried now; packaging and representative-save acceptance remain open. |
 
 ## Next work, in order
 
-1. **Finish M2e:** pass native cap/shape/rejected-record guards, rebuild the final clean engine, rerun bus/coal/legacy-save gates, publish matching engine patch/pins and project records, and verify both remote SHAs. Current development is not yet final accepted publication.
+1. **User testing point:** run `python3 -B tools/game_chat.py`, compare nearby town bus options with an explicit cap/reserve, then authorize a service. Use `--seed 20261024` for the tested Dudinghall -> Hudinghattan Ridge pair. Save/close through the AI; partial/uncertain jobs are not retried. Broader normal-map feasibility remains unproven.
 2. **M3a/M3b:** establish varied independently feasible supported road/map cases, then inject reply/process/journal/save failures and cancellation. Prove reconciliation or explicit uncertainty; do not add terrain scope or automatic retries as shortcuts.
 3. **M4a/M4b:** expose production/waiting-cargo/financial observations and observation-window evidence for useful advice, then held-out phrasing/ambiguity/unintended-action checks and authorized durable resumption.
 4. **M5:** reproducible setup/compatibility, representative copied-save and restart/resume acceptance, packaging and a scoped release report. Keep the shared 64-record bound and no-autonomous-management direction explicit.
@@ -161,8 +159,20 @@ The user answered both initial questions during this session. Remaining environm
 - Installed executable reports OpenTTD **15.3** at `/Applications/OpenTTD.app`; runtime and binary hash verified in the probe.
 - OpenGFX2 Classic 0.8.1 loads successfully from an isolated copy; content and bundled resource hashes are in the evidence report.
 - Apple Silicon; Python 3.14.6, Node 24.3.0, CMake 4.4.2, Apple clang 21.0.0 observed. Ninja and `openttd` were not found on PATH.
-- Original saves were not loaded or modified. No credentials were read or configured.
+- Original saves are only used through isolated copies and remain unchanged.
+  Disposable loopback Admin/client secrets are generated per run and removed
+  during cleanup; no personal credentials are recorded in project evidence.
 
 ## Known uncertainties
 
-General native mutation compatibility beyond the measured flat-clear rail and station/depot fixtures; complete-job cost accounting; pending-operation save/load fault injection; mutation/journal/save crash windows; rejected/uncertain-operation resolution beyond the tested cases; event-ring overflow and save/reload continuity in a real game; route-planner coverage; backwards/forwards handling of saves written by the custom build. The MCP demo is not durable across server restart and is fixture-bound. Read-only pages can span frames. Tile rail bits exclude station/depot geometry; industry `TileArea` rectangles are bounds, not exact occupied footprints; current station acceptance does not prove candidate catchment; train and order pages do not prove purchase identity or route reachability. Catalog values still need purchase/refit validation and resulting consist readback. M2c proves vehicle-tagged observation in an isolated GameScript-built service, not native complete-route construction.
+General native compatibility beyond the measured coal and ordinary passenger
+bus profiles; held-out normal-map feasibility; pending-save and mutation/journal/
+save crash windows; uncertain-operation resolution and cancellation; event-ring
+overflow and observation continuity; custom-save backward/forward compatibility;
+durable host/job restart and representative-save release coverage. Complete-job
+cost/reserve and actual transport are measured for the selected rail/bus runs,
+not every terrain/content combination. Read-only pages span frames; industry
+bounds are not occupied footprints; catalogs and configuration are not service
+proof without live command/readback/delivery evidence. Profit, production rates
+and station queues remain unavailable. The old GameScript demo is fixture-bound
+and non-resumable; it is not the current native production path.

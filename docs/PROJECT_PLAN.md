@@ -113,7 +113,11 @@ Exit: on a known feasible flat-map fixture, construct the complete coal route an
 
 ### M2e - Town passenger buses and ordinary playable maps
 
-**User-requested expansion, 2026-10-24; implementation in progress.**
+**User-requested expansion; bounded exit demonstrated, 2026-10-24.**
+Final clean-engine ordinary-map gate passed actual passengers at both stops,
+27-outcome replay/reload, duplicate/older-save and cap/shape/rejected-record
+guards. Actual conversational build/inspection/saved close and coal/legacy
+regressions passed. See [bus report](M2E_TOWN_BUS_REPORT.md).
 Default the conversational launcher to an ordinary randomly seeded 256x256
 temperate world with towns, trees, hills and water. Retain the old selected
 flat seed-6 world only as explicit `--map-style railway-fixture`. Copied saves
@@ -156,9 +160,10 @@ Exit: the user's coal request and paraphrases produce the same validated intent 
 
 Current bounded implementation (2026-10-24): `tools/game_chat.py` uses the
 installed signed-in Copilot CLI, a game-only custom agent and session-local MCP
-configuration. Actual model/engine evidence covers live inspection and named
-route comparison without construction. Explicit build requests still use M2's
-validated seven-field intent and deterministic execution. The fixed sentence
+configuration. Actual model/engine evidence covers live inspection, named
+route comparison without construction and a complete authorized town-bus build
+through verified service and saved close. Explicit requests use the validated
+seven-field railway or five-field bus intent and deterministic execution. The fixed sentence
 parser was not sufficient for the user's conversational requirement.
 Profit/production/queue telemetry, the held-out conversational cohort,
 cancellation and resumption remain open; this is not M4 exit acceptance.
@@ -190,7 +195,7 @@ that their capabilities already exist.
 
 | Order | Work package | Exit evidence |
 |---|---|---|
-| 1 | Finish M2e bus alpha and publish a reproducible testing point | Final clean-engine normal-world construction/passengers, cap/shape/rejected-record guards, duplicate/reload/older-save checks, coal regression, actual chat tools, pinned engine patch and remote verification |
+| 1 | M2e bus alpha testing point (bounded exit passed) | Clean-engine normal-world passengers, cap/shape/rejected-record guards, duplicate/reload/older-save checks, coal/legacy regressions, actual chat construction and pinned engine patch; publication recorded in STATUS |
 | 2 | M3a supported road/map reliability | Versioned nearby-town cases with independently feasible routes, varied stop/depot orientations, existing road slopes and protected obstacles; explicit bounds/unsupported results; no relaxed ownership, money or demolition rules |
 | 3 | M3b interruption and durable recovery | Inject reply loss and journal/save/process failures; demonstrate reconciliation or explicit uncertainty without duplicate purchases; cancellation between operations reports retained assets and spend |
 | 4 | M4a richer game observations and useful advice | Native production rates, station waiting cargo and vehicle/company financial telemetry with units/freshness; advice separates measured facts from suggestions and observes changes over a stated window |

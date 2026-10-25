@@ -4,9 +4,10 @@ This is the native town-bus/existing-business railway path, not the older contro
 GameScript demo. The opened map contains naturally generated industries;
 construction uses observed town/business IDs and never creates replacement endpoints.
 
-**Current development note:** the bus expansion is being integrated and is not
-yet accepted. See STATUS for the real-engine gates; do not treat a listed tool
-or a unit test as passenger-service proof.
+**Bounded bus alpha:** actual clean-engine construction, passenger acceptance
+at both towns, retained replay and conversational construction have passed.
+See [bus evidence and limits](M2E_TOWN_BUS_REPORT.md); this does not establish
+general random-map reliability or profitability.
 
 ## Run locally
 
@@ -101,8 +102,8 @@ distant or record-heavy pair is rejected rather than silently changing towns.
 
 ## What comes next
 
-The immediate gate is final clean-engine bus acceptance/publication, with the
-existing coal path preserved. Following work targets varied supported roads
+The bounded clean-engine bus gate is complete, with the existing coal path
+preserved. Following work targets varied supported roads
 and normal maps, interruption/cancellation and honest recovery; then live
 production, waiting-cargo and financial observations for more useful advice.
 Held-out conversational cases, restart/resume and reproducible packaging
@@ -150,35 +151,40 @@ Register this local stdio MCP server in a compatible host:
   "mcpServers": {
     "openttd-copilot-native": {
       "command": "python3",
-      "args": ["-B", "/absolute/path/openttd-copilot/tools/native_mcp_server.py"]
+      "args": ["-B", "/absolute/path/openttd-copilot/tools/native_mcp_server.py", "--seed", "20261024"]
     }
   }
 }
 ```
 
-Ask the AI to open a native map, then build the coal railway between the
-**discovered** Canley businesses, full load, construction cap 50,000 and reserve
-10,000. It must call `open_native_map`, bind the returned business and job IDs,
-then call `build_native_railway` with:
+This example selects the tested normal seed explicitly; the interactive
+launcher chooses a random seed instead. Ask the AI to open the map, bind the
+returned job and **observed** Dudinghall/Hudinghattan Ridge town IDs, quote the
+service with `plan_native_bus`, then build only when authorized.
+`build_native_bus` takes:
 
 ```json
 {
   "job_id": "<returned job ID>",
-  "source_id": 10,
-  "destination_id": 1,
-  "cargo": "coal",
-  "wait_for_full_load": true,
+  "source_town_id": 0,
+  "destination_town_id": 13,
   "construction_cap": 50000,
   "operating_reserve": 10000
 }
 ```
 
-The IDs above are seed-6 observations, not universal constants. Poll
-`get_native_status` with `job_id`. `operating` means the verifier observed two
-accepted deliveries and a third full-load departure, proving both returns.
+The IDs above are seed-20261024 observations, not universal constants. Poll
+`get_native_status` with `job_id` and `wait_seconds: 10`. For buses,
+`operating` means vehicle-attributed passenger acceptance at both stops.
+For the separate railway fixture, add `--map-style railway-fixture --seed 6`
+to the server arguments and use `plan_native_railway`/`build_native_railway`
+with the seven coal/full-load fields. Railway operation requires two accepted
+deliveries and a third full-load departure, proving both returns.
 The returned paths include a commissioned save, verified service save and
 durable job record. Duplicate identical calls return cached job status; changed
-payloads are rejected after execution starts. A planning-only `rejected` result
+requests are blocked during execution and after partial/uncertain failures.
+After verified operation, another explicit service can begin if cash/history
+permit. A planning-only `rejected` result
 has `construction_started: false`: no construction was attempted and a changed
 explicit request may be submitted on that same map. Partial/uncertain/execution
 failures do not authorize a changed request or automatic retry.

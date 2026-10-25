@@ -62,8 +62,13 @@ and normal profiles. Exercise the actual signed-in conversational host with
 bounded game output and no shell/SQL/coding fallback. A selected normal seed
 is not a random-world feasibility, profitability or reliability cohort.
 
-**Current result:** infrastructure and bus purchase passed; ordinary orders
-and complete passenger service remain open. See [work log](WORK_LOG.md).
+**Current result:** bounded M2e exit passed on the clean engine. Normal seed
+20261024 delivered passengers at both stops, preserved all 27 outcomes across
+reload/replay, refused older-save completion, malformed shapes and below-cap
+execution, and retained/reloaded the rejection. Actual conversational build,
+independent bus/order inspection and saved close passed; coal/legacy-save
+regressions passed. See [bus evidence](evidence/2026-10-24-native-town-buses.json).
+The broader scenario/recovery/release gates below remain open.
 
 ## Scenario matrix
 

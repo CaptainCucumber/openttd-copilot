@@ -22,9 +22,10 @@ New games use an ordinary randomly seeded 256x256 map with towns, hills, water
 and trees. `--save /absolute/path/world.sav` plays a copy of an existing world.
 The old flat seed-6 coal map is now explicit: `--map-style railway-fixture`.
 
-**Bus development status:** actual two-town passenger service and retained
-replay have passed on a development build; final command guards and clean-build
-publication are still in progress. See [current status](docs/STATUS.md).
+**Bus testing point:** clean-engine two-town passenger service, command guards,
+retained replay and actual conversational construction have passed on one
+selected normal map. This is not a random-map reliability or profitability
+claim. See [current status](docs/STATUS.md).
 
 Try: "Which nearby towns could we connect with a passenger bus? Budget 50000,
 keep 10000 reserve. Compare plans, don't build yet."
@@ -89,8 +90,8 @@ Natural language chooses goals; deterministic code chooses geometry, vehicles,
 prices and execution; the engine and independent readback establish results.
 
 The native coal-railway path is demonstrated. The active M2e expansion adds
-town passenger buses and ordinary maps; final command-boundary and clean-build
-publication gates remain in progress. Next: reliability on varied supported
+town passenger buses and ordinary maps, with its bounded clean-engine exit
+demonstrated. Next: reliability on varied supported
 roads/maps and interrupted jobs (M3), richer production/queue/profit observations
 and grounded conversational advice (M4), then restart/resume and reproducible
 local-alpha packaging (M5). These are proposed deliverables, not implemented

@@ -1,10 +1,12 @@
-# Proposed architecture
+# Architecture and implementation direction
 
 Status: 2026-10-24. The native simple-profile railway now connects existing
 businesses with a whole-job budget and verified service. Read-only construction
 quotes/catchment, bounded directed planning, fsynced execution and visible MCP
 use the native bridge independently of GameScript. Broader terrain and crash
-recovery remain open. See [D029](DECISIONS.md#d029---connect-a-bounded-existing-business-native-railway-before-expanding-scope)
+recovery remain open. The bounded town-bus/ordinary-map expansion also has
+clean-engine service, guards, replay and actual conversational-build evidence;
+see [bus report](M2E_TOWN_BUS_REPORT.md). See [D029](DECISIONS.md#d029---connect-a-bounded-existing-business-native-railway-before-expanding-scope)
 and [the native railway report](M2D_NATIVE_RAILWAY_REPORT.md).
 
 ## Responsibilities
@@ -170,10 +172,11 @@ Inspection exposes only currently buildable standard passenger engines to
 bound host-visible output. Coding tools are explicitly excluded; output
 truncation is not permission for shell/SQL fallback.
 
-**Integration status:** infrastructure and bus purchase have real-engine
-evidence; ordinary orders and end-to-end passenger service are still under
-investigation. The complete surface above is not yet accepted; see
-[current records](WORK_LOG.md).
+**Integration status:** the bounded clean-engine bus path passed actual
+passengers at both stops, command-cap/shape guards, rejected-record and all
+service-outcome reload/replay, older-save refusal, coal regressions and actual
+conversational build/inspection/saved close. See [bus report](M2E_TOWN_BUS_REPORT.md).
+This does not close broader supported-world or fault-injected recovery gates.
 
 Next architectural work follows the existing layers rather than new transport
 types: version supported-world fixtures and failure boundaries; add explicit
