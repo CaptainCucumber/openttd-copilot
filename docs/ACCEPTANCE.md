@@ -97,7 +97,11 @@ unpaced; at least one visible run is required).
 7. **Lifecycle:** typed save writes only a validated name in the isolated
    save directory; path-like names are refused; quit ends only the
    launcher-owned process. Normal profile and original saves unchanged.
-8. **Actual host:** `game_chat.py` opens one visible process; Copilot inspects,
+8. **Portability checks:** no Unix-domain sockets or platform-tool
+   subprocesses on the product path; platform default video driver; journal
+   unit tests cover the Windows durability branch. (Runtime evidence on
+   Windows/Linux is an M5 gate, not M2f.)
+9. **Actual host:** `game_chat.py` opens one visible process; Copilot inspects,
    plans, builds a bus service to verified operation, saves and closes using
    only native tools.
 

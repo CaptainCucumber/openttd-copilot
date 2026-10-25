@@ -23,8 +23,9 @@ The user's coal example is our first end-to-end acceptance case. It is a represe
 | R9 | Prioritize reliable control; a custom OpenTTD build is acceptable | Explicit user confirmation during planning |
 | R10 | Build passenger buses between towns and play on an ordinary map | Explicit 2026-10-24 user request; expand beyond the selected flat coal fixture |
 | R11 | Local single-player games only; multiplayer is not needed | Explicit 2026-10-24 user statement; run Copilot inside one game process (D032) |
+| R12 | Cross-platform (macOS, Windows, Linux) | Explicit 2026-10-25 user requirement; loopback TCP, portable engine/Python code; runtime evidence on each OS before claiming support |
 
-Initial target: local macOS play, one human company, OpenTTD 15.3, temperate climate, standard vehicles/industries. This is a testable starting scope, not a permanent restriction on the project. The user accepts a custom build; do not spend extended effort working around stock API limits if a narrow engine integration provides more dependable control.
+Initial target: local macOS play (cross-platform design per R12; other OSes tested at M5), one human company, OpenTTD 15.3, temperate climate, standard vehicles/industries. This is a testable starting scope, not a permanent restriction on the project. The user accepts a custom build; do not spend extended effort working around stock API limits if a narrow engine integration provides more dependable control.
 
 “Use my current budget” sets an upper bound; it does not mean spend every available unit of currency. The plan shows infrastructure, train/refit cost, contingency, and retained operating cash. The reserve is configurable and visible. Do not invent a fixed percentage before fixture measurements.
 
@@ -187,7 +188,7 @@ cancellation and resumption remain open; this is not M4 exit acceptance.
 
 **Depends on:** M3 and M4.
 
-Deliver a reproducible launcher, isolated profile setup, start/stop/status commands, compatibility checks, clear error messages, documentation, and versioned evidence. Demonstrate on a newly created world and on a copy of a representative existing save within the supported profile. Document how unsupported GameScripts/content are handled.
+Deliver a reproducible launcher for macOS, Windows and Linux, isolated profile setup, start/stop/status commands, compatibility checks, clear error messages, documentation, and versioned evidence. Demonstrate on a newly created world and on a copy of a representative existing save within the supported profile. Document how unsupported GameScripts/content are handled.
 
 Exit: the player can start the game and Copilot, issue the request, observe completion, restart, and resume without manual script editing. Record limitations prominently. Produce an acceptance report before describing the alpha as reliable.
 

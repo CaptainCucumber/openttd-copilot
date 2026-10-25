@@ -22,6 +22,31 @@ Target: **one visible OpenTTD process, one local endpoint.** The native
 request/response semantics, COPL save chunk, journals, planners, budget rules
 and MCP tools stay the same.
 
+## Cross-platform requirement
+
+User requirement (2026-10-25): the solution must be cross-platform. The
+endpoint is **loopback TCP on `127.0.0.1`**, built on OpenTTD's existing
+portable socket layer (Winsock on Windows, BSD sockets elsewhere). Unix-domain
+sockets, named pipes and other OS-specific IPC are excluded. The token is
+exchanged in-band, not through file permissions or peer credentials.
+
+Engine code stays portable C++ inside OpenTTD's existing abstractions. Python
+uses only the standard library and must not shell out to platform tools.
+Current macOS-only code found on 2026-10-25 that must become portable in F4:
+
+| Code | Problem | Portable replacement |
+|---|---|---|
+| `native_mutation_journal.py` directory `os.open(..., O_RDONLY)` + `fsync` | Fails on Windows; the journal then disables writes, blocking all construction | Directory fsync on POSIX only; on Windows rely on `os.replace` after file `fsync`, and record the weaker durability guarantee |
+| `native_play_session.py` `/usr/sbin/lsof` listener check | macOS/BSD tool | Endpoint readiness from the bridge hello itself |
+| `run_control_probe.py` `-v cocoa`, `/Applications/OpenTTD.app` paths | macOS video driver and install layout | Omit `-v` for the platform default video driver; binary and base-content paths from explicit options/config |
+| Secret files created with mode `0o600` | POSIX permissions are not enforced on Windows | Token kept in the per-launch isolated profile directory; document that it protects only against other local users where the OS enforces profile permissions |
+| `#!/usr/bin/env python3` launch instructions | Not Windows usage | Document `python -B tools/game_chat.py` (or `py -3`) |
+
+Acceptance on macOS only is still M2f's gate. Windows and Linux runtime
+evidence (build, coal/bus service, journal reload) is required before claiming
+cross-platform support; that is scheduled with M5 packaging. Until then,
+non-macOS support is a design constraint, not a tested capability.
+
 ## Is it actually simpler?
 
 Runtime and user experience: yes — one binary, one process, one port/token,
@@ -122,7 +147,7 @@ Execute in order; each ends at a checkable point.
 | F1 | Engine dispatcher refactor (no behavior change) | Clean build; existing Admin-path coal + bus gates still pass on the refactored binary | Sol, medium |
 | F2 | Single-player semantics: `NoEst`, tick frames, pause/game-mode/multiplayer/local-company guards, post-`Post` audit | Unit-level source checks; engine builds; Admin regressions still pass | High-end review of the diff |
 | F3 | Local endpoint + token hello + save/quit + protocol v4 | GUI build starts with endpoint only when token configured; loopback/token/oversize/second-connection refusals | Sol, medium |
-| F4 | Python `LocalBridgeClient` + single-process session + codec split | All Python tests pass; new transport unit tests incl. bad token, typed refusals | Luna, medium |
+| F4 | Python `LocalBridgeClient` + single-process session + codec split; remove macOS-only code listed above | All Python tests pass; new transport unit tests incl. bad token, typed refusals; tests for platform-conditional journal durability and no platform-tool subprocesses | Luna, medium |
 | F5 | Real-engine M2f gate (see [acceptance](ACCEPTANCE.md#m2f-single-process-gate)) | Evidence JSON with binary/source hashes | Parent agent only |
 | F6 | Switch `game_chat.py` / MCP to local path; actual Copilot build/inspect/save/close | Actual-host transcript hash; one visible process | Parent agent only |
 | F7 | Retire server/client from product path; update guides, engine README, patch 0019 | Records updated; publication verified | Luna for docs; parent publishes |
@@ -141,6 +166,6 @@ Execute in order; each ends at a checkable point.
 ## Out of scope
 
 Multiplayer support, attaching to the stock OpenTTD app, in-game chat UI,
-Windows/Linux packaging, new transport modes or planner scope. Attaching to a
+Windows/Linux packaging and runtime acceptance (M5; design must already be portable), new transport modes or planner scope. Attaching to a
 custom-build game the player started manually becomes possible after M2f but
 is an M5 packaging decision, not part of this gate.
