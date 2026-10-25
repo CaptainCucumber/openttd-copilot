@@ -5,7 +5,7 @@ Updated: 2026-10-24, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Engine bus branch `copilot/m2e-town-buses` is published at `2fb530eda610857329872eab1acaa9788de49f89`, fork remote SHA verified; matching clean server/client rebuilt and patch 0018 exported. Project bus implementation/direction records `a7563ba50a4bf26e6aff23db5f73973d40fd967a` are published on `origin/main`, exact remote SHA verified. Final clean bus/coal/legacy/actual-host acceptance passed; the evidence/acceptance handoff follows. Both repositories use the required no-reply Git identity.
+- Engine bus branch `copilot/m2e-town-buses` is published at `2fb530eda610857329872eab1acaa9788de49f89`, fork remote SHA verified; matching clean server/client rebuilt and patch 0018 exported. Project bus implementation/direction records `a7563ba50a4bf26e6aff23db5f73973d40fd967a` and final evidence/acceptance `b86d677743c2fa6d0de1fb210341ee70a6f1b43e` are published on `origin/main`, exact remote SHAs verified. Final clean bus/coal/legacy/actual-host acceptance passed; this records-only publication handoff follows. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
