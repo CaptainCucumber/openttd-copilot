@@ -169,7 +169,10 @@ This does not complete M2f or general route reliability.
 
 ### M2f — Single-process local bridge
 
-Status: **planned (D032).** Replace the dedicated-server + joining-client
+Status: **F1 dispatcher extraction verified; F2-F7 planned (D032).**
+Clean-engine Admin coal/bus service, reload/replay and wire/error guards
+passed; [evidence](evidence/2026-10-25-m2f-dispatcher.json).
+Replace the dedicated-server + joining-client
 topology with one visible single-player OpenTTD process hosting a loopback,
 token-authenticated Copilot endpoint. Keep request payloads, COPL, journals,
 planners and MCP tools. Handle single-player command semantics explicitly:

@@ -1,0 +1,667 @@
+{
+  "build_logs": {
+    ".runtime/m2f-f1-client-clean-build.log": "fc30ff1367c4829ed7ec9bc3e3f952f4a00877d1e5e02d306e66746f9355c47e",
+    ".runtime/m2f-f1-server-clean-build.log": "3842c4300c74d6def931d9a6f5cb055dfae4255a8276a9c745f15a96b35cacfa"
+  },
+  "build_warning": "Homebrew libpng/lzo deployment targets are newer than the configured macOS 11 target; builds succeed on this host.",
+  "coal_gate": {
+    "artifact": "artifacts/native-railway/20261025T190737Z-d8082dfc",
+    "binary_sha256": "98f49e2c0b018bd5f490ed6ccfd170b00209fa3adc1f5bc89dac54ede37cbb18",
+    "checks": [
+      "duplicate_job_no_mutation",
+      "low_budget_rejected",
+      "native_commissioned",
+      "planning_is_nonmutating",
+      "reload_and_exact_replay",
+      "two_native_deliveries",
+      "whole_job_plan"
+    ],
+    "client_binary_sha256": "1011a4eeb0e4d9c0992717361d0b0f7074da7ca4d0e0b89a1d186f589d51c440",
+    "command": "python3 -B tools/run_native_railway_probe.py --source 10 --destination 1",
+    "elapsed_seconds": 229.206,
+    "files_changed_after_launch": [
+      "tools/run_native_dispatcher_probe.py"
+    ],
+    "manifest_sha256": "48f912a6bca73483b10329ada1074b14aac4f80091179acf89ae83e735ef8318",
+    "map_style": "railway-fixture",
+    "normal_profile_unchanged": true,
+    "original_saves_unchanged": true,
+    "quote": {
+      "cost": 14979,
+      "operations": 44
+    },
+    "retained_outcomes_reloaded_replayed": 44,
+    "saves": {
+      "native-commissioned": {
+        "path": "artifacts/native-railway/20261025T190737Z-d8082dfc/native-commissioned.sav",
+        "sha256": "ed1e488c870a42b52eda41d7f74bfbc8c045724bb341db250fc39b035aa40c07"
+      },
+      "native-initial": {
+        "path": "artifacts/native-railway/20261025T190737Z-d8082dfc/native-initial.sav",
+        "sha256": "0ce355d2a5d5d05f754dac8f8d112868b89fd4424860b8fa61cf0e195067f082"
+      },
+      "native-service-final": {
+        "path": "artifacts/native-railway/20261025T190737Z-d8082dfc/native-service-final.sav",
+        "sha256": "7fde5573ddb1075a6201311633645f1867c4c5b77d9cfa09eaa5c69625460968"
+      }
+    },
+    "seed": 6,
+    "service": {
+      "deliveries": 2,
+      "departures": 3,
+      "scope": "vehicle_tagged_native",
+      "vehicle": 2
+    },
+    "settings_and_content": [
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "09158b1d2abbaa7d8b61af9521734133760fb4e2766ac155bed9afe2245ef5f4",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "initial"
+      },
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "e6aec4e5c7c3a26532cc8dd8f1e42b23d6faad495f4c359f3edebe7eae5fb271",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "reload"
+      }
+    ],
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "a7e0641f8082df87048bdffaf0befdd5ba716ba51374cc070beab3be6794d55d",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "d66af2c356db5430255df3b8b915cc01432db17a6fbddb42ca17c219f9638931",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_dispatcher_probe.py": "27829573d8c7a83515894509ebd96fe79f1e486408f2371d93a9280eb7cdd5ec",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "f77988c7641dcb71d3a9dba99e52381f6161680daabc12fddcda7209261653dd",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "spent": 14979,
+    "status": "success",
+    "temporary_secrets_removed": true
+  },
+  "date": "2026-10-25",
+  "dispatcher_guards": {
+    "after": {
+      "calendar_date": 712223,
+      "companies": [
+        {
+          "id": 0,
+          "is_ai": false,
+          "loan": 100000,
+          "money": 100000,
+          "name": "Copilot Probe Human Transport"
+        }
+      ],
+      "frame": 61,
+      "head": null,
+      "head_hi": 0,
+      "head_lo": 0,
+      "landscape": 0,
+      "map_height": 128,
+      "map_width": 128,
+      "request_id": 3581495577,
+      "request_kind": 0,
+      "seed": 6,
+      "sequence": 0,
+      "status": 0,
+      "version": 3,
+      "world_id": "664D1EB75134132A24AC8FECEB897F8B"
+    },
+    "artifact": "artifacts/native-railway/20261025T191117Z-aac637ae",
+    "before": {
+      "calendar_date": 712223,
+      "companies": [
+        {
+          "id": 0,
+          "is_ai": false,
+          "loan": 100000,
+          "money": 100000,
+          "name": "Unnamed"
+        }
+      ],
+      "frame": 21,
+      "head": null,
+      "head_hi": 0,
+      "head_lo": 0,
+      "landscape": 0,
+      "map_height": 128,
+      "map_width": 128,
+      "request_id": 286611826,
+      "request_kind": 0,
+      "seed": 6,
+      "sequence": 0,
+      "status": 0,
+      "version": 3,
+      "world_id": "664D1EB75134132A24AC8FECEB897F8B"
+    },
+    "binary_sha256": "98f49e2c0b018bd5f490ed6ccfd170b00209fa3adc1f5bc89dac54ede37cbb18",
+    "checks": [
+      "all_dispatcher_kinds_wrong_world_and_exact_error_bytes",
+      "guards_nonmutating",
+      "malformed_payloads_refused_and_reconnect"
+    ],
+    "client_binary_sha256": "1011a4eeb0e4d9c0992717361d0b0f7074da7ca4d0e0b89a1d186f589d51c440",
+    "command": "python3 -B tools/run_native_dispatcher_probe.py",
+    "elapsed_seconds": 2.694,
+    "files_changed_after_launch": [],
+    "malformed": [
+      {
+        "connection_closed": true,
+        "name": "short_header",
+        "request_hex": "0300"
+      },
+      {
+        "connection_closed": true,
+        "name": "missing_identity_company",
+        "request_hex": "0300001b000000"
+      },
+      {
+        "connection_closed": true,
+        "name": "identity_trailing_bytes",
+        "request_hex": "0300001c000000ff00"
+      },
+      {
+        "connection_closed": true,
+        "name": "unterminated_bus_string",
+        "request_hex": "0300121d0000007b"
+      }
+    ],
+    "manifest_sha256": "e1b5ded8cc8bb823b72f12289e4f93bab0815992e8d9599618c55e4edf5f237a",
+    "map_style": "railway-fixture",
+    "normal_profile_unchanged": true,
+    "original_saves_unchanged": true,
+    "responses": [
+      {
+        "name": "copilot_build_single_rail",
+        "request_hex": "03000101000000003f200000000001000000000000000000000000000000000000000000000000000000000000000100000000000000020000000000000003000000000000000400000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300010100000005"
+      },
+      {
+        "name": "copilot_operation_status",
+        "request_hex": "0300020200000001000000000000000200000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300020200000005"
+      },
+      {
+        "name": "copilot_vehicle_events",
+        "request_hex": "0300030300000000000000000000000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300030300000005"
+      },
+      {
+        "name": "copilot_tile_snapshot",
+        "request_hex": "030004040000000000000001646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300040400000005"
+      },
+      {
+        "name": "copilot_industry_snapshot",
+        "request_hex": "030005050000000000000001646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300050500000005"
+      },
+      {
+        "name": "copilot_rail_catalog",
+        "request_hex": "03000606000000000000000001646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300060600000005"
+      },
+      {
+        "name": "copilot_rail_assets",
+        "request_hex": "0300070700000000000000000001646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300070700000005"
+      },
+      {
+        "name": "copilot_train_parts",
+        "request_hex": "0300080800000000ffffffff100001646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300080800000005"
+      },
+      {
+        "name": "copilot_train_orders",
+        "request_hex": "030009090000000000000000000010646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300090900000005"
+      },
+      {
+        "name": "copilot_industry_details",
+        "request_hex": "03000a0a0000000000000008646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "03000a0a00000005"
+      },
+      {
+        "name": "copilot_build_infrastructure",
+        "request_hex": "03000b0b000000003f2000000000010201000000000000000000000000000000000000000000000000000000000000000100000000000000020000000000000003000000000000000400000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "03000b0b00000005"
+      },
+      {
+        "name": "copilot_infrastructure_status",
+        "request_hex": "03000c0c00000001000000000000000200000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "03000c0c00000005"
+      },
+      {
+        "name": "copilot_build_train",
+        "request_hex": "03000d0d000000003f200000000001000000000000000000000000000000000000000000000000000000000000000100000000000000020000000000000003000000000000000400000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "03000d0d00000005"
+      },
+      {
+        "name": "copilot_train_purchase_status",
+        "request_hex": "03000e0e00000001000000000000000200000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "03000e0e00000005"
+      },
+      {
+        "name": "copilot_configure_train",
+        "request_hex": "03000f0f000000003f20000005000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000020000000000000003000000000000000400000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "03000f0f00000005"
+      },
+      {
+        "name": "copilot_train_configuration_status",
+        "request_hex": "0300101000000001000000000000000200000000000000646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300101000000005"
+      },
+      {
+        "name": "copilot_construction_quote",
+        "request_hex": "03001111000000003f20000000000000ffff01646973706174636865722d70726f62652d77726f6e672d776f726c6400",
+        "response_hex": "0300111100000005"
+      },
+      {
+        "name": "bus_wrong_world",
+        "request_hex": "030012120000007b22616374696f6e223a22746f776e73222c22636f6d70616e795f6964223a302c22776f726c645f6964223a22646973706174636865722d70726f62652d77726f6e672d776f726c64222c227374617274223a302c22636f756e74223a317d00",
+        "response_hex": "0300121200000005"
+      },
+      {
+        "name": "missing_company",
+        "request_hex": "03000013000000fe",
+        "response_hex": "0300001300000003"
+      },
+      {
+        "name": "unsupported_version_0",
+        "request_hex": "00000014000000ff",
+        "response_hex": "0300001400000001"
+      },
+      {
+        "name": "unsupported_version_4",
+        "request_hex": "04000015000000ff",
+        "response_hex": "0300001500000001"
+      },
+      {
+        "name": "unsupported_version_65535",
+        "request_hex": "ffff0016000000ff",
+        "response_hex": "0300001600000001"
+      },
+      {
+        "name": "unsupported_kind_v1_1",
+        "request_hex": "010001170000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "response_hex": "0300011700000001"
+      },
+      {
+        "name": "unsupported_kind_v2_3",
+        "request_hex": "020003180000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "response_hex": "0300031800000001"
+      },
+      {
+        "name": "unsupported_kind_v3_255",
+        "request_hex": "0300ff190000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "response_hex": "0300ff1900000002"
+      },
+      {
+        "name": "malformed_bus_json",
+        "request_hex": "0300121a0000007b00",
+        "response_hex": "0300121a00000007"
+      }
+    ],
+    "retained_records": 0,
+    "saves": {
+      "dispatcher-guards-final": {
+        "path": "artifacts/native-railway/20261025T191117Z-aac637ae/dispatcher-guards-final.sav",
+        "sha256": "2b2cd7cf4e12e42b88462da3be0b687e93f8249fc29c34587ed454f87efe8b36"
+      }
+    },
+    "seed": 6,
+    "settings_and_content": [
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "0dbef8f00ad81aae997a749c54eb7664b6f833e27d817ebd8f9e322a92c98c97",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "dispatcher"
+      }
+    ],
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "a7e0641f8082df87048bdffaf0befdd5ba716ba51374cc070beab3be6794d55d",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "d66af2c356db5430255df3b8b915cc01432db17a6fbddb42ca17c219f9638931",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_dispatcher_probe.py": "94310058bd95b3d077c7ef3f4d5501fb71dd2f5b3a09c5af2c4ab5c636d58e1b",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "f77988c7641dcb71d3a9dba99e52381f6161680daabc12fddcda7209261653dd",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "status": "success",
+    "temporary_secrets_removed": true
+  },
+  "engine": {
+    "clean": true,
+    "head": "03ac6d9aee0163b3dbd71e1a3991b9f826702684",
+    "revision": "20261025-m2e-town-buses-g03ac6d9aee",
+    "source_hashes": {
+      "src/CMakeLists.txt": "5fb1c6f4001bb987dcd4642adef2308252c14d968e15b3663206506a0f57e317",
+      "src/command_type.h": "9fe8cccac98094d36d8dbc1405895f9026b5663e890a07826c35e18bfdf51f61",
+      "src/copilot_bridge.cpp": "e0b6e3d3b10643e64d661927012357f01ba7313849c549218c5d01b3d8e59dae",
+      "src/copilot_bridge.h": "79e22550103f0d884ddf09da22bb08d2825fb8b89d063532977f4e63aa0d445c",
+      "src/copilot_cmd.cpp": "1d63fe8653446828873856ee6729232c7305feaf1af7ede147eaa5c8a91a67e0",
+      "src/copilot_cmd.h": "e225f10dfda5947a452c4ca4c8a8fdd3482b96cb90d756f27975d6a2e521eea1",
+      "src/copilot_observation.cpp": "e11e5689cadcd14b689abe55599ce1e15ff8b3ab7e5b2080f02fba6955e788ea",
+      "src/economy.cpp": "e6dfce70889b2a81ed941d62b9bcbd38af37515136afc49bebdf9485499b4c34",
+      "src/network/network_admin.cpp": "5fdf32f17b56f67218c1a4f4ef266c02ce83a54b9ed480996c6dab0a43203385",
+      "src/network/network_admin.h": "550dab953fca36b5ec07a6d73966fdb7af81eafbe0fd519b36a11600b5b0d1f3",
+      "src/network/network_command.cpp": "23cba4bc14457b0eff63709cb87494dd0426134078c113802088e0df748eb6fa",
+      "src/saveload/copilot_sl.cpp": "630beaf2f6f8e4cbcc686cb3d0a23c47a001034178fa1b032e5ba9a9d3992d76"
+    }
+  },
+  "engine_remote_ref_verified": "03ac6d9aee0163b3dbd71e1a3991b9f826702684",
+  "engine_version": "OpenTTD 15.3 fork",
+  "existing_bus_line_gate": {
+    "artifact": "artifacts/native-railway/20261025T190737Z-dc540bb2",
+    "base_spent": 8781,
+    "binary_sha256": "98f49e2c0b018bd5f490ed6ccfd170b00209fa3adc1f5bc89dac54ede37cbb18",
+    "checks": [
+      "all_line_outcomes_reload_replay",
+      "existing_line_cap_nonmutation",
+      "existing_line_read_only_plan",
+      "insertion_duplicate",
+      "line_older_save_refusal",
+      "same_bus_expanded_passenger_service",
+      "two_town_base_cap_nonmutation",
+      "two_town_base_duplicate",
+      "two_town_base_passenger_service",
+      "two_town_base_read_only_plan"
+    ],
+    "client_binary_sha256": "1011a4eeb0e4d9c0992717361d0b0f7074da7ca4d0e0b89a1d186f589d51c440",
+    "command": "python3 -B tools/run_native_bus_line_probe.py --town-density high --towns 1 23 36 --add-town 36 --insert-index 1",
+    "edit_operations": 23,
+    "edit_spent": 3182,
+    "elapsed_seconds": 359.328,
+    "files_changed_after_launch": [
+      "tools/run_native_dispatcher_probe.py"
+    ],
+    "manifest_sha256": "397243f0d40adb324ff43c680199aa8e57fb5dddf356f064a1f3c0e1609cfaad",
+    "map_style": "normal",
+    "normal_profile_unchanged": true,
+    "orders_after": [
+      0,
+      2,
+      1
+    ],
+    "orders_before": [
+      0,
+      1
+    ],
+    "original_saves_unchanged": true,
+    "retained_outcomes_reloaded_replayed": 50,
+    "saves": {
+      "bus-commissioned": {
+        "path": "artifacts/native-railway/20261025T190737Z-dc540bb2/bus-commissioned.sav",
+        "sha256": "6aad601f04ba390ffefad244887cce78e0614672390a20496973e4c18b299535"
+      },
+      "bus-expanded-commissioned": {
+        "path": "artifacts/native-railway/20261025T190737Z-dc540bb2/bus-expanded-commissioned.sav",
+        "sha256": "2b8d72f8e8355565fe6b670c67bdf6c7dc71736efdf6907800389d1eeb6e579b"
+      },
+      "bus-line-initial": {
+        "path": "artifacts/native-railway/20261025T190737Z-dc540bb2/bus-line-initial.sav",
+        "sha256": "54db20612ebb10e121ea5d19d8a8c912c9fc93645b913aeeb16780b4021943f5"
+      },
+      "bus-service-final": {
+        "path": "artifacts/native-railway/20261025T190737Z-dc540bb2/bus-service-final.sav",
+        "sha256": "7cb675ba7f7df2b28b9d8efadbc30bdb942a691f4fd5ee5e50e9d698e83232d7"
+      }
+    },
+    "seed": 20261024,
+    "service": {
+      "passengers_delivered": {
+        "0": 17,
+        "1": 16,
+        "2": 5
+      },
+      "scope": "vehicle-tagged passenger acceptance at all ordered stops",
+      "vehicle": 5
+    },
+    "settings_and_content": [
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "688a794e867ab82d004755e55c0e2f3cab5ec2bd70e7a2ba7a58dc79c5a7095e",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "bus-line-initial"
+      },
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "1dbb4a2e2a3079db369c31f715b445c3dff4f3429de233a75eba824394b39195",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "bus-line-reload"
+      },
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "170ea1bb2687fdbd681ae2ca1d68120d6bf2ef31654ad05513956e109283a27e",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "bus-line-older-save"
+      }
+    ],
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "a7e0641f8082df87048bdffaf0befdd5ba716ba51374cc070beab3be6794d55d",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "d66af2c356db5430255df3b8b915cc01432db17a6fbddb42ca17c219f9638931",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_dispatcher_probe.py": "27829573d8c7a83515894509ebd96fe79f1e486408f2371d93a9280eb7cdd5ec",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "f77988c7641dcb71d3a9dba99e52381f6161680daabc12fddcda7209261653dd",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "status": "success",
+    "temporary_secrets_removed": true,
+    "town_density": "high",
+    "vehicle": 5
+  },
+  "legacy_coal_reload": {
+    "artifact": "artifacts/native-railway/20261025T190943Z-3ae31ac2",
+    "binary_sha256": "98f49e2c0b018bd5f490ed6ccfd170b00209fa3adc1f5bc89dac54ede37cbb18",
+    "checks": [
+      "all_outcomes_reloaded_and_replayed",
+      "legacy_saved_and_reloaded",
+      "older_save_not_false_completion",
+      "selected_industry_quotes_nonmutating"
+    ],
+    "client_binary_sha256": "1011a4eeb0e4d9c0992717361d0b0f7074da7ca4d0e0b89a1d186f589d51c440",
+    "command": "python3 -B tools/check_native_railway_reload.py artifacts/native-railway/20261025T173055Z-89e8c947",
+    "elapsed_seconds": 6.819,
+    "files_changed_after_launch": [
+      "tools/run_native_dispatcher_probe.py"
+    ],
+    "manifest_sha256": "6a9950f49b932e8750740efbad1bad2eeaf3c2534bf32094b54222537c13b609",
+    "map_style": "railway-fixture",
+    "normal_profile_unchanged": true,
+    "original_saves_unchanged": true,
+    "retained_outcomes_reloaded_replayed": 44,
+    "saves": {
+      "latest-migrated": {
+        "path": "artifacts/native-railway/20261025T190943Z-3ae31ac2/latest-migrated.sav",
+        "sha256": "43f66d550c17c47ffb66375d8596213fa9935f701b5d9840fbcb46d56a13ca93"
+      }
+    },
+    "seed": 6,
+    "settings_and_content": [
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "eb0042699ce6e51338fa72af7a4a55559dadbff7d33965a1e533fb45069102b5",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "older"
+      },
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "9c1e31333c18bd0a1c3661089659de5b7b4c042d6aa776a377f9fc3af75ae622",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "latest"
+      },
+      {
+        "base_resources_sha256": {
+          "baseset": "a470c6a5e8c7cfbb3d1db265d7401df056654d2d714496dc7ad9b1a1b667722a",
+          "game_compat": "5c57249e8f30872c0483e2166c07164eae54380b92afa51be8f348e143993e7f",
+          "lang": "b369af4cbddb7cb1af5ecdf6b945a44811c53dc3b077c358f984f1eb0ec9f7ca"
+        },
+        "config_sha256": "aa77b8b26808c84c8ceb75a24e11e5c597737fcd6f23e5768a973953e9645ae8",
+        "content_sha256": "714bd3d33318123e6c7181886b13075052645fcfe07a1918f32d8e46b0a3469a",
+        "game_script": null,
+        "label": "resaved-latest"
+      }
+    ],
+    "source_hashes": {
+      ".github/agents/openttd.agent.md": "e5bfea1f90d68621a1a916f68e446f4dbba6aed93eb1ac062106092153e3c71d",
+      "tools/admin_transport.py": "27e9d4b0208e150fe913fc1a2a5546177477a0c06d0fe6838b0d3d1e38c01642",
+      "tools/check_native_railway_reload.py": "5b4dc2f39d5acae3f5132b0f8b70635f2b0ec7528207ceadd90137750b6da375",
+      "tools/game_chat.py": "3991dcf6bbcd6d988c571a3f0e67c44f74856f9c549a60c59a4f1449a9db6e48",
+      "tools/native_bus.py": "4bbe65ae8bb7ae8f038f8895ba454420d807ab98223db140b42d655df97c9cc3",
+      "tools/native_bus_transport.py": "59332e58c74330454bfb77f88f0b4f15ee1f868037f3d53f11ee332de0ce16ab",
+      "tools/native_mcp_server.py": "6f340eedec1c6202edfda9b4bbccfc9f6e90e1ff23aa25358d530eba2063e6cb",
+      "tools/native_mutation_journal.py": "e9262bdba6e54c9169bcf0d76f64a0ec7464ba84636da921b0f13458e822cc24",
+      "tools/native_play_session.py": "a7e0641f8082df87048bdffaf0befdd5ba716ba51374cc070beab3be6794d55d",
+      "tools/native_railway.py": "e0b5865d2228e5bcdb24976cd3ce1a3f577d90eaa492e5e417fd895f7ed5d45f",
+      "tools/native_route_plan.py": "72bb9e12218300304e325d8d44f3b710a3a15a903cef1809d359ccec4084c6ff",
+      "tools/native_world_snapshot.py": "358b9ff7d6516081f521e60c18503ac2ee5ca9a55d92115e9d491f72899a5058",
+      "tools/play_native.py": "a31fab787fc7caa517693203fe772bc9b83b607019f5d0cc77c62f4b8dd43276",
+      "tools/run_control_probe.py": "500a430d176aab4a5b3d3c83942c52c5fed00e1071a873bae0663a7b16534de2",
+      "tools/run_environment_probe.py": "0282c39ef794f4d262073f94f9a850338b215b10e8f30461cb463acf099ebaee",
+      "tools/run_lifecycle_probe.py": "088d5b391425ee2051fbe63c6be17b707cbc3091d531eba164eea2d33d5aed9f",
+      "tools/run_native_bus_line_probe.py": "d66af2c356db5430255df3b8b915cc01432db17a6fbddb42ca17c219f9638931",
+      "tools/run_native_bus_probe.py": "a458919edad10d9a01c3baf69bf8adf6904f090e32c819ae5a8dd53c9664acc9",
+      "tools/run_native_dispatcher_probe.py": "27829573d8c7a83515894509ebd96fe79f1e486408f2371d93a9280eb7cdd5ec",
+      "tools/run_native_railway_probe.py": "df338005976079683fe1f30aca5902c5b1712cd0ee44efa17b582b9d966f46b0",
+      "tools/run_native_train_configuration_probe.py": "2afda41bee454682659d02832e83bcbcee1186f70461f819fdae5d2305b2bede",
+      "tools/run_native_train_orders_probe.py": "bfb36532b10db6ddc9e53dab7ca701ee9b72b5adde66591ac23ce037bfc5bd20",
+      "tools/run_native_train_purchase_probe.py": "f77988c7641dcb71d3a9dba99e52381f6161680daabc12fddcda7209261653dd",
+      "tools/run_vehicle_probe.py": "9b9ddf85c99c23e2877ecdfd6088685949b8b68e8db9d88c2b31a49bae4ade00"
+    },
+    "status": "success",
+    "temporary_secrets_removed": true
+  },
+  "limitations": [
+    "F2-F7 remain planned: no local endpoint, single-player semantics, v4, typed save/quit or one-process launcher.",
+    "Only selected coal and high-town-density bus insertion scenarios; no M3 reliability or Windows/Linux runtime acceptance.",
+    "No new actual-Copilot host acceptance in F1; prior bus-host evidence remains historical.",
+    "Shared non-evicting 64-record limit and non-atomic partial/uncertain construction boundaries unchanged."
+  ],
+  "milestone": "M2f F1 only",
+  "patch": {
+    "path": "engine/patches/0022-Extract-transport-neutral-Copilot-request-dispatcher.patch",
+    "reverse_apply_checked": true,
+    "sha256": "344b74aa3e3d5925d896291ac528bded6ef4e223ccdf048c1b12b7b7a57c4d86"
+  },
+  "platform": "macOS arm64",
+  "probe_development_failures": [
+    {
+      "artifact": "artifacts/native-railway/20261025T190632Z-3ecc4ba5",
+      "manifest_sha256": "c4032ec6f02785097da1570c9ad39939de5411d3e51b12a8950ad235e2273d35",
+      "reason": "Probe expected unsupported-kind status for v1; current engine refuses its version first.",
+      "status": "failed"
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T190737Z-760f32a8",
+      "manifest_sha256": "772fb9b2ed976fb75983e6c51ca4bddc82947103685fbc39b9ccb1d99faf6281",
+      "reason": "Probe compared full company objects under a finances label without retaining after snapshot; exact cause not established. Final guard reproduces automatic naming with unchanged finances.",
+      "status": "failed"
+    },
+    {
+      "artifact": "artifacts/native-railway/20261025T191058Z-3ce42503",
+      "manifest_sha256": "8fef98d04724fdcf2eb3cd857104ef9ad6ac366e7c0f55d5552fadd97f7294e5",
+      "reason": "Probe expected an error packet, but illegal-packet refusal closed the connection before the packet arrived; final probe verifies reconnect and unchanged state.",
+      "status": "failed"
+    }
+  ],
+  "provenance_note": "Only the standalone guard probe changed while coal/bus/legacy gates were running; those manifests retain its earlier hash. Final guard manifest matches every current tools source hash. All gates match final engine and construction/planner/transport sources.",
+  "python_tests": {
+    "command": "python3 -B -m unittest discover -s tests -q",
+    "passed": 283
+  },
+  "runtime": "Dedicated server plus GUI build using null:ticks=100000000 video; isolated profiles and copied saves; no visible/single-process acceptance claimed.",
+  "schema": 1,
+  "scope": "Transport-neutral game-thread dispatcher; existing authenticated loopback Admin adapter and product two-process topology preserved."
+}

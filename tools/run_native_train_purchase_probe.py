@@ -26,6 +26,13 @@ ENGINE_SOURCE = mutation.ENGINE_SOURCE
 INVALID_ID = 0xFFFFFFFF
 INVALID_ENGINE = 0xFFFF
 PAGE_SIZE = 16
+ENGINE_FILES = (
+    "src/command_type.h", "src/copilot_cmd.cpp", "src/copilot_cmd.h",
+    "src/copilot_bridge.cpp", "src/copilot_bridge.h", "src/CMakeLists.txt",
+    "src/network/network_admin.cpp", "src/network/network_admin.h",
+    "src/network/network_command.cpp",
+    "src/saveload/copilot_sl.cpp", "src/copilot_observation.cpp", "src/economy.cpp",
+)
 
 
 class Experiment(mutation.Experiment):
@@ -43,14 +50,8 @@ def engine_provenance(binary: Path, allow_dirty: bool) -> dict:
     marker = "m" if dirty else "g"
     environment.require(match is not None and f"{marker}{head[:10]}" in match.group(1),
                         "binary revision does not match engine checkout state")
-    files = (
-        "src/command_type.h", "src/copilot_cmd.cpp", "src/copilot_cmd.h",
-        "src/network/network_admin.cpp", "src/network/network_admin.h",
-        "src/network/network_command.cpp",
-        "src/saveload/copilot_sl.cpp", "src/copilot_observation.cpp", "src/economy.cpp",
-    )
     return {"head": head, "clean": not bool(dirty), "revision": match.group(1),
-            "source_hashes": {name: base.sha256_file(ENGINE_SOURCE / name) for name in files}}
+            "source_hashes": {name: base.sha256_file(ENGINE_SOURCE / name) for name in ENGINE_FILES}}
 
 
 def read_catalog(admin, world_id: str, company_id: int, remaining) -> tuple[list[dict], list[dict]]:

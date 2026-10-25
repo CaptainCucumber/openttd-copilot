@@ -5,10 +5,22 @@ Updated: 2026-10-25, America/Vancouver.
 ## Repository
 
 - GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/openttd-copilot), private.
-- Engine bus branch `copilot/m2e-town-buses` is published at `faf823d8ab5e76319ffb64ebc535ccb1547a9d4d`, exact fork SHA verified; matching clean server/client rebuilt and patches 0019-0021 exported/reverse-checked. Multi-town/same-bus implementation and evidence are published on `origin/main` at `d5244a5bfe201ee6fd5a5fd1c3a451aaaf65ac35`, exact GitHub ref verified; this records-only handoff follows. The prior two-town acceptance baseline was engine `2fb530eda6` and project `b86d677743c2fa6d0de1fb210341ee70a6f1b43e`; its historical evidence remains unchanged. Both repositories use the required no-reply Git identity.
+- Engine branch `copilot/m2e-town-buses` is published at `03ac6d9aee0163b3dbd71e1a3991b9f826702684`, exact fork SHA verified; matching clean server/client rebuilt and dispatcher patch 0022 exported/reverse-checked. This F1 checkpoint follows the published bus implementation/evidence `d5244a5bfe201ee6fd5a5fd1c3a451aaaf65ac35` and records handoff `ae251838de`. Historical bus acceptance remains on engine `faf823d8ab`; the earlier two-town baseline was `2fb530eda6`. Both repositories use the required no-reply Git identity.
 - Git author and committer must use the repository-local GitHub no-reply identity in `AGENTS.md`. The user's work email is prohibited for this project.
 
 ## Outcome so far
+
+**M2f F1 is verified: the bridge dispatcher is transport-neutral.** Engine
+`03ac6d9aee` moves kinds 0-18 into a game-thread byte-in/byte-out dispatcher;
+Admin retains authentication, loopback enforcement and framing. Clean-engine
+coal construction/service passed (44 actions, 14,979, three full departures
+and two deliveries), as did same-bus two-to-three-stop expansion (23 added
+actions, 3,182, all 50 outcomes/reload/replay/older-save guards). Exact error
+bytes passed 26 cases; four malformed payloads were refused with successful
+reconnect and zero history use. Legacy coal reload/resave also passed. All
+283 Python tests pass. See [evidence](evidence/2026-10-25-m2f-dispatcher.json).
+**This is not the single-process launcher:** F2-F7, including the local
+endpoint and single-player command semantics, remain open.
 
 **Multi-town bus lines and adding stops are ready for bounded user testing
 (R13/D033).** One line can
@@ -120,7 +132,7 @@ The first implementation checkpoint passes in real OpenTTD 15.3: an isolated ser
 ## Next work, in order
 
 1. **User testing point:** run `python3 -B tools/game_chat.py`, compare an ordered multi-town line with an explicit cap/reserve, then authorize it. Use `--seed 20261024` for Dudinghall -> Hudinghattan Ridge -> Drahill. To test adding a stop to the measured existing two-stop line, copy-load the commissioned world in the [guide](M2E_TOWN_BUS_REPORT.md#2026-10-25-follow-up-one-line-through-multiple-towns-and-added-stops) and ask to insert Plontford between Pafingfield and Prarnway. Save/close through the AI; partial/uncertain jobs are not retried. Broader normal-map feasibility remains unproven.
-2. **M2f single-process local bridge (planned, D032):** user confirmed local single-player only. Replace server + client + Admin transport with one visible process and a loopback token endpoint; fix single-player hazards found in source (no `NoEst` on Copilot commands, frozen `_frame_counter`, pause popups, console-only saves). Execute work packages F1–F7 in the [M2f plan](M2F_LOCAL_BRIDGE_PLAN.md); gate in [acceptance](ACCEPTANCE.md#m2f-single-process-gate). Cross-platform is required (R12): loopback TCP, not Unix sockets; F4 removes macOS-only Python code. Start with F1 (dispatcher refactor, no behavior change).
+2. **M2f single-process local bridge (F1 verified; D032):** user confirmed local single-player only. Next is F2: `NoEst`, tick frames, pre-admission pause/game-mode/network/local-company guards and synchronous-callback audit. Then F3-F7 add the loopback token endpoint, portable Python path, lifecycle and actual-host acceptance before retiring server/client. See the [M2f plan](M2F_LOCAL_BRIDGE_PLAN.md) and [acceptance](ACCEPTANCE.md#m2f-single-process-gate). Cross-platform is required (R12): loopback TCP, not Unix sockets; F4 removes macOS-only Python code. No single-player mutation is supported yet.
 3. **M3a/M3b:** establish varied independently feasible supported road/map cases, then inject reply/process/journal/save failures and cancellation. Prove reconciliation or explicit uncertainty; do not add terrain scope or automatic retries as shortcuts.
 4. **M4a/M4b:** expose production/waiting-cargo/financial observations and observation-window evidence for useful advice, then held-out phrasing/ambiguity/unintended-action checks and authorized durable resumption.
 5. **M5:** reproducible setup/compatibility, representative copied-save and restart/resume acceptance, packaging and a scoped release report. Keep the shared 64-record bound and no-autonomous-management direction explicit.

@@ -2,7 +2,9 @@
 
 M2 uses a narrow fork of OpenTTD 15.3. The current engine branch is
 [`copilot/m2e-town-buses`](https://github.com/CaptainCucumber/OpenTTD/tree/copilot/m2e-town-buses), commit
-`faf823d8ab5e76319ffb64ebc535ccb1547a9d4d`. It extends the two-town bus revision
+`03ac6d9aee0163b3dbd71e1a3991b9f826702684`. It extracts the transport-neutral
+dispatcher from the multi-town bus revision `faf823d8ab5e76319ffb64ebc535ccb1547a9d4d`,
+which extends the two-town bus revision
 `2fb530eda610857329872eab1acaa9788de49f89` and descends from the native railway
 commit `96f960a3239e87837919414604a19e3eca9830b7`, configuration
 commit `ff8bd20ef55b26505693e315d71d291967cce0a9`, purchase
@@ -14,8 +16,8 @@ tile commit `bf789a968cdf47ac54237a917402821d24e6dff6`, the M2c commit
 `37f88cc03d88a99273297b2691f88c16f6926fc4`, earlier M2b/M2a commits,
 and upstream `14ec60f248547d4d062a1160f0fc26d742319888`.
 
-All twenty-one commits are retained as mail patches in [`patches/`](patches/). Apply
-0001 through 0021 in order to the upstream revision if not using the fork branch.
+All twenty-two commits are retained as mail patches in [`patches/`](patches/). Apply
+0001 through 0022 in order to the upstream revision if not using the fork branch.
 
 ## Build
 
@@ -39,6 +41,11 @@ The first binary is the server; the second is the matching graphical client.
 Planned M2f ([D032](../docs/DECISIONS.md#d032---host-the-native-bridge-in-the-single-player-game-process))
 moves the bridge into the single-player GUI process; the dedicated build is
 retained only until that gate passes.
+F1's dispatcher extraction is verified on this revision, but the local
+endpoint and single-player command semantics are not implemented. Patch
+0022 keeps Admin authentication/loopback/framing and v3 behavior unchanged;
+coal, existing-line bus, reload/replay and wire guards passed. See
+[F1 evidence](../docs/evidence/2026-10-25-m2f-dispatcher.json).
 On this macOS environment optional OpenGL discovery must be disabled for the
 software Cocoa client: default linking otherwise misses CGL symbols. There is
 no supported `OPTION_USE_OPENGL` switch. Both binaries must match the source

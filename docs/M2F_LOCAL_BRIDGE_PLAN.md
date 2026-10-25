@@ -1,7 +1,27 @@
 # M2f plan — single-process local bridge
 
-Status: **planned, 2026-10-24. Nothing in this document is implemented yet.**
+Status: **F1 verified, 2026-10-25; F2-F7 remain planned.** The product still
+uses the Admin server/client path, not the single-process endpoint.
 Decision: [D032](DECISIONS.md#d032---host-the-native-bridge-in-the-single-player-game-process).
+
+## F1 checkpoint
+
+Engine `03ac6d9aee0163b3dbd71e1a3991b9f826702684` extracts kinds 0-18 into
+`copilot_bridge.{h,cpp}`. The game-thread interface accepts request bytes and
+returns response bytes or an explicit malformed result; it retains no
+socket/session. Admin alone owns authentication, loopback checks, framing
+and disconnects. Existing v3 bytes, validation and command posting are
+unchanged, including refusal of v1/v2 request headers. Frame values still
+come from networking; single-player semantics have not been enabled.
+
+Both clean builds passed. Admin-path coal construction and service passed
+with all 44 outcomes/reload/replay; a new two-town bus service then accepted a
+third stop on the same bus, passed passenger acceptance at all stops and all
+50 outcomes/reload/replay/older-save checks. The final wire probe covers 26
+exact errors and four malformed payload refusals/reconnects without history
+use. Legacy coal reload/resave and all 283 Python tests passed.
+See [source-hashed evidence](evidence/2026-10-25-m2f-dispatcher.json). This is
+F1's exit only, not the overall M2f gate.
 
 ## Why
 
@@ -144,13 +164,13 @@ Execute in order; each ends at a checkable point.
 
 | # | Package | Exit evidence | Suggested routing |
 |---|---|---|---|
-| F1 | Engine dispatcher refactor (no behavior change) | Clean build; existing Admin-path coal + bus gates still pass on the refactored binary | Sol, medium |
+| F1 (verified) | Engine dispatcher refactor (no behavior change) | Clean builds; Admin-path coal + existing-line bus gates, wire/guard matrix and legacy reload passed; evidence above | Sol, medium |
 | F2 | Single-player semantics: `NoEst`, tick frames, pause/game-mode/multiplayer/local-company guards, post-`Post` audit | Unit-level source checks; engine builds; Admin regressions still pass | High-end review of the diff |
 | F3 | Local endpoint + token hello + save/quit + protocol v4 | GUI build starts with endpoint only when token configured; loopback/token/oversize/second-connection refusals | Sol, medium |
 | F4 | Python `LocalBridgeClient` + single-process session + codec split; remove macOS-only code listed above | All Python tests pass; new transport unit tests incl. bad token, typed refusals; tests for platform-conditional journal durability and no platform-tool subprocesses | Luna, medium |
 | F5 | Real-engine M2f gate (see [acceptance](ACCEPTANCE.md#m2f-single-process-gate)) | Evidence JSON with binary/source hashes | Parent agent only |
 | F6 | Switch `game_chat.py` / MCP to local path; actual Copilot build/inspect/save/close | Actual-host transcript hash; one visible process | Parent agent only |
-| F7 | Retire server/client from product path; update guides, engine README, patch 0019 | Records updated; publication verified | Luna for docs; parent publishes |
+| F7 | Retire server/client from product path; update guides, engine README and final patch series | Records updated; publication verified | Luna for docs; parent publishes |
 
 ## Risks
 

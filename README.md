@@ -70,7 +70,7 @@ GitHub: [CaptainCucumber/openttd-copilot](https://github.com/CaptainCucumber/ope
 | [M2d train configuration report](docs/M2D_TRAIN_CONFIGURATION_REPORT.md) | Native wagon attachment, full-load/delivery orders, explicit start/stop, and replay/reload |
 | [Native railway report](docs/M2D_NATIVE_RAILWAY_REPORT.md) | Existing-business route, whole-job budget, native service, visible MCP and replay evidence |
 | [Town bus report](docs/M2E_TOWN_BUS_REPORT.md) | Ordinary-map bus service evidence, integration gates and bounded road scope |
-| [M2f local bridge plan](docs/M2F_LOCAL_BRIDGE_PLAN.md) | Planned single-process bridge for local games: design, source findings, work packages |
+| [M2f local bridge plan](docs/M2F_LOCAL_BRIDGE_PLAN.md) | F1 dispatcher verified; single-process endpoint and remaining work packages planned |
 
 Start each development session with `docs/STATUS.md`. Update the status and work log as work progresses; record substantial design changes in the decision log. These files are the project's durable memory.
 
@@ -102,7 +102,10 @@ roads/maps and interrupted jobs (M3), richer production/queue/profit observation
 and grounded conversational advice (M4), then restart/resume and reproducible
 local-alpha packaging (M5). Before M3, M2f moves Copilot into one
 single-player game process (no server/client pair) — local games only, per
-[D032](docs/DECISIONS.md#d032---host-the-native-bridge-in-the-single-player-game-process). These are proposed deliverables, not implemented
+[D032](docs/DECISIONS.md#d032---host-the-native-bridge-in-the-single-player-game-process).
+F1's transport-neutral dispatcher is verified against real coal/bus
+services and reload/replay; the product still uses server/client until
+F2-F7 pass. These remaining milestones are proposed deliverables, not implemented
 general terrain, measured optimization or unrestricted transport support.
 See [milestone sequencing](docs/PROJECT_PLAN.md#next-milestone-sequencing)
 and the [engine fork/build instructions](engine/README.md).

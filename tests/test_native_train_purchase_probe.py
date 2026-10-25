@@ -2,12 +2,32 @@ import unittest
 from pathlib import Path
 import sys
 import tempfile
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 import run_native_train_purchase_probe as probe
 
 
 class NativeTrainPurchaseProbeTests(unittest.TestCase):
+    def test_engine_provenance_covers_dispatcher_and_build_registration(self):
+        self.assertTrue({"src/copilot_bridge.cpp", "src/copilot_bridge.h",
+                         "src/CMakeLists.txt"} <= set(probe.ENGINE_FILES))
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            for name in probe.ENGINE_FILES:
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name, encoding="utf-8")
+            responses = [mock.Mock(stdout="abc123\n"), mock.Mock(stdout=""),
+                         mock.Mock(stdout="OpenTTD test-gabc123\n", stderr="")]
+            with mock.patch.object(probe, "ENGINE_SOURCE", source), \
+                    mock.patch.object(probe.subprocess, "run", side_effect=responses):
+                result = probe.engine_provenance(Path("/custom/openttd"), False)
+            self.assertTrue(result["clean"])
+            self.assertEqual(set(result["source_hashes"]), set(probe.ENGINE_FILES))
+            self.assertEqual(result["source_hashes"]["src/copilot_bridge.cpp"],
+                             probe.base.sha256_file(source / "src/copilot_bridge.cpp"))
+
     def test_payload_hash_and_operation_parts_are_deterministic(self):
         operation = (1 << 127) + 9
         self.assertEqual(probe.operation_parts(operation), (1 << 63, 9))

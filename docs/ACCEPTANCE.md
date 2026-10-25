@@ -108,7 +108,12 @@ Record binary/source hashes, video driver and pacing (headless `null` runs are
 unpaced; at least one visible run is required).
 
 1. **Refactor neutrality (before behavior changes):** existing Admin-path coal
-   and bus gates pass on the dispatcher-refactored binary.
+   and bus gates pass on the dispatcher-refactored binary. **F1 passed**
+   on clean `03ac6d9aee`: coal gate `20261025T190737Z-d8082dfc`, same-bus
+   insertion gate `20261025T190737Z-dc540bb2`, 26 exact error-byte cases/four
+   malformed refusals `20261025T191117Z-aac637ae`, and legacy coal resave
+   `20261025T190943Z-3ae31ac2`. [Evidence](evidence/2026-10-25-m2f-dispatcher.json).
+   Items 2-9 remain open.
 2. **Services:** native coal railway (three full departures, two deliveries)
    and normal-map bus service (accepted passengers at both stops) pass on the
    local path with duplicate lookup, all-outcome fresh-process reload/replay

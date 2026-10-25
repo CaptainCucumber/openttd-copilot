@@ -47,6 +47,7 @@ class NativeSession(Experiment):
                  "run_lifecycle_probe.py", "run_environment_probe.py", "run_control_probe.py",
                  "game_chat.py", "native_bus.py", "native_bus_transport.py", "run_native_bus_probe.py",
                  "run_native_bus_line_probe.py",
+                 "run_native_dispatcher_probe.py",
                  "check_native_railway_reload.py")
         self.manifest["source_hashes"] = {
             f"tools/{name}": base.sha256_file(ROOT / "tools" / name) for name in names}
